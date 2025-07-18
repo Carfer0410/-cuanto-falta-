@@ -230,7 +230,7 @@ class _CountersPageState extends State<CountersPage> {
                                       const SizedBox(height: 2),
                                       Text(
                                         counter.isNegativeHabit
-                                            ? 'sin ${counter.title.toLowerCase()}'
+                                            ? 'sin ${counter.title.toLowerCase().replaceFirst(RegExp(r'^dejar de '), '')}'
                                             : 'con ${counter.title.toLowerCase()}',
                                         style: TextStyle(
                                           fontSize: 26,

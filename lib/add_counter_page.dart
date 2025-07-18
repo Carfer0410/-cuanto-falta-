@@ -55,56 +55,142 @@ class _AddCounterPageState extends State<AddCounterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Nuevo Contador'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        centerTitle: true,
+        backgroundColor: Colors.orange,
+        elevation: 2,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Título del contador',
-                ),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Ingrese un título'
-                            : null,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Fecha de inicio: ${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+              elevation: 10,
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Icon(
+                        Icons.emoji_events,
+                        color: Colors.orange,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 18),
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          labelText: 'Título del contador',
+                          labelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          filled: true,
+                          fillColor: Colors.orange[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Colors.orange.shade200,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Colors.orange.shade100,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Colors.orange,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        style: const TextStyle(fontSize: 18),
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Ingrese un título'
+                                    : null,
+                        textInputAction: TextInputAction.done,
+                        autofocus: true,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Fecha de inicio:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange[900],
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: _pickDate,
+                            icon: const Icon(
+                              Icons.calendar_today,
+                              size: 18,
+                              color: Colors.orange,
+                            ),
+                            label: Text(
+                              '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.orange,
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _saveCounter,
+                          icon: const Icon(Icons.save, size: 24),
+                          label: const Text(
+                            'Guardar contador',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 2,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: _pickDate,
-                    child: const Text('Cambiar fecha'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _saveCounter,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  'Guardar contador',
-                  style: TextStyle(fontSize: 18),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

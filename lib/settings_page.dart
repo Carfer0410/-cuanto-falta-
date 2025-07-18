@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'counters_page.dart';
 
 class SettingsPage extends StatelessWidget {
   final ThemeMode themeMode;
@@ -13,6 +14,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Ajustes'),
         backgroundColor: Colors.orange,
@@ -44,6 +46,18 @@ class SettingsPage extends StatelessWidget {
             title: const Text('Importar/Exportar eventos'),
             onTap: () {
               // TODO: implementar funcionalidad
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.timer),
+            title: const Text('Contadores de días'),
+            subtitle: const Text('Días sin fumar, sin beber, etc.'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CountersPage()),
+              );
             },
           ),
         ],

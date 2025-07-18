@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'home_page.dart';
+import 'root_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,7 +51,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(primarySwatch: Colors.orange),
       darkTheme: ThemeData.dark(),
       themeMode: _themeMode,
-      home: HomePage(themeMode: _themeMode, onThemeChanged: _onThemeChanged),
+      home: RootPage(themeMode: _themeMode, onThemeChanged: _onThemeChanged),
       debugShowCheckedModeBanner: false,
     );
   }

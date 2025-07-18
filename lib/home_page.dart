@@ -168,7 +168,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Eventos'),
         backgroundColor: Colors.orange,
@@ -182,19 +182,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        decoration:
-            isDark
-                ? BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                )
-                : const BoxDecoration(
-                  // Degradado sutil de blanco a naranja pastel para mejor legibilidad
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFFF8E1), Color(0xFFFFE0B2)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
+        color: Colors.white,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: RefreshIndicator(
@@ -374,6 +362,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'homeFab',
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),

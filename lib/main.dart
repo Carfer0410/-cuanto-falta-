@@ -48,10 +48,19 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '¿Cuánto Falta?',
-      theme: ThemeData(primarySwatch: Colors.orange),
-      darkTheme: ThemeData.dark(),
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+        brightness: Brightness.light,
+      ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.orange,
+        brightness: Brightness.dark,
+      ),
       themeMode: _themeMode,
-      home: RootPage(themeMode: _themeMode, onThemeChanged: _onThemeChanged),
+      home: RootPage(
+        themeMode: _themeMode,
+        onThemeChanged: _onThemeChanged,
+      ),
       debugShowCheckedModeBanner: false,
     );
   }

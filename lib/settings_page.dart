@@ -14,7 +14,8 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:
+          themeMode == ThemeMode.dark ? Colors.black : Colors.white,
       appBar: AppBar(
         title: const Text('Ajustes'),
         backgroundColor: Colors.orange,

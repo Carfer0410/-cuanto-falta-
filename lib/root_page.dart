@@ -20,22 +20,9 @@ class RootPage extends StatefulWidget {
 class _RootPageState extends State<RootPage> {
   int _selectedIndex = 0;
 
-  late final List<Widget> _pages;
-
-  @override
-  void initState() {
-    super.initState();
-    _pages = [
-      HomePage(
-        themeMode: widget.themeMode,
-        onThemeChanged: widget.onThemeChanged,
-      ),
-      const CountersPage(),
-      SettingsPage(
-        themeMode: widget.themeMode,
-        onThemeChanged: widget.onThemeChanged,
-      ),
-    ];
+  void _handleThemeChange(ThemeMode mode) {
+    widget.onThemeChanged(mode);
+    setState(() {});
   }
 
   void _onItemTapped(int index) {
@@ -46,8 +33,22 @@ class _RootPageState extends State<RootPage> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      HomePage(
+        themeMode: widget.themeMode,
+        onThemeChanged: _handleThemeChange,
+      ),
+      const CountersPage(),
+      SettingsPage(
+        themeMode: widget.themeMode,
+        onThemeChanged: _handleThemeChange,
+      ),
+    ];
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

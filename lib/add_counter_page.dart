@@ -72,7 +72,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                     (context) => AlertDialog(
                       title: const Text('Consejo para el título'),
                       content: const Text(
-                        'Usa una o dos palabras clave para tu reto. Ejemplo: "Cigarro", "Alcohol", "Ejercicio". Así la card se verá limpia y profesional.',
+                        'Usa una o dos palabras clave para tu reto. Ejemplo: "Cigarro", "Alcohol", "Ejercicio". Así la pantalla se verá limpia y profesional.',
                       ),
                       actions: [
                         TextButton(
@@ -90,127 +90,135 @@ class _AddCounterPageState extends State<AddCounterPage> {
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              elevation: 10,
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Icon(
-                        Icons.emoji_events,
-                        color: Colors.orange,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 18),
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: InputDecoration(
-                          labelText: 'Título del reto',
-                          labelStyle: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          filled: true,
-                          fillColor: Colors.orange[50],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: Colors.orange.shade200,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: Colors.orange.shade100,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: Colors.orange,
-                              width: 2,
-                            ),
-                          ),
+                elevation: 12,
+                color: const Color(0xFFFFF3E0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 36,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Icon(
+                          Icons.emoji_events,
+                          color: Colors.orange,
+                          size: 54,
                         ),
-                        style: const TextStyle(fontSize: 18),
-                        validator:
-                            (value) =>
-                                value == null || value.isEmpty
-                                    ? 'Ingrese un título'
-                                    : null,
-                        textInputAction: TextInputAction.done,
-                        autofocus: true,
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Fecha de inicio:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange[900],
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _titleController,
+                          decoration: InputDecoration(
+                            labelText: 'Título del reto',
+                            labelStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                              fontSize: 18,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(color: Colors.orange),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: Colors.orange.shade100,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: Colors.orange,
+                                width: 2,
                               ),
                             ),
                           ),
-                          TextButton.icon(
-                            onPressed: _pickDate,
-                            icon: const Icon(
-                              Icons.calendar_today,
-                              size: 18,
-                              color: Colors.orange,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.orange,
+                          ),
+                          validator:
+                              (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Ingrese un título'
+                                      : null,
+                          textInputAction: TextInputAction.done,
+                          autofocus: true,
+                        ),
+                        const SizedBox(height: 28),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Fecha de inicio:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange[900],
+                                  fontSize: 16,
+                                ),
+                              ),
                             ),
-                            label: Text(
-                              '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                            TextButton.icon(
+                              onPressed: _pickDate,
+                              icon: const Icon(
+                                Icons.calendar_today,
+                                size: 18,
                                 color: Colors.orange,
                               ),
+                              label: Text(
+                                '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.orange,
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.orange,
-                              textStyle: const TextStyle(
+                          ],
+                        ),
+                        const SizedBox(height: 36),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _saveCounter,
+                            icon: const Icon(Icons.save, size: 26),
+                            label: const Text(
+                              'Guardar reto',
+                              style: TextStyle(
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _saveCounter,
-                          icon: const Icon(Icons.save, size: 24),
-                          label: const Text(
-                            'Guardar reto',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              elevation: 3,
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 2,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

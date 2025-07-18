@@ -37,4 +37,6 @@ class Event {
       message: map['message'],
     );
   }
+
+  bool get isNegativeHabit => title.toLowerCase().contains('dejar');
 }

@@ -8,17 +8,20 @@ class Counter {
   final String title;
   final DateTime startDate;
   DateTime? lastConfirmedDate;
+  final bool isNegativeHabit; // Nueva propiedad
 
   Counter({
     required this.title,
     required this.startDate,
     this.lastConfirmedDate,
+    this.isNegativeHabit = false, // Valor por defecto
   });
 
   Map<String, dynamic> toJson() => {
     'title': title,
     'startDate': startDate.toIso8601String(),
     'lastConfirmedDate': lastConfirmedDate?.toIso8601String(),
+    'isNegativeHabit': isNegativeHabit, // Incluir en JSON
   };
 
   static Counter fromJson(Map<String, dynamic> json) => Counter(
@@ -28,6 +31,8 @@ class Counter {
         json['lastConfirmedDate'] != null
             ? DateTime.parse(json['lastConfirmedDate'])
             : null,
+    isNegativeHabit:
+        json['isNegativeHabit'] == true, // Asegurar que sea un bool válido
   );
 }
 
@@ -224,7 +229,9 @@ class _CountersPageState extends State<CountersPage> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'sin ${counter.title.toLowerCase()}',
+                                        counter.isNegativeHabit
+                                            ? 'sin ${counter.title.toLowerCase()}'
+                                            : 'con ${counter.title.toLowerCase()}',
                                         style: TextStyle(
                                           fontSize: 26,
                                           color: Colors.orange[900],
@@ -326,20 +333,34 @@ class _CountersPageState extends State<CountersPage> {
                                   onPressed: () async {
                                     final confirm = await showDialog<bool>(
                                       context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text('Eliminar reto'),
-                                        content: const Text('¿Seguro que deseas eliminar este reto? Esta acción no se puede deshacer.'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(false),
-                                            child: const Text('Cancelar'),
+                                      builder:
+                                          (context) => AlertDialog(
+                                            title: const Text('Eliminar reto'),
+                                            content: const Text(
+                                              '¿Seguro que deseas eliminar este reto? Esta acción no se puede deshacer.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.of(
+                                                      context,
+                                                    ).pop(false),
+                                                child: const Text('Cancelar'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.of(
+                                                      context,
+                                                    ).pop(true),
+                                                child: const Text(
+                                                  'Eliminar',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(true),
-                                            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                          ),
-                                        ],
-                                      ),
                                     );
                                     if (confirm == true) {
                                       _deleteCounter(index);

@@ -118,7 +118,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                         TextFormField(
                           controller: _titleController,
                           decoration: InputDecoration(
-                            labelText: 'Título del reto',
+                            labelText: '¿Cuál es tu reto o hábito?',
                             labelStyle: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
@@ -127,21 +127,33 @@ class _AddCounterPageState extends State<AddCounterPage> {
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(18),
+                              ),
                               borderSide: BorderSide(color: Colors.orange),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(18),
+                              ),
                               borderSide: BorderSide(
                                 color: Colors.orange.shade100,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(18),
+                              ),
                               borderSide: BorderSide(
                                 color: Colors.orange,
                                 width: 2,
                               ),
+                            ),
+                            helperText:
+                                'Ejemplo: Dejar de fumar, Hacer ejercicio, Aprender inglés, Meditar... ',
+                            helperStyle: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 15,
                             ),
                           ),
                           style: const TextStyle(
@@ -151,7 +163,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           validator:
                               (value) =>
                                   value == null || value.isEmpty
-                                      ? 'Ingrese un título'
+                                      ? 'Ingrese un reto o hábito'
                                       : null,
                           textInputAction: TextInputAction.done,
                           autofocus: true,

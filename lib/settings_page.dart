@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'counters_page.dart';
 
 class SettingsPage extends StatelessWidget {
   final ThemeMode themeMode;
@@ -47,18 +46,6 @@ class SettingsPage extends StatelessWidget {
             title: const Text('Importar/Exportar eventos'),
             onTap: () {
               // TODO: implementar funcionalidad
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.timer),
-            title: const Text(' de días'),
-            subtitle: const Text('Días sin fumar, sin beber, etc.'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CountersPage()),
-              );
             },
           ),
         ],

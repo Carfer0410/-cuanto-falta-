@@ -144,195 +144,188 @@ class _CountersPageState extends State<CountersPage> {
                       final confirmedToday =
                           counter.lastConfirmedDate != null &&
                           _isSameDay(counter.lastConfirmedDate!, now);
-                      return Dismissible(
-                        key: ValueKey(
-                          '${counter.startDate.toIso8601String()}_${counter.title}',
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                        direction: DismissDirection.endToStart,
-                        onDismissed: (_) => _deleteCounter(index),
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                          elevation: 8,
+                          color: const Color(0xFFFFF3E0),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
                             ),
-                            elevation: 8,
-                            color: const Color(0xFFFFF3E0),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.emoji_events,
-                                    color: Colors.orange,
-                                    size: 56,
-                                  ),
-                                  const SizedBox(width: 18),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          '¡Llevas',
-                                          style: TextStyle(
-                                            fontSize: 22,
-                                            color: Colors.grey[800],
-                                            fontWeight: FontWeight.w600,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.emoji_events,
+                                  color: Colors.orange,
+                                  size: 56,
+                                ),
+                                const SizedBox(width: 18),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        '¡Llevas',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          color: Colors.grey[800],
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Center(
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 340,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.orangeAccent,
+                                              width: 1.2,
+                                            ),
+                                          ),
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                _LiveStreakTimer(
+                                                  startDate: streakStart,
+                                                  lastConfirmedDate:
+                                                      counter.lastConfirmedDate,
+                                                  confirmedToday:
+                                                      confirmedToday,
+                                                  fontSize: 20,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Center(
-                                          child: Container(
-                                            constraints: const BoxConstraints(
-                                              maxWidth: 320,
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: Colors.orangeAccent,
-                                                width: 1.2,
-                                              ),
-                                            ),
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: _LiveStreakTimer(
-                                                startDate: streakStart,
-                                                lastConfirmedDate:
-                                                    counter.lastConfirmedDate,
-                                                confirmedToday: confirmedToday,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'sin ${counter.title.toLowerCase()}',
+                                        style: TextStyle(
+                                          fontSize: 26,
+                                          color: Colors.orange[900],
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '¡Sigue así! Cada segundo cuenta.',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.green[700],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      if (counter.lastConfirmedDate == null)
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.orange,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 18,
+                                                  ),
+                                              textStyle: const TextStyle(
                                                 fontSize: 20,
+                                                fontWeight: FontWeight.bold,
                                               ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                counter.lastConfirmedDate =
+                                                    DateTime(
+                                                      now.year,
+                                                      now.month,
+                                                      now.day,
+                                                    );
+                                              });
+                                              _saveCounters();
+                                            },
+                                            child: const Text('Iniciar reto'),
+                                          ),
+                                        )
+                                      else if (!_isSameDay(
+                                        counter.lastConfirmedDate!,
+                                        now,
+                                      ))
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.orange,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 18,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                counter.lastConfirmedDate =
+                                                    DateTime(
+                                                      now.year,
+                                                      now.month,
+                                                      now.day,
+                                                    );
+                                              });
+                                              _saveCounters();
+                                            },
+                                            child: const Text(
+                                              '¿Cumpliste hoy?',
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'sin ${counter.title.toLowerCase()}',
-                                          style: TextStyle(
-                                            fontSize: 26,
-                                            color: Colors.orange[900],
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          '¡Sigue así! Cada segundo cuenta.',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.green[700],
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        if (counter.lastConfirmedDate == null)
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.orange,
-                                                foregroundColor: Colors.white,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 18,
-                                                    ),
-                                                textStyle: const TextStyle(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                setState(() {
-                                                  counter.lastConfirmedDate =
-                                                      DateTime(
-                                                        now.year,
-                                                        now.month,
-                                                        now.day,
-                                                      );
-                                                });
-                                                _saveCounters();
-                                              },
-                                              child: const Text('Iniciar reto'),
-                                            ),
-                                          )
-                                        else if (!_isSameDay(
-                                          counter.lastConfirmedDate!,
-                                          now,
-                                        ))
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.orange,
-                                                foregroundColor: Colors.white,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 18,
-                                                    ),
-                                                textStyle: const TextStyle(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                setState(() {
-                                                  counter.lastConfirmedDate =
-                                                      DateTime(
-                                                        now.year,
-                                                        now.month,
-                                                        now.day,
-                                                      );
-                                                });
-                                                _saveCounters();
-                                              },
-                                              child: const Text(
-                                                '¿Cumpliste hoy?',
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
+                                    ],
                                   ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.delete,
-                                      color:
-                                          Theme.of(context).colorScheme.error,
-                                    ),
-                                    onPressed: () => _deleteCounter(index),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete,
+                                    color: Theme.of(context).colorScheme.error,
                                   ),
-                                ],
-                              ),
+                                  onPressed: () => _deleteCounter(index),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -416,29 +409,59 @@ class _LiveStreakTimerState extends State<_LiveStreakTimer> {
     final hours = _duration.inHours.remainder(24);
     final minutes = _duration.inMinutes.remainder(60);
     final seconds = _duration.inSeconds.remainder(60);
+
+    int years = 0;
+    int months = 0;
+    int remDays = days;
+    if (days >= 30) {
+      // Calcular meses y años aproximados
+      final start =
+          widget.lastConfirmedDate == null ? DateTime.now() : widget.startDate;
+      final end =
+          (widget.lastConfirmedDate != null &&
+                  widget.lastConfirmedDate!.isAfter(widget.startDate))
+              ? (widget.confirmedToday
+                  ? DateTime.now()
+                  : widget.lastConfirmedDate!)
+              : DateTime.now();
+      years = end.year - start.year;
+      months = end.month - start.month;
+      remDays = end.day - start.day;
+      if (remDays < 0) {
+        final prevMonth = DateTime(end.year, end.month, 0).day;
+        remDays += prevMonth;
+        months--;
+      }
+      if (months < 0) {
+        months += 12;
+        years--;
+      }
+    }
+
+    List<Widget> timeWidgets = [];
+    final fontSize = widget.fontSize ?? 15;
+    if (years > 0) {
+      timeWidgets.add(_buildTimeBox(years, 'a', fontSize));
+      timeWidgets.add(const SizedBox(width: 2));
+    }
+    if (months > 0 || years > 0) {
+      timeWidgets.add(_buildTimeBox(months, 'm', fontSize - 2));
+      timeWidgets.add(const SizedBox(width: 2));
+    }
+    if (days >= 30) {
+      timeWidgets.add(_buildTimeBox(remDays, 'd', fontSize - 4));
+    } else {
+      timeWidgets.add(_buildTimeBox(days, 'd', fontSize));
+      timeWidgets.add(const SizedBox(width: 2));
+      timeWidgets.add(_buildTimeBox(hours, 'h', fontSize - 2));
+      timeWidgets.add(const SizedBox(width: 2));
+      timeWidgets.add(_buildTimeBox(minutes, 'm', fontSize - 4));
+      timeWidgets.add(const SizedBox(width: 2));
+      timeWidgets.add(_buildTimeBox(seconds, 's', fontSize - 6));
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildTimeBox(days, 'd', widget.fontSize ?? 15),
-        const SizedBox(width: 2),
-        _buildTimeBox(
-          hours,
-          'h',
-          widget.fontSize != null ? widget.fontSize! - 2 : 13,
-        ),
-        const SizedBox(width: 2),
-        _buildTimeBox(
-          minutes,
-          'm',
-          widget.fontSize != null ? widget.fontSize! - 4 : 11,
-        ),
-        const SizedBox(width: 2),
-        _buildTimeBox(
-          seconds,
-          's',
-          widget.fontSize != null ? widget.fontSize! - 6 : 9,
-        ),
-      ],
+      children: timeWidgets,
     );
   }
 

@@ -231,7 +231,7 @@ class _CountersPageState extends State<CountersPage> {
                                       Text(
                                         counter.isNegativeHabit
                                             ? 'sin ${counter.title.toLowerCase().replaceFirst(RegExp(r'^dejar de '), '')}'
-                                            : 'con ${counter.title.toLowerCase()}',
+                                            : 'con ${counter.title.toLowerCase().replaceFirst(RegExp(r'^empezar a '), '')}',
                                         style: TextStyle(
                                           fontSize: 26,
                                           color: Colors.orange[900],

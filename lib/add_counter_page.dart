@@ -14,6 +14,12 @@ class _AddCounterPageState extends State<AddCounterPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  String _selectedType = 'dejar de'; // Default value
+
+  final List<String> _types = [
+    'dejar de',
+    'empezar a',
+  ]; // Options for the dropdown
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -38,7 +44,8 @@ class _AddCounterPageState extends State<AddCounterPage> {
       list = jsonDecode(jsonString);
     }
     final newCounter = Counter(
-      title: _titleController.text,
+      title:
+          '$_selectedType ${_titleController.text}', // Combine the selected type with the title
       startDate: _selectedDate,
     );
     list.add(newCounter.toJson());
@@ -167,6 +174,49 @@ class _AddCounterPageState extends State<AddCounterPage> {
                                       : null,
                           textInputAction: TextInputAction.done,
                           autofocus: true,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: _selectedType,
+                          decoration: InputDecoration(
+                            labelText: 'Tipo de reto',
+                            labelStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                              fontSize: 18,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(color: Colors.orange),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: Colors.orange.shade100,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: Colors.orange,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          items:
+                              _types
+                                  .map(
+                                    (type) => DropdownMenuItem(
+                                      value: type,
+                                      child: Text(type),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedType = value!;
+                            });
+                          },
                         ),
                         const SizedBox(height: 28),
                         Row(

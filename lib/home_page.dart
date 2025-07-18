@@ -256,11 +256,20 @@ class _HomePageState extends State<HomePage> {
                               vertical: 10,
                             ),
                             child: Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
+                              shape:
+                                  isDark
+                                      ? RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        side: const BorderSide(
+                                          color: Colors.yellow,
+                                          width: 2,
+                                        ),
+                                      )
+                                      : RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
                               elevation: 6,
-                              color: Colors.white,
+                              color: Theme.of(context).cardColor,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 18,
@@ -282,10 +291,10 @@ class _HomePageState extends State<HomePage> {
                                         Expanded(
                                           child: Text(
                                             event.title,
-                                            style: const TextStyle(
-                                              fontSize: 20,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleLarge?.copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.black,
                                             ),
                                           ),
                                         ),
@@ -305,9 +314,9 @@ class _HomePageState extends State<HomePage> {
                                     const SizedBox(height: 10),
                                     Text(
                                       'El evento es el día ${DateFormat('dd/MM/yyyy').format(event.targetDate)}',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[600],
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -341,7 +350,13 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             style: TextStyle(
                                               fontSize: 16,
-                                              color: Colors.grey[700],
+                                              color:
+                                                  isDark
+                                                      ? Colors.white
+                                                      : Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.color,
                                             ),
                                           ),
                                         ),

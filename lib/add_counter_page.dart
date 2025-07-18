@@ -57,7 +57,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Nuevo Contador'),
+        title: const Text('Nuevo reto'),
         centerTitle: true,
         backgroundColor: Colors.orange,
         elevation: 2,
@@ -116,7 +116,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                       TextFormField(
                         controller: _titleController,
                         decoration: InputDecoration(
-                          labelText: 'Título del contador',
+                          labelText: 'Título del reto',
                           labelStyle: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
@@ -193,7 +193,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           onPressed: _saveCounter,
                           icon: const Icon(Icons.save, size: 24),
                           label: const Text(
-                            'Guardar contador',
+                            'Guardar reto',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

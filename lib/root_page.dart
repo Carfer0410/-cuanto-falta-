@@ -53,7 +53,7 @@ class _RootPageState extends State<RootPage> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Contadores'),
+          BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Retos'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ajustes'),
         ],
       ),

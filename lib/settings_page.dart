@@ -51,7 +51,7 @@ class SettingsPage extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.timer),
-            title: const Text('Contadores de días'),
+            title: const Text(' de días'),
             subtitle: const Text('Días sin fumar, sin beber, etc.'),
             onTap: () {
               Navigator.push(

@@ -88,7 +88,7 @@ class _CountersPageState extends State<CountersPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Contadores'),
+        title: const Text('Retos'),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -129,7 +129,7 @@ class _CountersPageState extends State<CountersPage> {
                       const SizedBox(height: 150),
                       Center(
                         child: Text(
-                          'No hay contadores. ¡Agrega uno!',
+                          'No hay retos. ¡Agrega uno!',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
@@ -323,7 +323,28 @@ class _CountersPageState extends State<CountersPage> {
                                     Icons.delete,
                                     color: Theme.of(context).colorScheme.error,
                                   ),
-                                  onPressed: () => _deleteCounter(index),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Eliminar reto'),
+                                        content: const Text('¿Seguro que deseas eliminar este reto? Esta acción no se puede deshacer.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(false),
+                                            child: const Text('Cancelar'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(true),
+                                            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      _deleteCounter(index);
+                                    }
+                                  },
                                 ),
                               ],
                             ),

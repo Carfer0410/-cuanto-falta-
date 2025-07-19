@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'settings_page.dart';
-import 'package:intl/intl.dart';
+
 import 'dart:async';
 import 'database_helper.dart';
 import 'event.dart';
@@ -168,11 +168,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Eventos'),
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor ?? (isDark ? Colors.white : Colors.white),
         elevation: 0,
         actions: [
           IconButton(
@@ -182,7 +182,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: RefreshIndicator(
@@ -249,7 +249,7 @@ class _HomePageState extends State<HomePage> {
                                       ? RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
                                         side: const BorderSide(
-                                          color: Colors.yellow,
+                                          color: Colors.orange,
                                           width: 2,
                                         ),
                                       )
@@ -259,67 +259,25 @@ class _HomePageState extends State<HomePage> {
                               elevation: 6,
                               color: Theme.of(context).cardColor,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 18,
-                                ),
+                                padding: const EdgeInsets.all(16.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
                                       children: [
                                         const Icon(
                                           Icons.event,
                                           color: Colors.orange,
-                                          size: 32,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            event.title,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleLarge?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed: () async {
-                                            await DatabaseHelper.instance
-                                                .deleteEvent(event.id!);
-                                            _loadEvents();
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      'El evento es el día ${DateFormat('dd/MM/yyyy').format(event.targetDate)}',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.timer,
-                                          color: Colors.orange,
-                                          size: 24,
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(
-                                          child: _CountdownTimer(
-                                            targetDate: event.targetDate,
+                                          child: Text(
+                                            event.title,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context).textTheme.titleLarge?.color,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -338,17 +296,15 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             style: TextStyle(
                                               fontSize: 16,
-                                              color:
-                                                  isDark
-                                                      ? Colors.white
-                                                      : Theme.of(context)
-                                                          .textTheme
-                                                          .bodyMedium
-                                                          ?.color,
+                                              color: Theme.of(context).textTheme.bodyMedium?.color,
                                             ),
                                           ),
                                         ),
                                       ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _CountdownTimer(
+                                      targetDate: event.targetDate,
                                     ),
                                   ],
                                 ),

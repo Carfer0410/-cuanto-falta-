@@ -103,12 +103,13 @@ class _AddCounterPageState extends State<AddCounterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Nuevo reto'),
         centerTitle: true,
-        backgroundColor: Colors.orange,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
         elevation: 2,
         actions: [
           IconButton(
@@ -142,11 +143,16 @@ class _AddCounterPageState extends State<AddCounterPage> {
             child: Container(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
+                shape: isDark
+                    ? RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        side: const BorderSide(color: Colors.orange, width: 2),
+                      )
+                    : RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
                 elevation: 12,
-                color: const Color(0xFFFFF3E0),
+                color: Theme.of(context).cardColor,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
@@ -168,18 +174,18 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           controller: _titleController,
                           decoration: InputDecoration(
                             labelText: '¿Qúe quieres dejar o iniciar a realizar?',
-                            labelStyle: const TextStyle(
+                            labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
                               fontSize: 18,
                             ),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: Theme.of(context).cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.all(
                                 Radius.circular(18),
                               ),
-                              borderSide: BorderSide(color: Colors.orange),
+                              borderSide: const BorderSide(color: Colors.orange),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(
@@ -193,21 +199,21 @@ class _AddCounterPageState extends State<AddCounterPage> {
                               borderRadius: BorderRadius.all(
                                 Radius.circular(18),
                               ),
-                              borderSide: BorderSide(
+                              borderSide: const BorderSide(
                                 color: Colors.orange,
                                 width: 2,
                               ),
                             ),
                             helperText:
                                 'Ejemplo: Dejar de fumar, Hacer ejercicio, Aprender inglés, Meditar... ',
-                            helperStyle: const TextStyle(
-                              color: Colors.grey,
+                            helperStyle: TextStyle(
+                              color: isDark ? Colors.grey[400] : Colors.grey,
                               fontSize: 15,
                             ),
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
-                            color: Colors.orange,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -243,14 +249,16 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           value: _selectedType,
                           decoration: InputDecoration(
                             labelText: 'Tipo de reto',
-                            labelStyle: const TextStyle(
+                            labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
                               fontSize: 18,
                             ),
+                            filled: true,
+                            fillColor: Theme.of(context).cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(color: Colors.orange),
+                              borderSide: const BorderSide(color: Colors.orange),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
@@ -260,7 +268,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(
+                              borderSide: const BorderSide(
                                 color: Colors.orange,
                                 width: 2,
                               ),
@@ -309,12 +317,12 @@ class _AddCounterPageState extends State<AddCounterPage> {
                                   fontSize: 16,
                                 ),
                               ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.orange,
-                                textStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.orange,
+                                  textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
                             ),
                           ],
                         ),

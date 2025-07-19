@@ -114,7 +114,7 @@ class _CountersPageState extends State<CountersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Retos'),
         backgroundColor: Colors.orange,
@@ -181,9 +181,12 @@ class _CountersPageState extends State<CountersPage> {
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
+                            side: Theme.of(context).brightness == Brightness.dark
+                                ? const BorderSide(color: Colors.orange, width: 2)
+                                : BorderSide.none,
                           ),
                           elevation: 8,
-                          color: const Color(0xFFFFF3E0),
+                          color: Theme.of(context).cardColor,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -208,7 +211,7 @@ class _CountersPageState extends State<CountersPage> {
                                         '¡Llevas',
                                         style: TextStyle(
                                           fontSize: 22,
-                                          color: Colors.grey[800],
+                                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[800],
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),

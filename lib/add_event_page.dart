@@ -78,13 +78,14 @@ class _AddEventPageState extends State<AddEventPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Nuevo evento'),
         centerTitle: true,
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor ?? Colors.white,
         elevation: 2,
       ),
       body: Center(
@@ -94,11 +95,16 @@ class _AddEventPageState extends State<AddEventPage> {
             child: Container(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
+                shape: isDark
+                    ? RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        side: const BorderSide(color: Colors.orange, width: 2),
+                      )
+                    : RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
                 elevation: 12,
-                color: const Color(0xFFFFF3E0),
+                color: Theme.of(context).cardColor,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
@@ -116,16 +122,16 @@ class _AddEventPageState extends State<AddEventPage> {
                           controller: _titleController,
                           decoration: InputDecoration(
                             labelText: 'Nombre del evento',
-                            labelStyle: const TextStyle(
+                            labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
                               fontSize: 18,
                             ),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: Theme.of(context).cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(color: Colors.orange),
+                              borderSide: const BorderSide(color: Colors.orange),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
@@ -135,15 +141,15 @@ class _AddEventPageState extends State<AddEventPage> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(
+                              borderSide: const BorderSide(
                                 color: Colors.orange,
                                 width: 2,
                               ),
                             ),
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
-                            color: Colors.orange,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
                           ),
                           validator:
                               (value) =>
@@ -158,14 +164,16 @@ class _AddEventPageState extends State<AddEventPage> {
                           value: _selectedCategory,
                           decoration: InputDecoration(
                             labelText: 'Categoría',
-                            labelStyle: const TextStyle(
+                            labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
                               fontSize: 18,
                             ),
+                            filled: true,
+                            fillColor: Theme.of(context).cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(color: Colors.orange),
+                              borderSide: const BorderSide(color: Colors.orange),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
@@ -175,7 +183,7 @@ class _AddEventPageState extends State<AddEventPage> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(
+                              borderSide: const BorderSide(
                                 color: Colors.orange,
                                 width: 2,
                               ),
@@ -207,9 +215,9 @@ class _AddEventPageState extends State<AddEventPage> {
                             padding: const EdgeInsets.only(bottom: 16),
                             child: Text(
                               _categoryMessages[_selectedCategory!] ?? '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.green,
+                                color: isDark ? Colors.greenAccent : Colors.green,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -221,7 +229,7 @@ class _AddEventPageState extends State<AddEventPage> {
                                 _selectedDate == null
                                     ? 'Seleccione una fecha'
                                     : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.orange,
                                   fontWeight: FontWeight.bold,

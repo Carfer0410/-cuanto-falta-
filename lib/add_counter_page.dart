@@ -44,9 +44,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
       list = jsonDecode(jsonString);
     }
     final newCounter = Counter(
-      title:
-          '$_selectedType ${_titleController.text}', // Combine the selected type with the title
+      title: _titleController.text.trim(), // Solo el texto ingresado
       startDate: _selectedDate,
+      isNegativeHabit: _selectedType == 'dejar de', // Marca hábito negativo según tipo
     );
     list.add(newCounter.toJson());
     await prefs.setString('counters', jsonEncode(list));
@@ -125,7 +125,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                         TextFormField(
                           controller: _titleController,
                           decoration: InputDecoration(
-                            labelText: '¿Cuál es tu reto o hábito?',
+                            labelText: '¿Qúe quieres dejar o iniciar a realizar?',
                             labelStyle: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,

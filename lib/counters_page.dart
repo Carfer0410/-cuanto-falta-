@@ -94,6 +94,23 @@ class _CountersPageState extends State<CountersPage> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  String _challengePhrase(Counter counter) {
+    final basePhrase = counter.title.toLowerCase();
+    if (counter.isNegativeHabit) {
+      if (basePhrase.startsWith('dejar de ')) {
+        return 'sin ${basePhrase.replaceFirst('dejar de ', '')}';
+      } else {
+        return 'sin $basePhrase';
+      }
+    } else {
+      if (basePhrase.startsWith('empezar a ')) {
+        return 'haciendo ${basePhrase.replaceFirst('empezar a ', '')}';
+      } else {
+        return 'haciendo $basePhrase';
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,7 +168,8 @@ class _CountersPageState extends State<CountersPage> {
                     itemBuilder: (context, index) {
                       final counter = _counters[index];
                       final now = DateTime.now();
-                      final streakStart = counter.startDate;
+                      // ...existing code...
+                      // final streakStart = counter.startDate; // eliminada variable no usada
                       final confirmedToday =
                           counter.lastConfirmedDate != null &&
                           _isSameDay(counter.lastConfirmedDate!, now);
@@ -243,9 +261,7 @@ class _CountersPageState extends State<CountersPage> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        counter.isNegativeHabit
-                                            ? 'sin ${counter.title.toLowerCase().replaceFirst(RegExp(r'^(dejar de) '), '')}'
-                                            : 'con ${counter.title.toLowerCase().replaceFirst(RegExp(r'^(empezar a) '), '')}',
+                                        _challengePhrase(counter),
                                         style: TextStyle(
                                           fontSize: 26,
                                           color: Colors.orange[900],
@@ -399,6 +415,7 @@ class _CountersPageState extends State<CountersPage> {
       ),
     );
   }
+  // ... otras funciones auxiliares si las hubiera.
 }
 
 class _LiveStreakTimer extends StatefulWidget {

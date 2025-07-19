@@ -175,8 +175,29 @@ class _HomePageState extends State<HomePage> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _openSettings,
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Información',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('¿Qué puedes hacer aquí?'),
+                  content: const Text(
+                    'En esta pantalla puedes ver todos tus eventos importantes con su cuenta regresiva personalizada.\n\n'
+                    '- Agrega un evento con el botón naranja (+) abajo a la derecha.\n'
+                    '- Desliza un evento hacia la izquierda para eliminarlo.\n'
+                    '- Toca el ícono de ajustes en la pantalla de configuración para cambiar el tema de la app.\n\n'
+                    'Cada tarjeta muestra el nombre, mensaje motivacional, fecha objetivo y un temporizador en tiempo real. ¡Organiza y visualiza tus próximos eventos de forma moderna y sencilla!'
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

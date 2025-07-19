@@ -142,19 +142,24 @@ class _CountersPageState extends State<CountersPage> {
             onPressed: () {
               showDialog(
                 context: context,
-                builder:
-                    (context) => AlertDialog(
-                      title: const Text('Consejo para tu reto'),
-                      content: const Text(
-                        'Te recomendamos elegir una hora fija cada día (por ejemplo, en la noche antes de dormir) para abrir la app y confirmar si cumpliste tu reto. Así tendrás un hábito claro y evitarás confusiones.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('OK'),
-                        ),
-                      ],
+                builder: (context) => AlertDialog(
+                  title: const Text('¿Qué puedes hacer aquí?'),
+                  content: const Text(
+                    'En esta pantalla puedes llevar el control de tus retos o hábitos, como dejar de fumar o empezar a hacer ejercicio.\n\n'
+                    '- Agrega un reto con el botón naranja (+) abajo a la derecha.\n'
+                    '- Cada tarjeta muestra el nombre del reto, el tiempo que llevas cumpliéndolo y una frase motivacional.\n'
+                    '- Pulsa “Iniciar reto” para comenzar a contar tu progreso.\n'
+                    '- Cada día, confirma si cumpliste tu reto pulsando “¿Cumpliste hoy?”.\n'
+                    '- Desliza un reto hacia la izquierda para eliminarlo.\n\n'
+                    '¡Haz seguimiento a tus logros y mantente motivado para cumplir tus objetivos!'
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('OK'),
                     ),
+                  ],
+                ),
               );
             },
           ),

@@ -11,6 +11,8 @@ class AddCounterPage extends StatefulWidget {
 }
 
 class _AddCounterPageState extends State<AddCounterPage> {
+  static const List<String> _bannedWords = ['mierda', 'puta', 'idiota'];
+  static final DateTime _minDate = DateTime.now().subtract(Duration(days: 3650)); // hace 10 años
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
@@ -35,6 +37,26 @@ class _AddCounterPageState extends State<AddCounterPage> {
     }
   }
 
+  /// Elimina prefijos duplicados y caracteres innecesarios, y normaliza el título.
+  String _sanitizeTitle(String input) {
+    var title = input.trim().toLowerCase();
+    // Eliminar todos los caracteres de puntuación
+    title = title.replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '').trim();
+    // Prefijos comunes a eliminar, incluyendo sinónimos
+    const prefixes = ['dejar de ', 'parar de ', 'comenzar a ', 'empezar a ', 'cesar ', 'detener ', 'iniciar ', 'abandonar ', 'suprimir '];
+    bool removed;
+    do {
+      removed = false;
+      for (var p in prefixes) {
+        if (title.startsWith(p)) {
+          title = title.substring(p.length).trim();
+          removed = true;
+        }
+      }
+    } while (removed);
+    return title;
+  }
+
   Future<void> _saveCounter() async {
     if (_formKey.currentState?.validate() != true) return;
     final prefs = await SharedPreferences.getInstance();
@@ -43,8 +65,28 @@ class _AddCounterPageState extends State<AddCounterPage> {
     if (jsonString != null) {
       list = jsonDecode(jsonString);
     }
+    final text = _titleController.text;
+    final sanitized = _sanitizeTitle(text);
+    // Validar fecha
+    if (_selectedDate.isAfter(DateTime.now()) || _selectedDate.isBefore(_minDate)) {
+      showDialog(context: context, builder: (_) => AlertDialog(
+        title: Text('Fecha inválida'),
+        content: Text('Seleccione una fecha dentro de los últimos 10 años y sin pasar hoy.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+      ));
+      return;
+    }
+    // Validar duplicados
+    if (list.any((e) => (e['title'] as String) == sanitized)) {
+      showDialog(context: context, builder: (_) => AlertDialog(
+        title: Text('Reto duplicado'),
+        content: Text('Ya existe un reto con este título.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+      ));
+      return;
+    }
     final newCounter = Counter(
-      title: _titleController.text.trim(), // Solo el texto ingresado
+      title: sanitized,
       startDate: _selectedDate,
       isNegativeHabit: _selectedType == 'dejar de', // Marca hábito negativo según tipo
     );
@@ -167,11 +209,32 @@ class _AddCounterPageState extends State<AddCounterPage> {
                             fontSize: 20,
                             color: Colors.orange,
                           ),
-                          validator:
-                              (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Ingrese un reto o hábito'
-                                      : null,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Ingrese un reto o hábito';
+                            }
+                            final sanitized = _sanitizeTitle(value);
+                            if (sanitized.isEmpty) {
+                              return 'Título inválido después de limpieza';
+                            }
+                            if (sanitized.length < 3) {
+                              return 'Título muy corto (mín. 3 caracteres)';
+                            }
+                            final words = sanitized.split(RegExp(r'\s+'));
+                            if (words.length > 2) {
+                              return 'Use máximo dos palabras clave';
+                            }
+                            if (sanitized.length > 20) {
+                              return 'Título muy largo (máx. 20 caracteres)';
+                            }
+                            if (RegExp(r'^[0-9]+$').hasMatch(sanitized)) {
+                              return 'Título no puede ser solo números';
+                            }
+                            if (words.any((w) => _bannedWords.contains(w))) {
+                              return 'Palabra no permitida';
+                            }
+                            return null;
+                          },
                           textInputAction: TextInputAction.done,
                           autofocus: true,
                         ),

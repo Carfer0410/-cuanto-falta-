@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'notification_service.dart';
 import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
 import 'root_page.dart';
+import 'localization_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Inicializar notificaciones
   await NotificationService.instance.init();
+  
+  // Cargar el idioma guardado
+  await LocalizationService.instance.loadLanguage();
   
   runApp(const MyApp());
 }
@@ -30,6 +35,8 @@ class _MyAppState extends State<MyApp> {
     _loadTheme();
     _initializeNotificationSystems();
   }
+
+  // Remover _loadLanguage() ya que se carga en main()
 
   Future<void> _initializeNotificationSystems() async {
     await NotificationService.instance.init();
@@ -66,32 +73,39 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '¿Cuánto Falta?',
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-        brightness: Brightness.light,
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.orange,
-          foregroundColor: Colors.white,
-        ),
+    return ChangeNotifierProvider.value(
+      value: LocalizationService.instance,
+      child: Consumer<LocalizationService>(
+        builder: (context, localizationService, child) {
+          return MaterialApp(
+            title: localizationService.t('appTitle'),
+            theme: ThemeData(
+              primarySwatch: Colors.orange,
+              brightness: Brightness.light,
+              floatingActionButtonTheme: const FloatingActionButtonThemeData(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            darkTheme: ThemeData(
+              primarySwatch: Colors.orange,
+              brightness: Brightness.dark,
+              floatingActionButtonTheme: const FloatingActionButtonThemeData(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            themeMode: _themeMode,
+            home: RootPage(
+              themeMode: _themeMode,
+              onThemeChanged: _onThemeChanged,
+              // Forzar color naranja en el botón flotante desde aquí si el tema no lo respeta
+              // (esto requiere que RootPage/FAB acepte parámetros, si no, el tema global lo debe forzar)
+            ),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
-      darkTheme: ThemeData(
-        primarySwatch: Colors.orange,
-        brightness: Brightness.dark,
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.orange,
-          foregroundColor: Colors.white,
-        ),
-      ),
-      themeMode: _themeMode,
-      home: RootPage(
-        themeMode: _themeMode,
-        onThemeChanged: _onThemeChanged,
-        // Forzar color naranja en el botón flotante desde aquí si el tema no lo respeta
-        // (esto requiere que RootPage/FAB acepte parámetros, si no, el tema global lo debe forzar)
-      ),
-      debugShowCheckedModeBanner: false,
     );
   }
 }

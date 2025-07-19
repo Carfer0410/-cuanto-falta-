@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'home_page.dart';
 import 'counters_page.dart';
 import 'settings_page.dart';
+import 'localization_service.dart';
 
 class RootPage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -49,14 +51,27 @@ class _RootPageState extends State<RootPage> {
         index: _selectedIndex,
         children: pages,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Retos'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ajustes'),
-        ],
+      bottomNavigationBar: Consumer<LocalizationService>(
+        builder: (context, localizationService, child) {
+          return BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home), 
+                label: localizationService.t('homeTab')
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.timer), 
+                label: localizationService.t('challengesTab')
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings), 
+                label: localizationService.t('settingsTab')
+              ),
+            ],
+          );
+        },
       ),
     );
   }

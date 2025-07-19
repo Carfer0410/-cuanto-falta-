@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'dart:async';
 import 'database_helper.dart';
 import 'event.dart';
 import 'add_event_page.dart';
+import 'localization_service.dart';
 
 /// Genera un mensaje alusivo automático según el evento y los días restantes.
 
@@ -151,13 +153,16 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Eventos'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor ?? (isDark ? Colors.white : Colors.white),
-        elevation: 0,
+    
+    return Consumer<LocalizationService>(
+      builder: (context, localizationService, child) {
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text(localizationService.t('events')),
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
+            foregroundColor: Theme.of(context).appBarTheme.foregroundColor ?? (isDark ? Colors.white : Colors.white),
+            elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -347,6 +352,8 @@ class _HomePageState extends State<HomePage> {
         child: const Icon(Icons.add),
         onPressed: _navigateToAddEvent,
       ),
+    );
+      },
     );
   }
 }

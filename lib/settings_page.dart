@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
 import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
+import 'localization_service.dart';
 
 class SettingsPage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -176,13 +178,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Ajustes'),
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
-      ),
+    return Consumer<LocalizationService>(
+      builder: (context, localizationService, child) {
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text(localizationService.t('settings')),
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+          ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -198,20 +202,66 @@ class _SettingsPageState extends State<SettingsPage> {
                       Icon(Icons.palette, color: Colors.orange),
                       SizedBox(width: 8),
                       Text(
-                        'Apariencia',
+                        localizationService.t('appearance'),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
                   ),
                   Divider(),
                   SwitchListTile(
-                    title: const Text('Modo oscuro'),
-                    subtitle: const Text('Cambia entre tema claro y oscuro'),
+                    title: Text(localizationService.t('darkTheme')),
+                    subtitle: Text(localizationService.t('themeDescription')),
                     value: widget.themeMode == ThemeMode.dark,
                     onChanged: (val) {
                       widget.onThemeChanged(val ? ThemeMode.dark : ThemeMode.light);
                     },
                     secondary: const Icon(Icons.dark_mode),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          SizedBox(height: 16),
+          
+          // Sección de Idioma
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.language, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text(
+                        LocalizationService.instance.t('language'),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.translate),
+                    title: Text(LocalizationService.instance.t('language')),
+                    subtitle: Text(LocalizationService.supportedLanguages[LocalizationService.instance.currentLanguage] ?? 'Español'),
+                    trailing: DropdownButton<String>(
+                      value: LocalizationService.instance.currentLanguage,
+                      items: LocalizationService.supportedLanguages.entries.map((entry) {
+                        return DropdownMenuItem<String>(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newLanguage) async {
+                        if (newLanguage != null) {
+                          await LocalizationService.instance.setLanguage(newLanguage);
+                          // El Consumer se actualiza automáticamente, no necesitamos setState
+                          _showSnackBar('🌍 Idioma cambiado: ${LocalizationService.supportedLanguages[newLanguage]}');
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -232,7 +282,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Icon(Icons.notifications, color: Colors.orange),
                       SizedBox(width: 8),
                       Text(
-                        'Notificaciones',
+                        localizationService.t('notifications'),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
@@ -241,7 +291,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   
                   // Notificaciones de Eventos
                   SwitchListTile(
-                    title: const Text('Recordatorios de Eventos'),
+                    title: Text(localizationService.t('eventNotifications')),
                     subtitle: Text(_eventNotificationsEnabled 
                       ? 'Sistema verifica eventos cada $_eventFrequency minutos para enviar recordatorios oportunos'
                       : 'No recibirás recordatorios de eventos'),
@@ -252,7 +302,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   
                   // Notificaciones de Retos
                   SwitchListTile(
-                    title: const Text('Notificaciones Motivacionales'),
+                    title: Text(localizationService.t('challengeNotifications')),
                     subtitle: Text(_challengeNotificationsEnabled 
                       ? 'Sistema verifica logros cada $_challengeFrequency horas para enviarte motivación'
                       : 'No recibirás notificaciones motivacionales'),
@@ -263,8 +313,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   
                   // Configuraciones de sonido
                   SwitchListTile(
-                    title: const Text('Sonido'),
-                    subtitle: const Text('Reproducir sonido con las notificaciones'),
+                    title: Text(localizationService.t('sound')),
+                    subtitle: Text(localizationService.t('soundEnabled')),
                     value: _soundEnabled,
                     onChanged: (val) {
                       setState(() {
@@ -278,8 +328,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   
                   // Configuraciones de vibración
                   SwitchListTile(
-                    title: const Text('Vibración'),
-                    subtitle: const Text('Vibrar el dispositivo con las notificaciones'),
+                    title: Text(localizationService.t('vibration')),
+                    subtitle: Text(localizationService.t('vibrationEnabled')),
                     value: _vibrationEnabled,
                     onChanged: (val) {
                       setState(() {
@@ -309,7 +359,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Icon(Icons.tune, color: Colors.orange),
                       SizedBox(width: 8),
                       Text(
-                        'Configuración Avanzada',
+                        localizationService.t('advancedSettings'),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
@@ -319,7 +369,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   // Frecuencia de eventos
                   ListTile(
                     leading: const Icon(Icons.timer),
-                    title: const Text('Frecuencia de verificación de eventos'),
+                    title: Text(localizationService.t('eventFrequency')),
                     subtitle: Text('Cada $_eventFrequency minutos'),
                     trailing: DropdownButton<String>(
                       value: _eventFrequency,
@@ -347,7 +397,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   // Frecuencia de retos
                   ListTile(
                     leading: const Icon(Icons.schedule),
-                    title: const Text('Frecuencia de verificación de retos'),
+                    title: Text(localizationService.t('challengeFrequency')),
                     subtitle: Text('Cada $_challengeFrequency horas'),
                     trailing: DropdownButton<String>(
                       value: _challengeFrequency,
@@ -390,7 +440,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Icon(Icons.info, color: Colors.orange),
                       SizedBox(width: 8),
                       Text(
-                        'Información',
+                        localizationService.t('about'),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
@@ -398,7 +448,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Divider(),
                   ListTile(
                     leading: const Icon(Icons.help_outline),
-                    title: const Text('Acerca de las notificaciones'),
+                    title: Text(localizationService.t('notificationInfo')),
                     subtitle: const Text('Cómo funcionan los recordatorios'),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
@@ -407,7 +457,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   ListTile(
                     leading: const Icon(Icons.sync),
-                    title: const Text('Estado del sistema'),
+                    title: Text(localizationService.t('systemStatus')),
                     subtitle: Text(_getSystemStatus()),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
@@ -420,6 +470,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
+    );
+      },
     );
   }
 }

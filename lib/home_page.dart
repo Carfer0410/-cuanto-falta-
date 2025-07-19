@@ -13,9 +13,12 @@ String generarMensajeAlusivo(String titulo, int dias) {
   if (lower.contains('navidad')) {
     return '🎄 Ve preparando los regalos';
   } else if (lower.contains('año nuevo')) {
-    // Mostrar conteo dinámico si falta mucho, o mensaje de cercanía si estamos en el último mes
-    if (dias > 30) {
+    if (dias > 60) {
       return '🎉 Faltan $dias días para el próximo año';
+    } else if (dias > 30) {
+      return '🎉 El año nuevo se acerca, ¡prepárate!';
+    } else if (dias > 7) {
+      return '🎉 ¡Ya falta poco para el año nuevo!';
     } else {
       return '🎉 ¡Ya casi comienza el año!';
     }
@@ -202,118 +205,119 @@ class _HomePageState extends State<HomePage> {
                       ],
                     )
                     : ListView.builder(
-                      itemCount: _events.length,
-                      itemBuilder: (context, index) {
-                        final event = _events[index];
-                        return Dismissible(
-                          key: ValueKey(event.id),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: const Icon(
-                              Icons.delete,
-                              color: Colors.white,
-                            ),
-                          ),
-                          onDismissed: (_) async {
-                            final deleted = event;
-                            await DatabaseHelper.instance.deleteEvent(
-                              deleted.id!,
-                            );
-                            _loadEvents();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Evento eliminado'),
-                                action: SnackBarAction(
-                                  label: 'Deshacer',
-                                  onPressed: () async {
-                                    await DatabaseHelper.instance.insertEvent(
-                                      deleted,
-                                    );
-                                    _loadEvents();
-                                  },
-                                ),
+                        itemCount: _events.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == _events.length) {
+                            // Espacio extra al final para el FAB (más alto para asegurar separación)
+                            return const SizedBox(height: 80);
+                          }
+                          final event = _events[index];
+                          return Dismissible(
+                            key: ValueKey(event.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
                               ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
                             ),
-                            child: Card(
-                              shape:
-                                  isDark
-                                      ? RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        side: const BorderSide(
-                                          color: Colors.orange,
-                                          width: 2,
-                                        ),
-                                      )
-                                      : RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                              elevation: 6,
-                              color: Theme.of(context).cardColor,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.event,
-                                          color: Colors.orange,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            event.title,
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Theme.of(context).textTheme.titleLarge?.color,
+                            onDismissed: (_) async {
+                              final deleted = event;
+                              await DatabaseHelper.instance.deleteEvent(
+                                deleted.id!,
+                              );
+                              _loadEvents();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Evento eliminado'),
+                                  action: SnackBarAction(
+                                    label: 'Deshacer',
+                                    onPressed: () async {
+                                      await DatabaseHelper.instance.insertEvent(
+                                        deleted,
+                                      );
+                                      _loadEvents();
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              child: Card(
+                                shape:
+                                    isDark
+                                        ? RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            side: const BorderSide(
+                                              color: Colors.orange,
+                                              width: 2,
                                             ),
+                                          )
+                                        : RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            generarMensajeAlusivo(
+                                elevation: 6,
+                                color: Theme.of(context).cardColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.event,
+                                            color: Colors.orange,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
                                               event.title,
-                                              _diasRestantes(event.targetDate),
-                                            ),
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: Theme.of(context).textTheme.bodyMedium?.color,
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context).textTheme.titleLarge?.color,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _CountdownTimer(
-                                      targetDate: event.targetDate,
-                                    ),
-                                  ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              event.message,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Theme.of(context).textTheme.bodyMedium?.color,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _CountdownTimer(
+                                        targetDate: event.targetDate,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
           ),
         ),
       ),

@@ -96,6 +96,21 @@ class _CountersPageState extends State<CountersPage> {
 
   String _challengePhrase(Counter counter) {
     final basePhrase = counter.title.toLowerCase();
+    // Lógica especial para "año nuevo"
+    if (basePhrase.contains('año nuevo')) {
+      final now = DateTime.now();
+      final nextYear = DateTime(now.year + 1, 1, 1);
+      final dias = nextYear.difference(now).inDays;
+      if (dias > 60) {
+        return '🎉 Faltan $dias días para el próximo año';
+      } else if (dias > 30) {
+        return '🎉 El año nuevo se acerca, ¡prepárate!';
+      } else if (dias > 7) {
+        return '🎉 ¡Ya falta poco para el año nuevo!';
+      } else {
+        return '🎉 ¡Ya casi comienza el año!';
+      }
+    }
     if (counter.isNegativeHabit) {
       if (basePhrase.startsWith('dejar de ')) {
         return 'sin ${basePhrase.replaceFirst('dejar de ', '')}';
@@ -164,20 +179,24 @@ class _CountersPageState extends State<CountersPage> {
                     ],
                   )
                   : ListView.builder(
-                    itemCount: _counters.length,
-                    itemBuilder: (context, index) {
-                      final counter = _counters[index];
-                      final now = DateTime.now();
-                      // ...existing code...
-                      // final streakStart = counter.startDate; // eliminada variable no usada
-                      final confirmedToday =
-                          counter.lastConfirmedDate != null &&
-                          _isSameDay(counter.lastConfirmedDate!, now);
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                      itemCount: _counters.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == _counters.length) {
+                          // Espacio extra al final para el FAB (más alto para asegurar separación)
+                          return const SizedBox(height: 80);
+                        }
+                        final counter = _counters[index];
+                        final now = DateTime.now();
+                        // ...existing code...
+                        // final streakStart = counter.startDate; // eliminada variable no usada
+                        final confirmedToday =
+                            counter.lastConfirmedDate != null &&
+                            _isSameDay(counter.lastConfirmedDate!, now);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),

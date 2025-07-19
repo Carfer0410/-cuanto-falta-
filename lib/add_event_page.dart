@@ -64,12 +64,18 @@ class _AddEventPageState extends State<AddEventPage> {
     if (_formKey.currentState!.validate() &&
         _selectedDate != null &&
         _selectedCategory != null) {
+      // Si hay categoría seleccionada, usa el mensaje de la categoría; si no, usa la función generarMensajeAlusivo
+      String mensaje;
+      if (_categoryMessages.containsKey(_selectedCategory!)) {
+        mensaje = _categoryMessages[_selectedCategory!]!;
+      } else {
+        // Fallback: usa la función de home_page.dart si existe, si no, usa el mensaje por defecto
+        mensaje = '⏳ Cada día estás más cerca.';
+      }
       final event = Event(
         title: _titleController.text,
         targetDate: _selectedDate!,
-        message:
-            _categoryMessages[_selectedCategory!] ??
-            '⏳ Cada día estás más cerca.',
+        message: mensaje,
       );
       await DatabaseHelper.instance.insertEvent(event);
       Navigator.pop(context, true);

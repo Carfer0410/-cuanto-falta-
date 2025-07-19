@@ -149,10 +149,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  int _diasRestantes(DateTime targetDate) {
-    final now = DateTime.now();
-    return targetDate.difference(DateTime(now.year, now.month, now.day)).inDays;
-  }
 
   void _openSettings() {
     Navigator.push(
@@ -296,12 +292,28 @@ class _HomePageState extends State<HomePage> {
                                         children: [
                                           const SizedBox(width: 8),
                                           Expanded(
-                                            child: Text(
-                                              event.message,
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color: Theme.of(context).textTheme.bodyMedium?.color,
-                                              ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  event.message,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  'Fecha objetivo: '
+                                                  '${event.targetDate.day.toString().padLeft(2, '0')}/'
+                                                  '${event.targetDate.month.toString().padLeft(2, '0')}/'
+                                                  '${event.targetDate.year}',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Theme.of(context).hintColor,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],

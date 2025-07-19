@@ -69,6 +69,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
     final sanitized = _sanitizeTitle(text);
     // Validar fecha
     if (_selectedDate.isAfter(DateTime.now()) || _selectedDate.isBefore(_minDate)) {
+      if (!mounted) return;
       showDialog(context: context, builder: (_) => AlertDialog(
         title: Text('Fecha inválida'),
         content: Text('Seleccione una fecha dentro de los últimos 10 años y sin pasar hoy.'),
@@ -78,6 +79,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
     }
     // Validar duplicados
     if (list.any((e) => (e['title'] as String) == sanitized)) {
+      if (!mounted) return;
       showDialog(context: context, builder: (_) => AlertDialog(
         title: Text('Reto duplicado'),
         content: Text('Ya existe un reto con este título.'),
@@ -92,6 +94,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
     );
     list.add(newCounter.toJson());
     await prefs.setString('counters', jsonEncode(list));
+    if (!mounted) return;
     Navigator.pop(context, true);
   }
 

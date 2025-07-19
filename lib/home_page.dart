@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'settings_page.dart';
 
 import 'dart:async';
 import 'database_helper.dart';
@@ -149,20 +148,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-  void _openSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => SettingsPage(
-              themeMode: widget.themeMode,
-              onThemeChanged: widget.onThemeChanged,
-            ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -247,6 +232,7 @@ class _HomePageState extends State<HomePage> {
                                 deleted.id!,
                               );
                               _loadEvents();
+                              if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: const Text('Evento eliminado'),

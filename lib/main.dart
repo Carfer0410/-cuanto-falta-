@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notification_service.dart';
+import 'simple_event_checker.dart';
+import 'challenge_notification_service.dart';
 import 'root_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar notificaciones
+  await NotificationService.instance.init();
+  
   runApp(const MyApp());
 }
 
@@ -20,7 +28,19 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadTheme();
+    _initializeNotificationSystems();
   }
+
+  Future<void> _initializeNotificationSystems() async {
+    await NotificationService.instance.init();
+    
+    // Iniciar el sistema de verificación simple para eventos
+    await SimpleEventChecker.startChecking();
+    
+    // Iniciar el sistema de notificaciones motivacionales para retos
+    await ChallengeNotificationService.startChecking();
+  }
+
 
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();

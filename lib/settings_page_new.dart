@@ -105,17 +105,15 @@ class _SettingsPageState extends State<SettingsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('📅 Recordatorios de Eventos:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('• Solo recibes notificaciones en momentos clave: 30d, 15d, 7d, 3d, 1d antes y el día del evento'),
-            Text('• El sistema verifica periódicamente pero NO envía spam'),
+            Text('• 30 días, 15 días, 7 días, 3 días, 1 día antes y el día del evento'),
             SizedBox(height: 12),
             Text('🎯 Notificaciones Motivacionales:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('• Solo cuando alcanzas hitos: día 1, día 3, semana 1, 2 semanas, mes 1, etc.'),
-            Text('• Sistema anti-spam: cada logro se notifica solo UNA vez'),
+            Text('• Día 1, día 3, semana 1, 2 semanas, mes 1, cada mes adicional, año 1+'),
             SizedBox(height: 12),
-            Text('⚙️ Frecuencia de Verificación:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('• Controla qué tan seguido el sistema busca nuevos recordatorios'),
-            Text('• NO controla la frecuencia de notificaciones recibidas'),
-            Text('• Más frecuente = detección más rápida de eventos próximos'),
+            Text('⚙️ Configuración:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('• Puedes ajustar la frecuencia de verificación'),
+            Text('• Activar/desactivar sonido y vibración'),
+            Text('• Controlar cada tipo por separado'),
           ],
         ),
         actions: [
@@ -163,7 +161,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: '🧪 Prueba del Sistema',
                 body: 'El sistema de notificaciones está funcionando correctamente.',
               );
-              if (!mounted) return;
               Navigator.pop(context);
               _showSnackBar('🔔 Notificación de prueba enviada');
             },
@@ -243,7 +240,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     title: const Text('Recordatorios de Eventos'),
                     subtitle: Text(_eventNotificationsEnabled 
-                      ? 'Sistema verifica eventos cada $_eventFrequency minutos para enviar recordatorios oportunos'
+                      ? 'Recibirás notificaciones cada $_eventFrequency minutos'
                       : 'No recibirás recordatorios de eventos'),
                     value: _eventNotificationsEnabled,
                     onChanged: _toggleEventNotifications,
@@ -254,7 +251,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     title: const Text('Notificaciones Motivacionales'),
                     subtitle: Text(_challengeNotificationsEnabled 
-                      ? 'Sistema verifica logros cada $_challengeFrequency horas para enviarte motivación'
+                      ? 'Recibirás motivación de tus retos cada $_challengeFrequency horas'
                       : 'No recibirás notificaciones motivacionales'),
                     value: _challengeNotificationsEnabled,
                     onChanged: _toggleChallengeNotifications,

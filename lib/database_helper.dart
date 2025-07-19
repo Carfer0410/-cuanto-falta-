@@ -1,3 +1,9 @@
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+// import 'dart:io';
+import 'event.dart';
+
 /// Clase DatabaseHelper para manejar SQLite
 /// Métodos:
 /// - initDatabase(): inicializa DB
@@ -7,11 +13,6 @@
 /// - deleteEvent(int id)
 /// Usa sqflite y path_provider para obtener ruta local.
 /// La tabla se llama 'events' con columnas id, title, targetDate, message.
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-// import 'dart:io';
-import 'event.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();

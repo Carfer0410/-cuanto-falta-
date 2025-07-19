@@ -64,12 +64,10 @@ class _AddEventPageState extends State<AddEventPage> {
     if (_formKey.currentState!.validate() &&
         _selectedDate != null &&
         _selectedCategory != null) {
-      // Si hay categoría seleccionada, usa el mensaje de la categoría; si no, usa la función generarMensajeAlusivo
       String mensaje;
       if (_categoryMessages.containsKey(_selectedCategory!)) {
         mensaje = _categoryMessages[_selectedCategory!]!;
       } else {
-        // Fallback: usa la función de home_page.dart si existe, si no, usa el mensaje por defecto
         mensaje = '⏳ Cada día estás más cerca.';
       }
       final event = Event(
@@ -77,7 +75,27 @@ class _AddEventPageState extends State<AddEventPage> {
         targetDate: _selectedDate!,
         message: mensaje,
       );
+      
+      // Guardar evento en la base de datos
       await DatabaseHelper.instance.insertEvent(event);
+      
+      // Mensaje informativo sobre notificaciones
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Evento guardado exitosamente.\n'
+              '🔔 Recibirás recordatorios:\n'
+              '📅 30 días, 15 días, 7 días, 3 días, 1 día antes y el día del evento.\n'
+              '💡 Sistema inteligente activo.',
+            ),
+            duration: Duration(seconds: 5),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+      
+      if (!mounted) return;
       Navigator.pop(context, true);
     }
   }

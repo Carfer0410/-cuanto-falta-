@@ -8,20 +8,23 @@ class Counter {
   final String title;
   final DateTime startDate;
   DateTime? lastConfirmedDate;
-  final bool isNegativeHabit; // Nueva propiedad
+  final bool isNegativeHabit;
+  DateTime? challengeStartedAt; // Nuevo campo
 
   Counter({
     required this.title,
     required this.startDate,
     this.lastConfirmedDate,
-    this.isNegativeHabit = false, // Valor por defecto
+    this.isNegativeHabit = false,
+    this.challengeStartedAt,
   });
 
   Map<String, dynamic> toJson() => {
     'title': title,
     'startDate': startDate.toIso8601String(),
     'lastConfirmedDate': lastConfirmedDate?.toIso8601String(),
-    'isNegativeHabit': isNegativeHabit, // Incluir en JSON
+    'isNegativeHabit': isNegativeHabit,
+    'challengeStartedAt': challengeStartedAt?.toIso8601String(),
   };
 
   static Counter fromJson(Map<String, dynamic> json) => Counter(
@@ -32,7 +35,10 @@ class Counter {
             ? DateTime.parse(json['lastConfirmedDate'])
             : null,
     isNegativeHabit:
-        json['isNegativeHabit'] == true, // Asegurar que sea un bool válido
+        json['isNegativeHabit'] == true,
+    challengeStartedAt: json['challengeStartedAt'] != null
+        ? DateTime.parse(json['challengeStartedAt'])
+        : null,
   );
 }
 
@@ -214,14 +220,22 @@ class _CountersPageState extends State<CountersPage> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                _LiveStreakTimer(
-                                                  startDate: streakStart,
-                                                  lastConfirmedDate:
-                                                      counter.lastConfirmedDate,
-                                                  confirmedToday:
-                                                      confirmedToday,
-                                                  fontSize: 20,
-                                                ),
+                                                if (counter.challengeStartedAt != null)
+                                                  _LiveStreakTimer(
+                                                    startDate: counter.challengeStartedAt!,
+                                                    lastConfirmedDate: counter.lastConfirmedDate,
+                                                    confirmedToday: confirmedToday,
+                                                    fontSize: 20,
+                                                  )
+                                                else
+                                                  Text(
+                                                    '0d 0h 0m 0s',
+                                                    style: TextStyle(
+                                                      fontSize: 20,
+                                                      color: Colors.green[800],
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
                                               ],
                                             ),
                                           ),
@@ -249,7 +263,7 @@ class _CountersPageState extends State<CountersPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 10),
-                                      if (counter.lastConfirmedDate == null)
+                                      if (counter.challengeStartedAt == null)
                                         SizedBox(
                                           width: double.infinity,
                                           child: ElevatedButton(
@@ -271,12 +285,12 @@ class _CountersPageState extends State<CountersPage> {
                                             ),
                                             onPressed: () {
                                               setState(() {
-                                                counter.lastConfirmedDate =
-                                                    DateTime(
-                                                      now.year,
-                                                      now.month,
-                                                      now.day,
-                                                    );
+                                                counter.challengeStartedAt = DateTime.now();
+                                                counter.lastConfirmedDate = DateTime(
+                                                  now.year,
+                                                  now.month,
+                                                  now.day,
+                                                );
                                               });
                                               _saveCounters();
                                             },
@@ -419,23 +433,8 @@ class _LiveStreakTimerState extends State<_LiveStreakTimer> {
 
   void _updateDuration() {
     setState(() {
-      if (widget.lastConfirmedDate == null) {
-        _duration = Duration.zero;
-      } else {
-        final now = DateTime.now();
-        final lastConfirmed = widget.lastConfirmedDate!;
-        final isLastConfirmedToday =
-            lastConfirmed.year == now.year &&
-            lastConfirmed.month == now.month &&
-            lastConfirmed.day == now.day;
-        if (isLastConfirmedToday) {
-          // Si la última confirmación es hoy, cuenta desde startDate hasta ahora
-          _duration = now.difference(widget.startDate);
-        } else {
-          // Si no, cuenta hasta la última confirmación
-          _duration = lastConfirmed.difference(widget.startDate);
-        }
-      }
+      final now = DateTime.now();
+      _duration = now.difference(widget.startDate);
     });
   }
 

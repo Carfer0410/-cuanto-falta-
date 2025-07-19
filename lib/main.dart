@@ -51,15 +51,25 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         primarySwatch: Colors.orange,
         brightness: Brightness.light,
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+        ),
       ),
       darkTheme: ThemeData(
         primarySwatch: Colors.orange,
         brightness: Brightness.dark,
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+        ),
       ),
       themeMode: _themeMode,
       home: RootPage(
         themeMode: _themeMode,
         onThemeChanged: _onThemeChanged,
+        // Forzar color naranja en el botón flotante desde aquí si el tema no lo respeta
+        // (esto requiere que RootPage/FAB acepte parámetros, si no, el tema global lo debe forzar)
       ),
       debugShowCheckedModeBanner: false,
     );

@@ -408,8 +408,8 @@ class _CountersPageState extends State<CountersPage> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'countersFab',
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
         onPressed: _navigateToAddCounter,
         child: const Icon(Icons.add),
       ),

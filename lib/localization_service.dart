@@ -224,6 +224,8 @@ class LocalizationService extends ChangeNotifier {
 
       // TIEMPO
       'timeLeft': 'Tiempo restante',
+      'timeRemaining': 'Falta {days}d {hours}h {minutes}m {seconds}s',
+      'timeElapsed': 'Llevas {days}d {hours}h {minutes}m {seconds}s',
       'days': 'días',
       'hours': 'horas',
       'minutes': 'minutos',
@@ -232,7 +234,11 @@ class LocalizationService extends ChangeNotifier {
       'hoursShort': 'h',
       'minutesShort': 'm',
       'secondsShort': 's',
-      'timeRemaining': 'Falta {days}d {hours}h {minutes}m {seconds}s',
+      'remaining': 'Falta',
+      'elapsed': 'Llevas',
+      'everySecondCounts': 'Cada segundo cuenta.',
+      'youHave': '¡Llevas',
+      'keepGoing': '¡Sigue así!',
 
       // NOTIFICACIONES
       'notificationEventTitle': '📅 {eventTitle} - {days} días',
@@ -358,6 +364,8 @@ class LocalizationService extends ChangeNotifier {
 
       // TIEMPO
       'timeLeft': 'Time left',
+      'timeRemaining': '{days}d {hours}h {minutes}m {seconds}s left',
+      'timeElapsed': '{days}d {hours}h {minutes}m {seconds}s elapsed',
       'days': 'days',
       'hours': 'hours',
       'minutes': 'minutes',
@@ -366,7 +374,11 @@ class LocalizationService extends ChangeNotifier {
       'hoursShort': 'h',
       'minutesShort': 'm',
       'secondsShort': 's',
-      'timeRemaining': '{days}d {hours}h {minutes}m {seconds}s left',
+      'remaining': 'Left',
+      'elapsed': 'Elapsed',
+      'everySecondCounts': 'Keep going, every second counts',
+      'youHave': 'You have',
+      'keepGoing': 'Keep going!',
 
       // NOTIFICACIONES
       'notificationEventTitle': '📅 {eventTitle} - {days} days',
@@ -388,6 +400,11 @@ class LocalizationService extends ChangeNotifier {
       'delete': 'Excluir',
       'ok': 'OK',
       'timeRemaining': 'Falta {days}d {hours}h {minutes}m {seconds}s',
+      'remaining': 'Faltam',
+      'elapsed': 'Decorrido',
+      'everySecondCounts': 'Cada segundo conta.',
+      'youHave': 'Você tem',
+      'keepGoing': 'Continue assim!',
       'language': 'Idioma',
     },
 
@@ -404,6 +421,11 @@ class LocalizationService extends ChangeNotifier {
       'delete': 'Supprimer',
       'ok': 'OK',
       'timeRemaining': 'Il reste {days}j {hours}h {minutes}m {seconds}s',
+      'remaining': 'Reste',
+      'elapsed': 'Écoulé',
+      'everySecondCounts': 'Chaque seconde compte.',
+      'youHave': 'Vous avez',
+      'keepGoing': 'Continuez !',
       'language': 'Langue',
     },
 
@@ -420,6 +442,11 @@ class LocalizationService extends ChangeNotifier {
       'delete': 'Löschen',
       'ok': 'OK',
       'timeRemaining': 'Noch {days}T {hours}Std {minutes}Min {seconds}Sek',
+      'remaining': 'Verbleibend',
+      'elapsed': 'Vergangen',
+      'everySecondCounts': 'Jede Sekunde zählt.',
+      'youHave': 'Du hast',
+      'keepGoing': 'Weiter so!',
       'language': 'Sprache',
     },
 
@@ -436,6 +463,11 @@ class LocalizationService extends ChangeNotifier {
       'delete': 'Elimina',
       'ok': 'OK',
       'timeRemaining': 'Mancano {days}g {hours}h {minutes}m {seconds}s',
+      'remaining': 'Mancano',
+      'elapsed': 'Trascorso',
+      'everySecondCounts': 'Ogni secondo conta.',
+      'youHave': 'Hai',
+      'keepGoing': 'Continua così!',
       'language': 'Lingua',
     },
 

@@ -8,31 +8,28 @@ import 'add_event_page.dart';
 import 'localization_service.dart';
 
 /// Genera un mensaje alusivo automático según el evento y los días restantes.
-
-String generarMensajeAlusivo(String titulo, int dias) {
+String generarMensajeAlusivo(String titulo, int dias, LocalizationService locService) {
   final lower = titulo.toLowerCase();
-  if (lower.contains('navidad')) {
-    return '🎄 Ve preparando los regalos';
-  } else if (lower.contains('año nuevo')) {
+  
+  // Buscar categorías por palabras clave en diferentes idiomas
+  if (lower.contains('navidad') || lower.contains('christmas') || lower.contains('noel')) {
+    return locService.t('msgChristmas');
+  } else if (lower.contains('año nuevo') || lower.contains('new year') || lower.contains('nouvel an')) {
     if (dias > 60) {
-      return '🎉 Faltan $dias días para el próximo año';
-    } else if (dias > 30) {
-      return '🎉 El año nuevo se acerca, ¡prepárate!';
-    } else if (dias > 7) {
-      return '🎉 ¡Ya falta poco para el año nuevo!';
+      return '🎉 ${locService.t('timeRemaining').replaceAll('{days}', dias.toString()).replaceAll('{hours}', '0').replaceAll('{minutes}', '0').replaceAll('{seconds}', '0')} para el próximo año';
     } else {
-      return '🎉 ¡Ya casi comienza el año!';
+      return locService.t('msgNewYear');
     }
-  } else if (lower.contains('cumple')) {
-    return '🎂 ¡No se te olvide el pastel!';
-  } else if (lower.contains('vacaciones')) {
-    return '🧳 ¡A empacar maletas desde ya!';
+  } else if (lower.contains('cumple') || lower.contains('birthday') || lower.contains('anniversaire')) {
+    return locService.t('msgBirthday');
+  } else if (lower.contains('vacaciones') || lower.contains('vacation') || lower.contains('vacances')) {
+    return locService.t('msgVacation');
   } else if (dias == 0) {
     return '🚨 ¡Hoy es el gran día!';
   } else if (dias <= 3) {
     return '⏰ ¡Ya casi llega!';
   } else {
-    return '⏳ Cada día estás más cerca.';
+    return locService.t('msgOther');
   }
 }
 
@@ -89,13 +86,17 @@ class _CountdownTimerState extends State<_CountdownTimer> {
     final hours = _duration.inHours.remainder(24);
     final minutes = _duration.inMinutes.remainder(60);
     final seconds = _duration.inSeconds.remainder(60);
-    return Text(
-      "Falta ${days}d ${hours.toString().padLeft(2, '0')}h ${minutes.toString().padLeft(2, '0')}m ${seconds.toString().padLeft(2, '0')}s",
-      style: const TextStyle(
-        fontSize: 24,
-        color: Colors.orange,
-        fontWeight: FontWeight.bold,
-      ),
+    return Consumer<LocalizationService>(
+      builder: (context, localizationService, child) {
+        return Text(
+          localizationService.timeRemaining(days, hours, minutes, seconds),
+          style: const TextStyle(
+            fontSize: 24,
+            color: Colors.orange,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      },
     );
   }
 }
@@ -316,10 +317,8 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  'Fecha objetivo: '
-                                                  '${event.targetDate.day.toString().padLeft(2, '0')}/'
-                                                  '${event.targetDate.month.toString().padLeft(2, '0')}/'
-                                                  '${event.targetDate.year}',
+                                                  '${localizationService.t('targetDate')}: '
+                                                  '${localizationService.formatDate(event.targetDate)}',
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     color: Theme.of(context).hintColor,

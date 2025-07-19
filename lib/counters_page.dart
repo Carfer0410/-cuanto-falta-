@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'add_counter_page.dart';
+import 'localization_service.dart';
 
 class Counter {
   final String title;
@@ -128,7 +130,9 @@ class _CountersPageState extends State<CountersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Consumer<LocalizationService>(
+      builder: (context, localizationService, child) {
+        return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Retos'),
@@ -232,7 +236,7 @@ class _CountersPageState extends State<CountersPage> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        '¡Llevas',
+                                        localizationService.t('youHave'),
                                         style: TextStyle(
                                           fontSize: 22,
                                           color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[800],
@@ -298,7 +302,7 @@ class _CountersPageState extends State<CountersPage> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        '¡Sigue así! Cada segundo cuenta.',
+                                        '${localizationService.t('keepGoing')} ${localizationService.t('everySecondCounts')}',
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.green[700],
@@ -440,6 +444,8 @@ class _CountersPageState extends State<CountersPage> {
         onPressed: _navigateToAddCounter,
         child: const Icon(Icons.add),
       ),
+    );
+      },
     );
   }
   // ... otras funciones auxiliares si las hubiera.

@@ -108,29 +108,29 @@ class SimpleEventChecker {
       return {
         'notificationId': baseId + 1000,
         'reminderType': '1month',
-        'title': '📅 $eventTitle - 1 Mes',
-        'body': '¡Tu evento "$eventTitle" se acerca!\nFaltan aproximadamente 30 días.\n\n📝 Es buen momento para empezar a planificar.'
+        'title': '📅 $eventTitle - $difference días',
+        'body': '¡Tu evento "$eventTitle" se acerca!\nFaltan $difference días.\n\n📝 Es buen momento para empezar a planificar.'
       };
     } else if (difference >= 13 && difference <= 17) {
       return {
         'notificationId': baseId + 2000,
         'reminderType': '2weeks',
-        'title': '📅 $eventTitle - 2 Semanas',
-        'body': '⏰ Faltan 2 semanas para "$eventTitle".\n\n🎯 ¡Ya es hora de preparar los detalles!'
+        'title': '📅 $eventTitle - $difference días',
+        'body': '⏰ Faltan $difference días para "$eventTitle".\n\n🎯 ¡Ya es hora de preparar los detalles!'
       };
     } else if (difference >= 6 && difference <= 8) {
       return {
         'notificationId': baseId + 3000,
         'reminderType': '1week',
-        'title': '📅 $eventTitle - 1 Semana',
-        'body': '🚨 ¡Solo falta 1 semana para "$eventTitle"!\n\n✅ Revisa que todo esté listo.'
+        'title': '📅 $eventTitle - $difference días',
+        'body': '🚨 ¡Faltan $difference días para "$eventTitle"!\n\n✅ Revisa que todo esté listo.'
       };
     } else if (difference >= 2 && difference <= 4) {
       return {
         'notificationId': baseId + 4000,
         'reminderType': '3days',
-        'title': '📅 $eventTitle - 3 Días',
-        'body': '⚡ ¡Faltan solo 3 días para "$eventTitle"!\n\n🎯 Los últimos preparativos.'
+        'title': '📅 $eventTitle - $difference días',
+        'body': '⚡ ¡Faltan $difference días para "$eventTitle"!\n\n🎯 Los últimos preparativos.'
       };
     } else if (difference == 1) {
       return {

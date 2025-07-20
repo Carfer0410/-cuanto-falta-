@@ -63,10 +63,10 @@ class _SettingsPageState extends State<SettingsPage> {
     
     if (enabled) {
       SimpleEventChecker.startChecking();
-      _showSnackBar('✅ Notificaciones de eventos activadas');
+      _showLocalizedSnackBar('eventsActivated');
     } else {
       SimpleEventChecker.stopChecking();
-      _showSnackBar('🔕 Notificaciones de eventos desactivadas');
+      _showLocalizedSnackBar('eventsDeactivated');
     }
   }
 
@@ -78,10 +78,10 @@ class _SettingsPageState extends State<SettingsPage> {
     
     if (enabled) {
       ChallengeNotificationService.startChecking();
-      _showSnackBar('✅ Notificaciones de retos activadas');
+      _showLocalizedSnackBar('challengesActivated');
     } else {
       ChallengeNotificationService.stopChecking();
-      _showSnackBar('🔕 Notificaciones de retos desactivadas');
+      _showLocalizedSnackBar('challengesDeactivated');
     }
   }
 
@@ -91,39 +91,48 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  void _showLocalizedSnackBar(String key, [Map<String, String>? params]) {
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
+    String message = localizationService.t(key);
+    if (params != null) {
+      params.forEach((placeholder, value) {
+        message = message.replaceAll('{$placeholder}', value);
+      });
+    }
+    _showSnackBar(message);
+  }
+
   String _getSystemStatus() {
-    String eventStatus = SimpleEventChecker.isActive ? "✅ Activo" : "❌ Inactivo";
-    String challengeStatus = ChallengeNotificationService.isActive ? "✅ Activo" : "❌ Inactivo";
-    return "Eventos: $eventStatus | Retos: $challengeStatus";
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
+    String eventStatus = SimpleEventChecker.isActive ? localizationService.t('active') : localizationService.t('inactive');
+    String challengeStatus = ChallengeNotificationService.isActive ? localizationService.t('active') : localizationService.t('inactive');
+    return "${localizationService.t('eventsStatus')}: $eventStatus | ${localizationService.t('challengesStatus')}: $challengeStatus";
   }
 
   void _showNotificationInfoDialog(BuildContext context) {
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('📱 Información de Notificaciones'),
-        content: const Column(
+        title: Text(localizationService.t('notificationInfoTitle')),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('📅 Recordatorios de Eventos:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('• Solo recibes notificaciones en momentos clave: 30d, 15d, 7d, 3d, 1d antes y el día del evento'),
-            Text('• El sistema verifica periódicamente pero NO envía spam'),
+            Text(localizationService.t('eventRemindersTitle'), style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(localizationService.t('eventRemindersDescription')),
             SizedBox(height: 12),
-            Text('🎯 Notificaciones Motivacionales:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('• Solo cuando alcanzas hitos: día 1, día 3, semana 1, 2 semanas, mes 1, etc.'),
-            Text('• Sistema anti-spam: cada logro se notifica solo UNA vez'),
+            Text(localizationService.t('motivationalNotificationsTitle'), style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(localizationService.t('motivationalNotificationsDescription')),
             SizedBox(height: 12),
-            Text('⚙️ Frecuencia de Verificación:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('• Controla qué tan seguido el sistema busca nuevos recordatorios'),
-            Text('• NO controla la frecuencia de notificaciones recibidas'),
-            Text('• Más frecuente = detección más rápida de eventos próximos'),
+            Text(localizationService.t('verificationFrequencyTitle'), style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(localizationService.t('verificationFrequencyDescription')),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
+            child: Text(localizationService.t('understood')),
           ),
         ],
       ),
@@ -131,45 +140,46 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showSystemStatusDialog(BuildContext context) {
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('🔧 Estado del Sistema'),
+        title: Text(localizationService.t('systemStatusTitle')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('📅 Sistema de Eventos:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('Estado: ${SimpleEventChecker.isActive ? "✅ Funcionando" : "❌ Detenido"}'),
-            Text('Frecuencia: Cada $_eventFrequency minutos'),
+            Text(localizationService.t('eventSystemTitle'), style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('${localizationService.t('systemStatus')}: ${SimpleEventChecker.isActive ? localizationService.t('systemActive') : localizationService.t('systemInactive')}'),
+            Text('${localizationService.t('frequencyEvery').replaceAll('{frequency}', _eventFrequency)} ${localizationService.t('minutesUnit')}'),
             SizedBox(height: 12),
-            Text('🎯 Sistema de Retos:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('Estado: ${ChallengeNotificationService.isActive ? "✅ Funcionando" : "❌ Detenido"}'),
-            Text('Frecuencia: Cada $_challengeFrequency horas'),
+            Text(localizationService.t('challengeSystemTitle'), style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('${localizationService.t('systemStatus')}: ${ChallengeNotificationService.isActive ? localizationService.t('systemActive') : localizationService.t('systemInactive')}'),
+            Text('${localizationService.t('frequencyEvery').replaceAll('{frequency}', _challengeFrequency)} ${localizationService.t('hoursUnit')}'),
             SizedBox(height: 12),
-            Text('🔊 Configuración de Audio:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('Sonido: ${_soundEnabled ? "✅ Habilitado" : "❌ Deshabilitado"}'),
-            Text('Vibración: ${_vibrationEnabled ? "✅ Habilitada" : "❌ Deshabilitada"}'),
+            Text(localizationService.t('audioConfigTitle'), style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('${localizationService.t('sound')}: ${_soundEnabled ? localizationService.t('soundEnabledStatus') : localizationService.t('soundDisabledStatus')}'),
+            Text('${localizationService.t('vibration')}: ${_vibrationEnabled ? localizationService.t('vibrationEnabledStatus') : localizationService.t('vibrationDisabledStatus')}'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
+            child: Text(localizationService.t('close')),
           ),
           TextButton(
             onPressed: () async {
               // Enviar notificación de prueba
               await NotificationService.instance.showImmediateNotification(
                 id: 999,
-                title: '🧪 Prueba del Sistema',
-                body: 'El sistema de notificaciones está funcionando correctamente.',
+                title: localizationService.t('testNotificationTitle'),
+                body: localizationService.t('testNotificationBody'),
               );
               if (!mounted) return;
               Navigator.pop(context);
-              _showSnackBar('🔔 Notificación de prueba enviada');
+              _showLocalizedSnackBar('testNotificationSent');
             },
-            child: const Text('Probar'),
+            child: Text(localizationService.t('test')),
           ),
         ],
       ),
@@ -258,7 +268,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         if (newLanguage != null) {
                           await LocalizationService.instance.setLanguage(newLanguage);
                           // El Consumer se actualiza automáticamente, no necesitamos setState
-                          _showSnackBar('🌍 Idioma cambiado: ${LocalizationService.supportedLanguages[newLanguage]}');
+                          _showLocalizedSnackBar('languageChanged', {'language': LocalizationService.supportedLanguages[newLanguage] ?? newLanguage});
                         }
                       },
                     ),
@@ -293,8 +303,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     title: Text(localizationService.t('eventNotifications')),
                     subtitle: Text(_eventNotificationsEnabled 
-                      ? 'Sistema verifica eventos cada $_eventFrequency minutos para enviar recordatorios oportunos'
-                      : 'No recibirás recordatorios de eventos'),
+                      ? localizationService.t('eventNotificationSubtitleEnabled').replaceAll('{frequency}', _eventFrequency)
+                      : localizationService.t('eventNotificationSubtitleDisabled')),
                     value: _eventNotificationsEnabled,
                     onChanged: _toggleEventNotifications,
                     secondary: const Icon(Icons.event),
@@ -304,8 +314,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     title: Text(localizationService.t('challengeNotifications')),
                     subtitle: Text(_challengeNotificationsEnabled 
-                      ? 'Sistema verifica logros cada $_challengeFrequency horas para enviarte motivación'
-                      : 'No recibirás notificaciones motivacionales'),
+                      ? localizationService.t('challengeNotificationSubtitleEnabled').replaceAll('{frequency}', _challengeFrequency)
+                      : localizationService.t('challengeNotificationSubtitleDisabled')),
                     value: _challengeNotificationsEnabled,
                     onChanged: _toggleChallengeNotifications,
                     secondary: const Icon(Icons.fitness_center),
@@ -321,7 +331,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         _soundEnabled = val;
                       });
                       _saveNotificationSetting('sound_enabled', val);
-                      _showSnackBar(val ? '🔊 Sonido activado' : '🔇 Sonido desactivado');
+                      _showLocalizedSnackBar(val ? 'soundActivated' : 'soundDeactivated');
                     },
                     secondary: Icon(_soundEnabled ? Icons.volume_up : Icons.volume_off),
                   ),
@@ -336,7 +346,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         _vibrationEnabled = val;
                       });
                       _saveNotificationSetting('vibration_enabled', val);
-                      _showSnackBar(val ? '📳 Vibración activada' : '📴 Vibración desactivada');
+                      _showLocalizedSnackBar(val ? 'vibrationActivated' : 'vibrationDeactivated');
                     },
                     secondary: Icon(_vibrationEnabled ? Icons.vibration : Icons.phone_android),
                   ),
@@ -370,7 +380,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ListTile(
                     leading: const Icon(Icons.timer),
                     title: Text(localizationService.t('eventFrequency')),
-                    subtitle: Text('Cada $_eventFrequency minutos'),
+                    subtitle: Text('${localizationService.t('frequencyEvery').replaceAll('{frequency}', _eventFrequency)} ${localizationService.t('minutesUnit')}'),
                     trailing: DropdownButton<String>(
                       value: _eventFrequency,
                       items: ['1', '3', '5', '10', '15'].map((String value) {
@@ -385,7 +395,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             _eventFrequency = newValue;
                           });
                           _saveNotificationSetting('event_frequency', newValue);
-                          _showSnackBar('⏱️ Frecuencia de eventos: cada $newValue minutos');
+                          _showLocalizedSnackBar('eventFrequencyChanged', {'frequency': newValue});
                           // Reiniciar el servicio con nueva frecuencia
                           SimpleEventChecker.stopChecking();
                           SimpleEventChecker.startChecking();
@@ -398,7 +408,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ListTile(
                     leading: const Icon(Icons.schedule),
                     title: Text(localizationService.t('challengeFrequency')),
-                    subtitle: Text('Cada $_challengeFrequency horas'),
+                    subtitle: Text('${localizationService.t('frequencyEvery').replaceAll('{frequency}', _challengeFrequency)} ${localizationService.t('hoursUnit')}'),
                     trailing: DropdownButton<String>(
                       value: _challengeFrequency,
                       items: ['3', '6', '12', '24'].map((String value) {
@@ -413,7 +423,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             _challengeFrequency = newValue;
                           });
                           _saveNotificationSetting('challenge_frequency', newValue);
-                          _showSnackBar('🎯 Frecuencia de retos: cada $newValue horas');
+                          _showLocalizedSnackBar('challengeFrequencyChanged', {'frequency': newValue});
                           // Reiniciar el servicio con nueva frecuencia
                           ChallengeNotificationService.stopChecking();
                           ChallengeNotificationService.startChecking();
@@ -449,7 +459,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ListTile(
                     leading: const Icon(Icons.help_outline),
                     title: Text(localizationService.t('notificationInfo')),
-                    subtitle: const Text('Cómo funcionan los recordatorios'),
+                    subtitle: Text(localizationService.t('howNotificationsWork')),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
                       _showNotificationInfoDialog(context);

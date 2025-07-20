@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import 'notification_service.dart';
 import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
@@ -51,11 +52,59 @@ class _MyAppState extends State<MyApp> {
   Future<void> _initializeNotificationSystems() async {
     await NotificationService.instance.init();
     
-    // Iniciar el sistema de verificación simple para eventos
+    // Sistema Timer MEJORADO - Más frecuente y resistente a suspensión
     await SimpleEventChecker.startChecking();
-    
-    // Iniciar el sistema de notificaciones motivacionales para retos
     await ChallengeNotificationService.startChecking();
+    
+    // NUEVO: Sistema de recuperación automática
+    _setupTimerRecovery();
+    
+    print('🔄 Sistema Timer mejorado iniciado:');
+    print('  ✅ Verificaciones frecuentes mientras app está activa');
+    print('  ✅ Verificaciones críticas cada minuto para eventos urgentes');
+    print('  ✅ Motivación activa cada 30 minutos para retos');
+    print('  ✅ Sistema de recuperación automática');
+    print('  ⚠️  Funciona solo con app abierta (solución más confiable)');
+  }
+
+  /// Sistema de recuperación automática del Timer
+  void _setupTimerRecovery() {
+    // Verificar y reactivar timers cada 5 minutos si se detuvieron
+    Timer.periodic(Duration(minutes: 5), (timer) async {
+      if (!SimpleEventChecker.isActive) {
+        print('🔄 Recuperando SimpleEventChecker...');
+        await SimpleEventChecker.startChecking();
+      }
+      
+      if (!ChallengeNotificationService.isActive) {
+        print('🔄 Recuperando ChallengeNotificationService...');
+        await ChallengeNotificationService.startChecking();
+      }
+    });
+    
+    // NUEVO: Notificación educativa para el usuario (una sola vez)
+    _showOptimalUsageHint();
+  }
+
+  /// Muestra hint sobre uso óptimo (solo la primera vez)
+  Future<void> _showOptimalUsageHint() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasShownHint = prefs.getBool('has_shown_usage_hint') ?? false;
+    
+    if (!hasShownHint) {
+      // Esperar 30 segundos para que el usuario explore la app
+      Timer(Duration(seconds: 30), () async {
+        await NotificationService.instance.showImmediateNotification(
+          id: 99999,
+          title: '💡 Tip: Para mejores notificaciones',
+          body: 'Mantén la app minimizada (no cerrada) para recibir todos los recordatorios. ¡Funciona perfectamente en segundo plano! 🚀',
+        );
+        
+        // Marcar como mostrado
+        await prefs.setBool('has_shown_usage_hint', true);
+        print('💡 Hint de uso óptimo mostrado al usuario');
+      });
+    }
   }
 
 

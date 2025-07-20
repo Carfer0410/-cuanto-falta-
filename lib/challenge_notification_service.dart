@@ -27,7 +27,16 @@ class ChallengeNotificationService {
     // Verificar inmediatamente
     _checkChallengesNow();
     
+    // TIMER MEJORADO: Verificaciones más frecuentes para mejor cobertura
     // Programar verificaciones según la frecuencia configurada
+    _timer = Timer.periodic(Duration(hours: frequency), (timer) {
+      _checkChallengesNow();
+    });
+    
+    // NUEVO: Timer adicional cada 30 minutos para motivación activa
+    Timer.periodic(Duration(minutes: 30), (timer) {
+      _checkActiveMotivation();
+    });
     _timer = Timer.periodic(Duration(hours: frequency), (timer) {
       _checkChallengesNow();
     });
@@ -251,6 +260,55 @@ class ChallengeNotificationService {
 
     // Si no encuentra coincidencia, usar el título tal como está
     return clean;
+  }
+
+  /// Verificación motivacional activa cada 30 minutos
+  static Future<void> _checkActiveMotivation() async {
+    if (!_isActive) return;
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final enabled = prefs.getBool('challenge_notifications_enabled') ?? true;
+      if (!enabled) return;
+      
+      // Enviar mensaje motivacional aleatorio si han pasado más de 2 horas desde la última
+      final lastMotivationKey = 'last_motivation_${DateTime.now().day}';
+      final lastMotivation = prefs.getString(lastMotivationKey);
+      final now = DateTime.now();
+      
+      bool shouldSendMotivation = false;
+      if (lastMotivation == null) {
+        shouldSendMotivation = true;
+      } else {
+        final lastTime = DateTime.parse(lastMotivation);
+        final hoursSince = now.difference(lastTime).inHours;
+        shouldSendMotivation = hoursSince >= 2;
+      }
+      
+      if (shouldSendMotivation) {
+        final messages = [
+          '💪 ¡Tu constancia está creando resultados!',
+          '🌟 Cada decisión cuenta hacia tu meta',
+          '🔥 ¡Mantén viva la llama de tu motivación!',
+          '🎯 Un paso más cerca de ser tu mejor versión',
+          '⚡ La disciplina de hoy es el éxito de mañana',
+        ];
+        
+        final randomMessage = messages[now.minute % messages.length];
+        
+        await NotificationService.instance.showImmediateNotification(
+          id: 60000 + now.hour, // ID único por hora
+          title: '🎯 Motivación Activa',
+          body: randomMessage,
+        );
+        
+        // Guardar timestamp
+        await prefs.setString(lastMotivationKey, now.toIso8601String());
+        print('💪 Motivación activa enviada: $randomMessage');
+      }
+    } catch (e) {
+      print('❌ Error en motivación activa: $e');
+    }
   }
 
   /// Getter para saber si está activo

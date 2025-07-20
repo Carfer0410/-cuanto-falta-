@@ -27,7 +27,16 @@ class SimpleEventChecker {
     // Verificar inmediatamente
     _checkEventsNow();
     
+    // TIMER MEJORADO: Verificaciones más frecuentes para mejor cobertura
     // Programar verificaciones según la frecuencia configurada
+    _timer = Timer.periodic(Duration(minutes: frequency), (timer) {
+      _checkEventsNow();
+    });
+    
+    // NUEVO: Timer adicional cada 1 minuto para eventos críticos (últimas 24 horas)
+    Timer.periodic(Duration(minutes: 1), (timer) {
+      _checkCriticalEvents();
+    });
     _timer = Timer.periodic(Duration(minutes: frequency), (timer) {
       _checkEventsNow();
     });
@@ -149,6 +158,49 @@ class SimpleEventChecker {
     }
     
     return null;
+  }
+
+  /// Verifica eventos críticos (últimas 24 horas) cada minuto
+  static Future<void> _checkCriticalEvents() async {
+    if (!_isActive) return;
+    
+    try {
+      final events = await DatabaseHelper.instance.getEvents();
+      final now = DateTime.now();
+      
+      for (final event in events) {
+        final hoursUntilEvent = event.targetDate.difference(now).inHours;
+        
+        // Solo verificar eventos en las próximas 24 horas
+        if (hoursUntilEvent >= 0 && hoursUntilEvent <= 24) {
+          final reminderInfo = _shouldSendReminder(event.targetDate, now, event.id, event.title);
+          
+          if (reminderInfo != null) {
+            final wasAlreadySent = await ReminderTracker.wasReminderSent(
+              event.id ?? 0, 
+              reminderInfo['reminderType']
+            );
+            
+            if (!wasAlreadySent) {
+              await NotificationService.instance.showImmediateNotification(
+                id: reminderInfo['notificationId'],
+                title: reminderInfo['title'],
+                body: reminderInfo['body'],
+              );
+
+              await ReminderTracker.markReminderSent(
+                event.id ?? 0, 
+                reminderInfo['reminderType']
+              );
+              
+              print('🚨 Notificación crítica enviada: ${reminderInfo['title']}');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Error en verificación crítica: $e');
+    }
   }
 
   /// Getter para saber si está activo

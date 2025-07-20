@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'notification_service.dart';
 import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
+import 'statistics_service.dart';
+import 'achievement_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 
@@ -15,6 +17,10 @@ void main() async {
   
   // Cargar el idioma guardado
   await LocalizationService.instance.loadLanguage();
+  
+  // Inicializar servicios de estadísticas y logros
+  await StatisticsService.instance.loadStatistics();
+  await AchievementService.instance.loadAchievements();
   
   runApp(const MyApp());
 }
@@ -73,8 +79,12 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: LocalizationService.instance,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: LocalizationService.instance),
+        ChangeNotifierProvider.value(value: StatisticsService.instance),
+        ChangeNotifierProvider.value(value: AchievementService.instance),
+      ],
       child: Consumer<LocalizationService>(
         builder: (context, localizationService, child) {
           return MaterialApp(

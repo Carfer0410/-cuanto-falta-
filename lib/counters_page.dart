@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'dart:async';
 import 'add_counter_page.dart';
 import 'localization_service.dart';
+import 'statistics_service.dart';
+import 'achievement_service.dart';
 
 class Counter {
   final String title;
@@ -67,6 +69,12 @@ class _CountersPageState extends State<CountersPage> {
       final List decoded = jsonDecode(jsonString);
       _counters = decoded.map((e) => Counter.fromJson(e)).toList();
     }
+    
+    // Actualizar estadísticas de retos
+    final activeChallenges = _counters.length;
+    final totalChallenges = activeChallenges; // Para simplificar por ahora
+    await StatisticsService.instance.updateChallengeStats(activeChallenges, totalChallenges);
+    
     setState(() {});
   }
 
@@ -371,7 +379,7 @@ class _CountersPageState extends State<CountersPage> {
                                                     BorderRadius.circular(14),
                                               ),
                                             ),
-                                            onPressed: () {
+                                            onPressed: () async {
                                               setState(() {
                                                 counter.lastConfirmedDate =
                                                     DateTime(
@@ -380,7 +388,13 @@ class _CountersPageState extends State<CountersPage> {
                                                       now.day,
                                                     );
                                               });
-                                              _saveCounters();
+                                              await _saveCounters();
+                                              
+                                              // Registrar actividad y verificar logros
+                                              await StatisticsService.instance.recordChallengeConfirmation();
+                                              await AchievementService.instance.checkAndUnlockAchievements(
+                                                StatisticsService.instance.statistics
+                                              );
                                             },
                                             child: const Text(
                                               '¿Cumpliste hoy?',

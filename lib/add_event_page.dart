@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'database_helper.dart';
 import 'event.dart';
 import 'localization_service.dart';
+import 'statistics_service.dart';
+import 'achievement_service.dart';
 // import 'package:intl/intl.dart';
 
 class AddEventPage extends StatefulWidget {
@@ -58,6 +60,12 @@ class _AddEventPageState extends State<AddEventPage> {
       
       // Guardar evento en la base de datos
       await DatabaseHelper.instance.insertEvent(event);
+      
+      // Registrar estadísticas y verificar logros
+      await StatisticsService.instance.recordEventActivity();
+      await AchievementService.instance.checkAndUnlockAchievements(
+        StatisticsService.instance.statistics
+      );
       
       // Mensaje informativo sobre notificaciones
       if (mounted) {

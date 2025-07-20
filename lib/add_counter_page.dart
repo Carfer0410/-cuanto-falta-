@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'counters_page.dart';
 import 'localization_service.dart';
+import 'statistics_service.dart';
+import 'achievement_service.dart';
 
 class AddCounterPage extends StatefulWidget {
   const AddCounterPage({Key? key}) : super(key: key);
@@ -97,6 +99,13 @@ class _AddCounterPageState extends State<AddCounterPage> {
     );
     list.add(newCounter.toJson());
     await prefs.setString('counters', jsonEncode(list));
+    
+    // Registrar estadísticas y verificar logros
+    await StatisticsService.instance.recordChallengeConfirmation();
+    await AchievementService.instance.checkAndUnlockAchievements(
+      StatisticsService.instance.statistics
+    );
+    
     if (!mounted) return;
     Navigator.pop(context, true);
   }

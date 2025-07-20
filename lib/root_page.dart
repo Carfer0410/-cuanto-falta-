@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'home_page.dart';
 import 'counters_page.dart';
 import 'settings_page.dart';
+import 'dashboard_page.dart';
 import 'localization_service.dart';
 
 class RootPage extends StatefulWidget {
@@ -41,6 +42,7 @@ class _RootPageState extends State<RootPage> {
         onThemeChanged: _handleThemeChange,
       ),
       const CountersPage(),
+      const DashboardPage(),
       SettingsPage(
         themeMode: widget.themeMode,
         onThemeChanged: _handleThemeChange,
@@ -66,10 +68,15 @@ class _RootPageState extends State<RootPage> {
                 label: localizationService.t('challengesTab')
               ),
               BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard), 
+                label: localizationService.t('dashboard')
+              ),
+              BottomNavigationBarItem(
                 icon: Icon(Icons.settings), 
                 label: localizationService.t('settingsTab')
               ),
             ],
+            type: BottomNavigationBarType.fixed,
           );
         },
       ),

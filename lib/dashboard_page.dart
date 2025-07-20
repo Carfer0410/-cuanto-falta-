@@ -29,6 +29,57 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // Función específica para pull-to-refresh que incluye sincronización
+  Future<void> _onRefresh() async {
+    print('🔄 DashboardPage: Pull-to-refresh iniciado');
+    try {
+      // Primero, sincronizar datos automáticamente (sin resetear)
+      await DataMigrationService.forceSyncAllData();
+      
+      // Luego, recargar todos los datos
+      await _loadData();
+      
+      print('✅ DashboardPage: Pull-to-refresh completado exitosamente');
+      
+      // Mostrar mensaje discreto de sincronización exitosa
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.refresh, color: Colors.white, size: 16),
+                SizedBox(width: 8),
+                Text('Dashboard sincronizado'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ DashboardPage: Error en pull-to-refresh: $e');
+      // En caso de error, solo cargar datos normalmente
+      await _loadData();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Datos cargados (sync falló: $e)'),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _resetAndRemigrate() async {
     try {
       // Mostrar indicador de carga
@@ -170,6 +221,103 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         actions: [
+          // Icono de información
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Información del Dashboard',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.dashboard, color: Colors.orange, size: 24),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Dashboard de Estadísticas',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            '📊 ¿Qué puedes ver aquí?',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '• Resumen de puntos y nivel actual\n'
+                            '• Estadísticas de eventos y retos\n'
+                            '• Racha de actividad diaria\n'
+                            '• Gráfico de actividad semanal\n'
+                            '• Sistema de logros y medallas\n'
+                            '• Progreso de desbloqueo de insignias',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '🔄 ¿Cómo sincronizar datos?',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '1. Desliza hacia abajo (Pull-to-refresh)\n'
+                            '   → Sincronización rápida y automática\n\n'
+                            '2. Menú de opciones (⋮) → "Resincronizar"\n'
+                            '   → Sincronización manual completa\n\n'
+                            '3. Menú de opciones (⋮) → "Reset y re-migrar"\n'
+                            '   → Reinicia estadísticas completamente',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '🎯 ¿Por qué sincronizar?',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '• Actualiza contadores de eventos y retos\n'
+                            '• Corrige estadísticas incorrectas\n'
+                            '• Recalcula puntos y logros\n'
+                            '• Mantiene datos consistentes\n'
+                            '• Refleja cambios recientes en tiempo real',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '💡 Tip: El dashboard se actualiza automáticamente cuando creas o modificas eventos y retos.',
+                              style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Entendido', style: TextStyle(color: Colors.orange)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Menú de opciones
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'sync') {
@@ -208,7 +356,7 @@ class _DashboardPageState extends State<DashboardPage> {
           final stats = statsService.statistics;
           
           return RefreshIndicator(
-            onRefresh: _loadData,
+            onRefresh: _onRefresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16.0),

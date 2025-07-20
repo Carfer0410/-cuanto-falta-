@@ -96,11 +96,12 @@ class DataMigrationService {
 
   /// Fuerza una resincronización completa de datos
   static Future<void> forceSyncAllData() async {
-    print('🔄 Forzando sincronización completa...');
+    print('🔄 DataMigrationService: Forzando sincronización completa...');
 
     try {
       // Obtener todos los eventos de la base de datos
       final events = await DatabaseHelper.instance.getEvents();
+      print('📊 DataMigrationService: Encontrados ${events.length} eventos');
       
       // Obtener todos los retos de SharedPreferences
       final prefs = await SharedPreferences.getInstance();
@@ -110,6 +111,7 @@ class DataMigrationService {
         final List decoded = jsonDecode(countersJson);
         challengeCount = decoded.length;
       }
+      print('📊 DataMigrationService: Encontrados $challengeCount retos');
 
       // Reconstruir estadísticas desde cero basándose en datos reales
       final currentStats = StatisticsService.instance.statistics;
@@ -126,16 +128,19 @@ class DataMigrationService {
           : basePoints,
       );
 
+      print('📊 DataMigrationService: Actualizando estadísticas a: eventos=${syncedStats.totalEvents}, retos=${syncedStats.totalChallenges}');
+
       // Actualizar el servicio
       await StatisticsService.instance.setStatisticsFromMigration(syncedStats);
 
       // Verificar logros
       await AchievementService.instance.checkAndUnlockAchievements(syncedStats);
 
-      print('✅ Sincronización forzada completada: ${events.length} eventos, $challengeCount retos');
+      print('✅ DataMigrationService: Sincronización forzada completada: ${events.length} eventos, $challengeCount retos');
 
     } catch (e) {
-      print('❌ Error en la sincronización forzada: $e');
+      print('❌ DataMigrationService: Error en la sincronización forzada: $e');
+      rethrow; // Re-lanzar el error para que las páginas puedan manejarlo
     }
   }
 }

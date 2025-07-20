@@ -7,6 +7,7 @@ import 'add_counter_page.dart';
 import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'data_migration_service.dart';
 
 class Counter {
   final String title;
@@ -75,6 +76,57 @@ class _CountersPageState extends State<CountersPage> {
     // o durante la migración/sincronización manual
     
     setState(() {});
+  }
+
+  // Función específica para pull-to-refresh que incluye sincronización
+  Future<void> _onRefresh() async {
+    print('🔄 CountersPage: Pull-to-refresh iniciado');
+    try {
+      // Sincronizar estadísticas de retos con datos reales
+      await DataMigrationService.forceSyncAllData();
+      
+      // Cargar retos
+      await _loadCounters();
+      
+      print('✅ CountersPage: Pull-to-refresh completado exitosamente');
+      
+      // Mostrar mensaje discreto de actualización exitosa
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.refresh, color: Colors.white, size: 16),
+                SizedBox(width: 8),
+                Text('Retos sincronizados'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ CountersPage: Error en pull-to-refresh: $e');
+      // En caso de error, solo cargar retos normalmente
+      await _loadCounters();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Retos cargados (sync falló: $e)'),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _saveCounters() async {
@@ -183,7 +235,7 @@ class _CountersPageState extends State<CountersPage> {
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: RefreshIndicator(
-          onRefresh: _loadCounters,
+          onRefresh: _onRefresh,
           child:
               _counters.isEmpty
                   ? ListView(
@@ -379,21 +431,187 @@ class _CountersPageState extends State<CountersPage> {
                                               ),
                                             ),
                                             onPressed: () async {
-                                              setState(() {
-                                                counter.lastConfirmedDate =
-                                                    DateTime(
-                                                      now.year,
-                                                      now.month,
-                                                      now.day,
-                                                    );
-                                              });
-                                              await _saveCounters();
-                                              
-                                              // Registrar actividad y verificar logros
-                                              await StatisticsService.instance.recordChallengeConfirmation();
-                                              await AchievementService.instance.checkAndUnlockAchievements(
-                                                StatisticsService.instance.statistics
+                                              // Mostrar diálogo de confirmación
+                                              final result = await showDialog<bool>(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Row(
+                                                      children: [
+                                                        Icon(
+                                                          counter.isNegativeHabit ? Icons.block : Icons.fitness_center,
+                                                          color: Colors.orange,
+                                                          size: 28,
+                                                        ),
+                                                        const SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            '¿Cumpliste tu reto hoy?',
+                                                            style: TextStyle(
+                                                              fontSize: 18,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    content: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Container(
+                                                          padding: const EdgeInsets.all(12),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.orange.withOpacity(0.1),
+                                                            borderRadius: BorderRadius.circular(8),
+                                                          ),
+                                                          child: Row(
+                                                            children: [
+                                                              Icon(
+                                                                counter.isNegativeHabit ? Icons.sentiment_satisfied : Icons.emoji_events,
+                                                                color: Colors.orange,
+                                                                size: 20,
+                                                              ),
+                                                              const SizedBox(width: 8),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  counter.isNegativeHabit 
+                                                                    ? '${_challengePhrase(counter, localizationService)}'
+                                                                    : '${_challengePhrase(counter, localizationService)}',
+                                                                  style: const TextStyle(
+                                                                    fontWeight: FontWeight.w500,
+                                                                    fontSize: 14,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        const SizedBox(height: 16),
+                                                        const Text(
+                                                          'Selecciona tu progreso de hoy:',
+                                                          style: TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    actionsPadding: const EdgeInsets.all(16),
+                                                    actions: [
+                                                      // Botón "No cumplí"
+                                                      SizedBox(
+                                                        width: double.infinity,
+                                                        child: ElevatedButton.icon(
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: Colors.red,
+                                                            foregroundColor: Colors.white,
+                                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                          ),
+                                                          onPressed: () => Navigator.of(context).pop(false),
+                                                          icon: const Icon(Icons.close, size: 20),
+                                                          label: const Text(
+                                                            'No cumplí hoy',
+                                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 8),
+                                                      // Botón "¡Sí cumplí!"
+                                                      SizedBox(
+                                                        width: double.infinity,
+                                                        child: ElevatedButton.icon(
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: Colors.green,
+                                                            foregroundColor: Colors.white,
+                                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                          ),
+                                                          onPressed: () => Navigator.of(context).pop(true),
+                                                          icon: const Icon(Icons.check_circle, size: 20),
+                                                          label: const Text(
+                                                            '¡Sí cumplí!',
+                                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
                                               );
+
+                                              // Procesar resultado
+                                              if (result != null) {
+                                                setState(() {
+                                                  counter.lastConfirmedDate = DateTime(
+                                                    now.year,
+                                                    now.month,
+                                                    now.day,
+                                                  );
+                                                });
+                                                await _saveCounters();
+
+                                                if (result) {
+                                                  // Usuario cumplió el reto
+                                                  await StatisticsService.instance.recordChallengeConfirmation();
+                                                  await AchievementService.instance.checkAndUnlockAchievements(
+                                                    StatisticsService.instance.statistics
+                                                  );
+
+                                                  // Mostrar mensaje de éxito
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Row(
+                                                          children: [
+                                                            const Icon(Icons.emoji_events, color: Colors.white, size: 20),
+                                                            const SizedBox(width: 8),
+                                                            Expanded(
+                                                              child: Text(
+                                                                '¡Excelente! +${10 + (StatisticsService.instance.statistics.currentStreak * 2)} puntos',
+                                                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        backgroundColor: Colors.green,
+                                                        duration: const Duration(seconds: 3),
+                                                      ),
+                                                    );
+                                                  }
+                                                } else {
+                                                  // Usuario no cumplió el reto
+                                                  await StatisticsService.instance.recordChallengeFailure();
+
+                                                  // Mostrar mensaje motivacional
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Row(
+                                                          children: [
+                                                            Icon(Icons.sentiment_neutral, color: Colors.white, size: 20),
+                                                            SizedBox(width: 8),
+                                                            Expanded(
+                                                              child: Text(
+                                                                'No te preocupes, mañana es un nuevo día. ¡Tú puedes!',
+                                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        backgroundColor: Colors.orange,
+                                                        duration: Duration(seconds: 4),
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              }
                                             },
                                             child: const Text(
                                               '¿Cumpliste hoy?',

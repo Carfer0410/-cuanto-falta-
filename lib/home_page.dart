@@ -6,6 +6,7 @@ import 'database_helper.dart';
 import 'event.dart';
 import 'add_event_page.dart';
 import 'localization_service.dart';
+import 'data_migration_service.dart';
 
 /// Widget de cuenta regresiva en vivo mostrando días, horas, minutos y segundos.
 class _CountdownTimer extends StatefulWidget {
@@ -115,6 +116,57 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Función específica para pull-to-refresh que incluye sincronización
+  Future<void> _onRefresh() async {
+    print('🔄 HomePage: Pull-to-refresh iniciado');
+    try {
+      // Sincronizar estadísticas de eventos con datos reales
+      await DataMigrationService.forceSyncAllData();
+      
+      // Cargar eventos
+      await _loadEvents();
+      
+      print('✅ HomePage: Pull-to-refresh completado exitosamente');
+      
+      // Mostrar mensaje discreto de actualización exitosa
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.refresh, color: Colors.white, size: 16),
+                SizedBox(width: 8),
+                Text('Eventos sincronizados'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ HomePage: Error en pull-to-refresh: $e');
+      // En caso de error, solo cargar eventos normalmente
+      await _loadEvents();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text('Eventos cargados (sync falló: $e)'),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
   void _navigateToAddEvent() async {
     final result = await Navigator.push(
       context,
@@ -171,7 +223,7 @@ class _HomePageState extends State<HomePage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: RefreshIndicator(
-            onRefresh: _loadEvents,
+            onRefresh: _onRefresh,
             child:
                 _events.isEmpty
                     ? ListView(

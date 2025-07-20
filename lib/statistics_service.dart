@@ -7,11 +7,13 @@ class UserStatistics {
   final int totalChallenges;
   final int activeChallenges;
   final int completedChallenges;
+  final int failedChallenges;
   final int currentStreak;
   final int longestStreak;
   final Map<String, int> challengesByCategory;
   final Map<String, int> eventsByCategory;
   final List<DateTime> recentActivity;
+  final List<DateTime> failedDays;
   final int totalPoints;
 
   UserStatistics({
@@ -19,11 +21,13 @@ class UserStatistics {
     this.totalChallenges = 0,
     this.activeChallenges = 0,
     this.completedChallenges = 0,
+    this.failedChallenges = 0,
     this.currentStreak = 0,
     this.longestStreak = 0,
     this.challengesByCategory = const {},
     this.eventsByCategory = const {},
     this.recentActivity = const [],
+    this.failedDays = const [],
     this.totalPoints = 0,
   });
 
@@ -32,11 +36,13 @@ class UserStatistics {
     'totalChallenges': totalChallenges,
     'activeChallenges': activeChallenges,
     'completedChallenges': completedChallenges,
+    'failedChallenges': failedChallenges,
     'currentStreak': currentStreak,
     'longestStreak': longestStreak,
     'challengesByCategory': challengesByCategory,
     'eventsByCategory': eventsByCategory,
     'recentActivity': recentActivity.map((d) => d.toIso8601String()).toList(),
+    'failedDays': failedDays.map((d) => d.toIso8601String()).toList(),
     'totalPoints': totalPoints,
   };
 
@@ -45,11 +51,15 @@ class UserStatistics {
     totalChallenges: json['totalChallenges'] ?? 0,
     activeChallenges: json['activeChallenges'] ?? 0,
     completedChallenges: json['completedChallenges'] ?? 0,
+    failedChallenges: json['failedChallenges'] ?? 0,
     currentStreak: json['currentStreak'] ?? 0,
     longestStreak: json['longestStreak'] ?? 0,
     challengesByCategory: Map<String, int>.from(json['challengesByCategory'] ?? {}),
     eventsByCategory: Map<String, int>.from(json['eventsByCategory'] ?? {}),
     recentActivity: (json['recentActivity'] as List<dynamic>? ?? [])
+        .map((d) => DateTime.parse(d.toString()))
+        .toList(),
+    failedDays: (json['failedDays'] as List<dynamic>? ?? [])
         .map((d) => DateTime.parse(d.toString()))
         .toList(),
     totalPoints: json['totalPoints'] ?? 0,
@@ -60,22 +70,26 @@ class UserStatistics {
     int? totalChallenges,
     int? activeChallenges,
     int? completedChallenges,
+    int? failedChallenges,
     int? currentStreak,
     int? longestStreak,
     Map<String, int>? challengesByCategory,
     Map<String, int>? eventsByCategory,
     List<DateTime>? recentActivity,
+    List<DateTime>? failedDays,
     int? totalPoints,
   }) => UserStatistics(
     totalEvents: totalEvents ?? this.totalEvents,
     totalChallenges: totalChallenges ?? this.totalChallenges,
     activeChallenges: activeChallenges ?? this.activeChallenges,
     completedChallenges: completedChallenges ?? this.completedChallenges,
+    failedChallenges: failedChallenges ?? this.failedChallenges,
     currentStreak: currentStreak ?? this.currentStreak,
     longestStreak: longestStreak ?? this.longestStreak,
     challengesByCategory: challengesByCategory ?? this.challengesByCategory,
     eventsByCategory: eventsByCategory ?? this.eventsByCategory,
     recentActivity: recentActivity ?? this.recentActivity,
+    failedDays: failedDays ?? this.failedDays,
     totalPoints: totalPoints ?? this.totalPoints,
   );
 }
@@ -168,7 +182,28 @@ class StatisticsService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Calcular racha actual basada en actividad reciente
+  // Registrar fracaso de reto (rompe la racha)
+  Future<void> recordChallengeFailure() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final newFailedDays = [..._statistics.failedDays, today];
+    final thirtyDaysAgo = now.subtract(const Duration(days: 30));
+    final filteredFailedDays = newFailedDays
+        .where((date) => date.isAfter(thirtyDaysAgo))
+        .toList();
+
+    _statistics = _statistics.copyWith(
+      currentStreak: 0, // Romper la racha
+      failedDays: filteredFailedDays,
+      failedChallenges: _statistics.failedChallenges + 1,
+    );
+
+    await _saveStatistics();
+    notifyListeners();
+  }
+
+  // Calcular racha actual basada en actividad reciente y días fallidos
   int _calculateCurrentStreak() {
     if (_statistics.recentActivity.isEmpty) return 1;
 
@@ -176,9 +211,22 @@ class StatisticsService extends ChangeNotifier {
     final today = DateTime(now.year, now.month, now.day);
     int streak = 1;
 
-    // Buscar hacia atrás días consecutivos con actividad
+    // Buscar hacia atrás días consecutivos con actividad (sin días fallidos)
     for (int i = 1; i <= 365; i++) {
       final checkDate = today.subtract(Duration(days: i));
+      
+      // Verificar si hay un día fallido en esta fecha
+      final hasFailed = _statistics.failedDays.any((failDate) {
+        final failedDate = DateTime(failDate.year, failDate.month, failDate.day);
+        return failedDate.isAtSameMomentAs(checkDate);
+      });
+      
+      // Si hay un día fallido, romper la racha
+      if (hasFailed) {
+        break;
+      }
+      
+      // Verificar si hay actividad positiva
       final hasActivity = _statistics.recentActivity.any((activity) {
         final activityDate = DateTime(activity.year, activity.month, activity.day);
         return activityDate.isAtSameMomentAs(checkDate);

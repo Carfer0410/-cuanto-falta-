@@ -43,165 +43,37 @@ class _DashboardPageState extends State<DashboardPage> {
       
       // Mostrar mensaje discreto de sincronización exitosa
       if (mounted) {
+        final localization = Provider.of<LocalizationService>(context, listen: false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
                 Icon(Icons.refresh, color: Colors.white, size: 16),
-                SizedBox(width: 8),
-                Text('Dashboard sincronizado'),
+                SizedBox(width: 12),
+                Text(localization.t('data_synced')),
               ],
             ),
-            duration: Duration(seconds: 2),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       print('❌ DashboardPage: Error en pull-to-refresh: $e');
-      // En caso de error, solo cargar datos normalmente
-      await _loadData();
       
+      // Mostrar mensaje de error si falla la sincronización
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.warning, color: Colors.white, size: 16),
-                const SizedBox(width: 8),
-                Text('Datos cargados (sync falló: $e)'),
-              ],
-            ),
-            duration: const Duration(seconds: 2),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _resetAndRemigrate() async {
-    try {
-      // Mostrar indicador de carga
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 16),
-                Text('Reseteando y re-migrando datos...'),
-              ],
-            ),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-
-      // Ejecutar reset y migración
-      await DataMigrationService.resetAndRemigrate();
-      
-      // Recargar datos
-      await _loadData();
-
-      // Mostrar mensaje de éxito
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 16),
-                Text('¡Datos reseteados y migrados correctamente!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      // Mostrar mensaje de error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 16),
-                Text('Error: $e'),
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Text('Error al sincronizar: $e'),
               ],
             ),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _forceSyncData() async {
-    try {
-      // Mostrar indicador de carga
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 16),
-                Text('Resincronizando datos...'),
-              ],
-            ),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-
-      // Ejecutar sincronización forzada
-      await DataMigrationService.forceSyncAllData();
-      
-      // Recargar datos
-      await _loadData();
-
-      // Mostrar mensaje de éxito
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 16),
-                Text('¡Datos sincronizados correctamente!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      // Mostrar mensaje de error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 16),
-                Text('Error: $e'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -217,137 +89,10 @@ class _DashboardPageState extends State<DashboardPage> {
             return Text(localization.t('dashboard'));
           },
         ),
-        elevation: 0,
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
         actions: [
-          // Icono de información
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: 'Información del Dashboard',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Row(
-                    children: [
-                      Icon(Icons.dashboard, color: Colors.orange, size: 24),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Dashboard de Estadísticas',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ],
-                  ),
-                  content: SizedBox(
-                    width: double.maxFinite,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '📊 ¿Qué puedes ver aquí?',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '• Resumen de puntos y nivel actual\n'
-                            '• Estadísticas de eventos y retos\n'
-                            '• Racha de actividad diaria\n'
-                            '• Gráfico de actividad semanal\n'
-                            '• Sistema de logros y medallas\n'
-                            '• Progreso de desbloqueo de insignias',
-                            style: TextStyle(fontSize: 13),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '🔄 ¿Cómo sincronizar datos?',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '1. Desliza hacia abajo (Pull-to-refresh)\n'
-                            '   → Sincronización rápida y automática\n\n'
-                            '2. Menú de opciones (⋮) → "Resincronizar"\n'
-                            '   → Sincronización manual completa\n\n'
-                            '3. Menú de opciones (⋮) → "Reset y re-migrar"\n'
-                            '   → Reinicia estadísticas completamente',
-                            style: TextStyle(fontSize: 13),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '🎯 ¿Por qué sincronizar?',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '• Actualiza contadores de eventos y retos\n'
-                            '• Corrige estadísticas incorrectas\n'
-                            '• Recalcula puntos y logros\n'
-                            '• Mantiene datos consistentes\n'
-                            '• Refleja cambios recientes en tiempo real',
-                            style: TextStyle(fontSize: 13),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              '💡 Tip: El dashboard se actualiza automáticamente cuando creas o modificas eventos y retos.',
-                              style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Entendido', style: TextStyle(color: Colors.orange)),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          // Menú de opciones
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'sync') {
-                await _forceSyncData();
-              } else if (value == 'reset') {
-                await _resetAndRemigrate();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'sync',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh),
-                    SizedBox(width: 8),
-                    Text('Resincronizar datos'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'reset',
-                child: Row(
-                  children: [
-                    Icon(Icons.restart_alt, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Text('Reset y re-migrar', style: TextStyle(color: Colors.orange)),
-                  ],
-                ),
-              ),
-            ],
+            onPressed: () => _showInfoDialog(context),
           ),
         ],
       ),
@@ -363,6 +108,12 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Mensaje especial si todos los retos están completados
+                  if (stats.activeChallenges == 0 && stats.totalChallenges > 0) ...[
+                    _buildAllChallengesCompletedCard(localization, stats),
+                    const SizedBox(height: 16),
+                  ],
+                  
                   // Resumen de puntos y nivel
                   _buildPointsCard(localization, stats),
                   const SizedBox(height: 16),
@@ -379,8 +130,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   _buildWeeklyActivityChart(localization, statsService),
                   const SizedBox(height: 16),
                   
-                  // Próximo logro
-                  _buildNextAchievementCard(localization, achievementService),
+                  // Próximo logro o sugerencias especiales
+                  if (stats.activeChallenges == 0 && stats.totalChallenges > 0)
+                    _buildSuggestionsCard(localization, stats)
+                  else
+                    _buildNextAchievementCard(localization, achievementService),
                   const SizedBox(height: 16),
                   
                   // Logros recientes
@@ -401,79 +155,335 @@ class _DashboardPageState extends State<DashboardPage> {
             return Text(localization.t('achievements'));
           },
         ),
-        backgroundColor: Colors.amber,
-        foregroundColor: Colors.white,
       ),
     );
   }
 
-  Widget _buildPointsCard(LocalizationService localization, UserStatistics stats) {
-    final level = (stats.totalPoints / 100).floor() + 1;
-    final pointsInCurrentLevel = stats.totalPoints % 100;
-    final progressToNextLevel = pointsInCurrentLevel / 100;
-
+  // Tarjeta especial cuando todos los retos están completados
+  Widget _buildAllChallengesCompletedCard(LocalizationService localization, UserStatistics stats) {
     return Card(
       elevation: 4,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
-            colors: [Colors.orange.shade400, Colors.orange.shade600],
+            colors: [Colors.green.shade400, Colors.green.shade600],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${localization.t('level')} $level',
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.celebration,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      localization.t('congratulations'),
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      '${stats.totalPoints} ${localization.t('points')}',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                localization.t('all_challenges_completed'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildCompletionStat(localization.t('challenges_completed'), '${stats.completedChallenges}', Icons.task_alt),
+                        _buildCompletionStat(localization.t('points_accumulated'), '${stats.totalPoints}', Icons.stars),
+                        _buildCompletionStat(localization.t('current_streak_short'), '${stats.currentStreak} días', Icons.local_fire_department),
+                      ],
                     ),
                   ],
                 ),
-                Icon(
-                  Icons.stars,
-                  color: Colors.white,
-                  size: 40,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletionStat(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white, size: 24),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Tarjeta de sugerencias cuando todos los retos están completados
+  Widget _buildSuggestionsCard(LocalizationService localization, UserStatistics stats) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.lightbulb_outline, color: Colors.amber, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  localization.t('what_next'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
+            _buildSuggestionItem(
+              Icons.add_task,
+              localization.t('create_new_challenges'),
+              localization.t('create_new_challenges_desc'),
+              Colors.blue,
+            ),
+            const SizedBox(height: 12),
+            _buildSuggestionItem(
+              Icons.trending_up,
+              localization.t('increase_difficulty'),
+              localization.t('increase_difficulty_desc'),
+              Colors.orange,
+            ),
+            const SizedBox(height: 12),
+            _buildSuggestionItem(
+              Icons.share,
+              localization.t('share_success'),
+              localization.t('share_success_desc'),
+              Colors.green,
+            ),
+            const SizedBox(height: 12),
+            _buildSuggestionItem(
+              Icons.analytics,
+              localization.t('analyze_progress'),
+              localization.t('analyze_progress_desc'),
+              Colors.purple,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionItem(IconData icon, String title, String description, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Resto de los métodos existentes continúan aquí...
+  void _showInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Dashboard'),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'El Dashboard muestra información completa sobre tu progreso:\n',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  const Text(
+                    '📊 Funciones principales:\n'
+                    '• Puntos totales y nivel actual\n'
+                    '• Estadísticas de eventos y retos\n'
+                    '• Racha actual y mejor racha\n'
+                    '• Gráfico de actividad semanal\n'
+                    '• Próximos logros por desbloquear\n'
+                    '• Logros recientes obtenidos\n',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      '🔄 Sincronización:\n'
+                      '• Desliza hacia abajo para actualizar\n'
+                      '• Actualiza contadores de eventos y retos\n'
+                      '• Recalcula estadísticas automáticamente\n'
+                      '• Verifica nuevos logros desbloqueados',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      '💡 Tip: El dashboard se actualiza automáticamente cuando creas o modificas eventos y retos.',
+                      style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPointsCard(LocalizationService localization, UserStatistics stats) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(
+              Icons.star,
+              color: Colors.amber,
+              size: 32,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localization.t('total_points'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '${stats.totalPoints} puntos',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber[700],
+                    ),
+                  ),
+                  Text(
+                    'Nivel: ${(stats.totalPoints / 100).floor() + 1}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Icon(Icons.trending_up, color: Colors.green),
                 Text(
-                  '${localization.t('progress')} ${localization.t('level')} ${level + 1}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  '+${stats.recentActivity.length}',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: progressToNextLevel,
-                  backgroundColor: Colors.white30,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-                const SizedBox(height: 4),
                 Text(
-                  '$pointsInCurrentLevel / 100',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  'esta semana',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ],
             ),
@@ -484,6 +494,45 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildStatsGrid(LocalizationService localization, UserStatistics stats) {
+    // Si todos los retos están completados, mostrar estadísticas especiales
+    if (stats.activeChallenges == 0 && stats.totalChallenges > 0) {
+      return GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 1.2,
+        children: [
+          _buildStatCard(
+            'Retos Completados',
+            '${stats.completedChallenges}/${stats.totalChallenges}',
+            Icons.task_alt,
+            Colors.green,
+          ),
+          _buildStatCard(
+            'Puntos Totales',
+            '${stats.totalPoints}',
+            Icons.stars,
+            Colors.amber,
+          ),
+          _buildStatCard(
+            'Racha Actual',
+            '${stats.currentStreak} días',
+            Icons.local_fire_department,
+            Colors.red,
+          ),
+          _buildStatCard(
+            'Mejor Racha',
+            '${stats.longestStreak} días',
+            Icons.military_tech,
+            Colors.purple,
+          ),
+        ],
+      );
+    }
+    
+    // Estadísticas normales cuando hay retos activos
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -560,52 +609,70 @@ class _DashboardPageState extends State<DashboardPage> {
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.local_fire_department,
-                color: Colors.red.shade600,
-                size: 32,
-              ),
+            Row(
+              children: [
+                Icon(
+                  Icons.local_fire_department,
+                  color: stats.currentStreak > 0 ? Colors.red : Colors.grey,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  localization.t('current_streak'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    localization.t('current_streak'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '${stats.currentStreak} días consecutivos',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  if (stats.currentStreak > 0) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      '¡Sigue así! 🔥',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.red.shade600,
-                        fontWeight: FontWeight.w500,
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${stats.currentStreak}',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: stats.currentStreak > 0 ? Colors.red : Colors.grey,
+                        ),
                       ),
-                    ),
-                  ],
+                      Text(
+                        'días consecutivos',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (stats.currentStreak > 0) ...[
+                  Column(
+                    children: [
+                      Text(
+                        '🔥',
+                        style: TextStyle(fontSize: 24),
+                      ),
+                      Text(
+                        '¡Sigue así!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.red.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ],
         ),
@@ -632,7 +699,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(height: 16),
-            // Gráfico simple con barras nativas
             SizedBox(
               height: 120,
               child: Row(
@@ -656,6 +722,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         entry.key,
                         style: const TextStyle(fontSize: 12),
                       ),
+                      Text(
+                        '${entry.value}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   );
                 }).toList(),
@@ -668,7 +741,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildNextAchievementCard(LocalizationService localization, AchievementService achievementService) {
-    final nextAchievement = achievementService.nextAchievement;
     final progress = StatisticsService.instance.getNextAchievementProgress();
 
     return Card(
@@ -686,63 +758,48 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(height: 12),
-            if (nextAchievement != null) ...[
-              Row(
-                children: [
-                  Icon(
-                    nextAchievement.icon,
-                    color: nextAchievement.color,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          localization.t(nextAchievement.titleKey),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+            Row(
+              children: [
+                Icon(
+                  Icons.emoji_events,
+                  color: Colors.amber,
+                  size: 32,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        progress['title'],
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
-                        Text(
-                          localization.t(nextAchievement.descriptionKey),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
+                      ),
+                      Text(
+                        progress['description'],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              LinearProgressIndicator(
-                value: progress['progress'],
-                backgroundColor: Colors.grey[300],
-                valueColor: AlwaysStoppedAnimation<Color>(nextAchievement.color),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${progress['current']} / ${progress['target']}',
-                style: const TextStyle(fontSize: 12),
-              ),
-            ] else ...[
-              const Row(
-                children: [
-                  Icon(Icons.emoji_events, color: Colors.amber, size: 32),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '¡Has desbloqueado todos los logros disponibles!',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: progress['progress'],
+              backgroundColor: Colors.grey[300],
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${progress['current']} / ${progress['target']}',
+              style: const TextStyle(fontSize: 12),
+            ),
           ],
         ),
       ),
@@ -750,17 +807,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildRecentAchievements(LocalizationService localization, AchievementService achievementService) {
-    final recentAchievements = achievementService.unlockedAchievements
-        .where((a) => a.unlockedAt != null)
-        .toList()
-      ..sort((a, b) => b.unlockedAt!.compareTo(a.unlockedAt!));
-
-    final recent = recentAchievements.take(3).toList();
-
-    if (recent.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
+    // Por ahora mostramos un mensaje genérico sobre logros
     return Card(
       elevation: 2,
       child: Padding(
@@ -772,7 +819,7 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Logros Recientes',
+                  localization.t('recent_achievements'),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -780,53 +827,29 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 TextButton(
                   onPressed: () => _showAchievementsBottomSheet(context),
-                  child: Text('Ver todos'),
+                  child: Text(localization.t('view_all')),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            ...recent.map((achievement) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: Row(
+            Center(
+              child: Column(
                 children: [
-                  Icon(
-                    achievement.icon,
-                    color: achievement.color,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          localization.t(achievement.titleKey),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          localization.formatDate(achievement.unlockedAt!),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey[400]),
+                  const SizedBox(height: 8),
                   Text(
-                    '+${achievement.points}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green[600],
-                      fontWeight: FontWeight.w600,
-                    ),
+                    localization.t('continue_completing_challenges'),
+                    style: TextStyle(color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => _showAchievementsBottomSheet(context),
+                    child: Text(localization.t('view_all_achievements_button')),
                   ),
                 ],
               ),
-            )),
+            ),
           ],
         ),
       ),

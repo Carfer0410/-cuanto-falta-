@@ -389,6 +389,12 @@ class LocalizationService extends ChangeNotifier {
       'youHave': '¡Llevas',
       'keepGoing': '¡Sigue así!',
 
+      // PALABRAS CLAVE DE RETOS
+      'without': 'sin',
+      'doing': 'haciendo',
+      'stopPrefix': 'dejar de',
+      'startPrefix': 'empezar a',
+
       // NOTIFICACIONES
       'notificationEventTitle': '📅 {eventTitle} - {days} días',
       'notificationEventBody': 'Faltan {days} días para "{eventTitle}".',
@@ -613,6 +619,12 @@ class LocalizationService extends ChangeNotifier {
       'youHave': 'You have',
       'keepGoing': 'Keep going!',
 
+      // PALABRAS CLAVE DE RETOS
+      'without': 'without',
+      'doing': 'doing',
+      'stopPrefix': 'stop',
+      'startPrefix': 'start',
+
       // NOTIFICACIONES
       'notificationEventTitle': '📅 {eventTitle} - {days} days',
       'notificationEventBody': '{days} days left for "{eventTitle}".',
@@ -766,6 +778,12 @@ class LocalizationService extends ChangeNotifier {
       'inactive': '❌ Inativo',
       'howNotificationsWork': 'Como funcionam os lembretes',
 
+      // PALAVRAS-CHAVE DE DESAFIOS
+      'without': 'sem',
+      'doing': 'fazendo',
+      'stopPrefix': 'parar de',
+      'startPrefix': 'começar a',
+
       'language': 'Idioma',
     },
 
@@ -914,6 +932,12 @@ class LocalizationService extends ChangeNotifier {
       'active': '✅ Actif',
       'inactive': '❌ Inactif',
       'howNotificationsWork': 'Comment fonctionnent les rappels',
+
+      // MOTS-CLÉS DE DÉFIS
+      'without': 'sans',
+      'doing': 'en faisant',
+      'stopPrefix': 'arrêter de',
+      'startPrefix': 'commencer à',
 
       'language': 'Langue',
     },
@@ -1064,6 +1088,12 @@ class LocalizationService extends ChangeNotifier {
       'inactive': '❌ Inaktiv',
       'howNotificationsWork': 'Wie Erinnerungen funktionieren',
 
+      // SCHLÜSSELWÖRTER FÜR HERAUSFORDERUNGEN
+      'without': 'ohne',
+      'doing': 'machen',
+      'stopPrefix': 'aufhören mit',
+      'startPrefix': 'anfangen mit',
+
       'language': 'Sprache',
     },
 
@@ -1179,6 +1209,12 @@ class LocalizationService extends ChangeNotifier {
       'hoursUnit': 'ore',
       'howNotificationsWork': 'Come funzionano i promemoria',
 
+      // PAROLE CHIAVE PER SFIDE
+      'without': 'senza',
+      'doing': 'facendo',
+      'stopPrefix': 'smettere di',
+      'startPrefix': 'iniziare a',
+
       'language': 'Lingua',
     },
 
@@ -1244,6 +1280,12 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'イベントのタイトルを入力してください',
       'addEventDateError': 'イベントの日付を選択してください',
       'addEventCategoryError': 'カテゴリを選択してください',
+
+      // チャレンジのキーワード
+      'without': 'なしで',
+      'doing': 'やって',
+      'stopPrefix': 'やめる',
+      'startPrefix': 'はじめる',
       
       'language': '言語',
     },
@@ -1310,6 +1352,12 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': '이벤트 제목을 입력하세요',
       'addEventDateError': '이벤트 날짜를 선택하세요',
       'addEventCategoryError': '카테고리를 선택하세요',
+
+      // 챌린지 키워드
+      'without': '없이',
+      'doing': '하고 있는',
+      'stopPrefix': '그만두다',
+      'startPrefix': '시작하다',
       
       'language': '언어',
     },
@@ -1376,6 +1424,12 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': '请输入事件标题',
       'addEventDateError': '请选择事件日期',
       'addEventCategoryError': '请选择类别',
+
+      // 挑战关键词
+      'without': '没有',
+      'doing': '正在做',
+      'stopPrefix': '停止',
+      'startPrefix': '开始',
       
       'language': '语言',
     },
@@ -1442,6 +1496,12 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'أدخل عنوان الحدث',
       'addEventDateError': 'اختر تاريخ الحدث',
       'addEventCategoryError': 'اختر فئة',
+
+      // كلمات التحدي الرئيسية
+      'without': 'بدون',
+      'doing': 'يفعل',
+      'stopPrefix': 'توقف عن',
+      'startPrefix': 'ابدأ في',
       
       'language': 'اللغة',
     },
@@ -1508,6 +1568,12 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'Введите название события',
       'addEventDateError': 'Выберите дату события',
       'addEventCategoryError': 'Выберите категорию',
+
+      // КЛЮЧЕВЫЕ СЛОВА ВЫЗОВОВ
+      'without': 'без',
+      'doing': 'делая',
+      'stopPrefix': 'перестать',
+      'startPrefix': 'начать',
       
       'language': 'Язык',
     },
@@ -1574,6 +1640,12 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'इवेंट का शीर्षक दर्ज करें',
       'addEventDateError': 'इवेंट की तारीख चुनें',
       'addEventCategoryError': 'एक श्रेणी चुनें',
+
+      // चुनौती मुख्य शब्द
+      'without': 'बिना',
+      'doing': 'करते हुए',
+      'stopPrefix': 'बंद करना',
+      'startPrefix': 'शुरू करना',
       
       'language': 'भाषा',
     },

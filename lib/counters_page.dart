@@ -96,7 +96,7 @@ class _CountersPageState extends State<CountersPage> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  String _challengePhrase(Counter counter) {
+  String _challengePhrase(Counter counter, LocalizationService localizationService) {
     final basePhrase = counter.title.toLowerCase();
     // Lógica especial para "año nuevo"
     if (basePhrase.contains('año nuevo')) {
@@ -114,16 +114,20 @@ class _CountersPageState extends State<CountersPage> {
       }
     }
     if (counter.isNegativeHabit) {
-      if (basePhrase.startsWith('dejar de ')) {
-        return 'sin ${basePhrase.replaceFirst('dejar de ', '')}';
+      final stopPrefix = localizationService.t('stopPrefix');
+      if (basePhrase.startsWith('${stopPrefix.toLowerCase()} ')) {
+        final cleanPhrase = basePhrase.replaceFirst('${stopPrefix.toLowerCase()} ', '');
+        return '${localizationService.t('without')} $cleanPhrase';
       } else {
-        return 'sin $basePhrase';
+        return '${localizationService.t('without')} $basePhrase';
       }
     } else {
-      if (basePhrase.startsWith('empezar a ')) {
-        return 'haciendo ${basePhrase.replaceFirst('empezar a ', '')}';
+      final startPrefix = localizationService.t('startPrefix');
+      if (basePhrase.startsWith('${startPrefix.toLowerCase()} ')) {
+        final cleanPhrase = basePhrase.replaceFirst('${startPrefix.toLowerCase()} ', '');
+        return '${localizationService.t('doing')} $cleanPhrase';
       } else {
-        return 'haciendo $basePhrase';
+        return '${localizationService.t('doing')} $basePhrase';
       }
     }
   }
@@ -292,7 +296,7 @@ class _CountersPageState extends State<CountersPage> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        _challengePhrase(counter),
+                                        _challengePhrase(counter, localizationService),
                                         style: TextStyle(
                                           fontSize: 26,
                                           color: Colors.orange[900],

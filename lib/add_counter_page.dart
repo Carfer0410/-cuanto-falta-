@@ -6,6 +6,8 @@ import 'counters_page.dart';
 import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'event.dart';
+import 'challenge_customization_widget.dart';
 
 class AddCounterPage extends StatefulWidget {
   const AddCounterPage({Key? key}) : super(key: key);
@@ -22,6 +24,8 @@ class _AddCounterPageState extends State<AddCounterPage> {
   DateTime _selectedDate = DateTime.now();
   String _selectedType = 'dejar de'; // Default value
   late LocalizationService localizationService;
+  EventColor _selectedColor = EventColor.orange;
+  EventIcon _selectedIcon = EventIcon.star;
 
   List<String> get _types => [
     localizationService.t('stopHabit'),
@@ -96,6 +100,8 @@ class _AddCounterPageState extends State<AddCounterPage> {
       title: sanitized,
       startDate: _selectedDate,
       isNegativeHabit: _selectedType == localizationService.t('stopHabit'), // Marca hábito negativo según tipo
+      color: _selectedColor,
+      icon: _selectedIcon,
     );
     list.add(newCounter.toJson());
     await prefs.setString('counters', jsonEncode(list));
@@ -350,6 +356,25 @@ class _AddCounterPageState extends State<AddCounterPage> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 24),
+                        
+                        // Widget de personalización visual para retos
+                        ChallengeCustomizationWidget(
+                          selectedColor: _selectedColor,
+                          selectedIcon: _selectedIcon,
+                          isNegativeHabit: _selectedType == localizationService.t('stopHabit'),
+                          onColorChanged: (color) {
+                            setState(() {
+                              _selectedColor = color;
+                            });
+                          },
+                          onIconChanged: (icon) {
+                            setState(() {
+                              _selectedIcon = icon;
+                            });
+                          },
+                        ),
+                        
                         const SizedBox(height: 36),
                         SizedBox(
                           width: double.infinity,

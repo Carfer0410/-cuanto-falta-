@@ -8,6 +8,7 @@ import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'data_migration_service.dart';
+import 'event.dart'; // Para usar EventColor y EventIcon
 
 class Counter {
   final String title;
@@ -15,6 +16,8 @@ class Counter {
   DateTime? lastConfirmedDate;
   final bool isNegativeHabit;
   DateTime? challengeStartedAt; // Nuevo campo
+  final EventColor color;
+  final EventIcon icon;
 
   Counter({
     required this.title,
@@ -22,6 +25,8 @@ class Counter {
     this.lastConfirmedDate,
     this.isNegativeHabit = false,
     this.challengeStartedAt,
+    this.color = EventColor.orange,
+    this.icon = EventIcon.fitness,
   });
 
   Map<String, dynamic> toJson() => {
@@ -30,6 +35,8 @@ class Counter {
     'lastConfirmedDate': lastConfirmedDate?.toIso8601String(),
     'isNegativeHabit': isNegativeHabit,
     'challengeStartedAt': challengeStartedAt?.toIso8601String(),
+    'color': color.name,
+    'icon': icon.name,
   };
 
   static Counter fromJson(Map<String, dynamic> json) => Counter(
@@ -44,6 +51,14 @@ class Counter {
     challengeStartedAt: json['challengeStartedAt'] != null
         ? DateTime.parse(json['challengeStartedAt'])
         : null,
+    color: EventColor.values.firstWhere(
+      (c) => c.name == json['color'], 
+      orElse: () => EventColor.orange,
+    ),
+    icon: EventIcon.values.firstWhere(
+      (i) => i.name == json['icon'], 
+      orElse: () => EventIcon.fitness,
+    ),
   );
 }
 
@@ -269,15 +284,22 @@ class _CountersPageState extends State<CountersPage> {
                             horizontal: 16,
                             vertical: 8,
                           ),
-                        child: Card(
-                          shape: RoundedRectangleBorder(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [counter.color.color, counter.color.lightColor],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             borderRadius: BorderRadius.circular(20),
-                            side: Theme.of(context).brightness == Brightness.dark
-                                ? const BorderSide(color: Colors.orange, width: 2)
-                                : BorderSide.none,
+                            boxShadow: [
+                              BoxShadow(
+                                color: counter.color.color.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          elevation: 8,
-                          color: Theme.of(context).cardColor,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -286,10 +308,17 @@ class _CountersPageState extends State<CountersPage> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.emoji_events,
-                                  color: Colors.orange,
-                                  size: 56,
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Icon(
+                                    counter.icon.icon,
+                                    color: counter.color.color,
+                                    size: 56,
+                                  ),
                                 ),
                                 const SizedBox(width: 18),
                                 Expanded(
@@ -300,9 +329,9 @@ class _CountersPageState extends State<CountersPage> {
                                     children: [
                                       Text(
                                         localizationService.t('youHave'),
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 22,
-                                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey[800],
+                                          color: Colors.white,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -322,7 +351,7 @@ class _CountersPageState extends State<CountersPage> {
                                               12,
                                             ),
                                             border: Border.all(
-                                              color: Colors.orangeAccent,
+                                              color: counter.color.color,
                                               width: 1.2,
                                             ),
                                           ),
@@ -358,7 +387,7 @@ class _CountersPageState extends State<CountersPage> {
                                         _challengePhrase(counter, localizationService),
                                         style: TextStyle(
                                           fontSize: 26,
-                                          color: Colors.orange[900],
+                                          color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                           letterSpacing: 0.5,
                                         ),
@@ -366,9 +395,9 @@ class _CountersPageState extends State<CountersPage> {
                                       const SizedBox(height: 8),
                                       Text(
                                         '${localizationService.t('keepGoing')} ${localizationService.t('everySecondCounts')}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 16,
-                                          color: Colors.green[700],
+                                          color: Colors.white70,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -378,8 +407,8 @@ class _CountersPageState extends State<CountersPage> {
                                           width: double.infinity,
                                           child: ElevatedButton(
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.orange,
-                                              foregroundColor: Colors.white,
+                                              backgroundColor: Colors.white,
+                                              foregroundColor: counter.color.color,
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                     vertical: 18,
@@ -415,8 +444,8 @@ class _CountersPageState extends State<CountersPage> {
                                           width: double.infinity,
                                           child: ElevatedButton(
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.orange,
-                                              foregroundColor: Colors.white,
+                                              backgroundColor: Colors.white,
+                                              foregroundColor: counter.color.color,
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                     vertical: 18,

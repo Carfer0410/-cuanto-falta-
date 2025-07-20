@@ -8,11 +8,17 @@ import 'add_event_page.dart';
 import 'localization_service.dart';
 import 'data_migration_service.dart';
 import 'optimal_usage_guide.dart';
+import 'event_customization_widget.dart';
 
 /// Widget de cuenta regresiva en vivo mostrando días, horas, minutos y segundos.
 class _CountdownTimer extends StatefulWidget {
   final DateTime targetDate;
-  const _CountdownTimer({Key? key, required this.targetDate}) : super(key: key);
+  final EventColor eventColor;
+  const _CountdownTimer({
+    Key? key, 
+    required this.targetDate,
+    required this.eventColor,
+  }) : super(key: key);
 
   @override
   _CountdownTimerState createState() => _CountdownTimerState();
@@ -66,9 +72,9 @@ class _CountdownTimerState extends State<_CountdownTimer> {
       builder: (context, localizationService, child) {
         return Text(
           localizationService.timeRemaining(days, hours, minutes, seconds),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
-            color: Colors.orange,
+            color: widget.eventColor.color,
             fontWeight: FontWeight.bold,
           ),
         );
@@ -318,11 +324,12 @@ class _HomePageState extends State<HomePage> {
                                     children: [
                                       Row(
                                         children: [
-                                          const Icon(
-                                            Icons.event,
-                                            color: Colors.orange,
+                                          EventStyleIndicator(
+                                            color: event.color,
+                                            icon: event.icon,
+                                            size: 32,
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 12),
                                           Expanded(
                                             child: Text(
                                               event.title,
@@ -369,6 +376,7 @@ class _HomePageState extends State<HomePage> {
                                       const SizedBox(height: 8),
                                       _CountdownTimer(
                                         targetDate: event.targetDate,
+                                        eventColor: event.color,
                                       ),
                                     ],
                                   ),

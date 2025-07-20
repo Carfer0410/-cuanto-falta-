@@ -17,7 +17,7 @@ import 'event.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
 
   DatabaseHelper._init();
 
@@ -45,7 +45,9 @@ class DatabaseHelper {
         title TEXT NOT NULL,
         targetDate TEXT NOT NULL,
         message TEXT NOT NULL,
-        category TEXT NOT NULL DEFAULT 'other'
+        category TEXT NOT NULL DEFAULT 'other',
+        color TEXT NOT NULL DEFAULT 'orange',
+        icon TEXT NOT NULL DEFAULT 'celebration'
       )
     ''');
   }
@@ -65,6 +67,12 @@ class DatabaseHelper {
       await db.execute('UPDATE events SET category = "health" WHERE category = "Salud" OR category = "Health"');
       await db.execute('UPDATE events SET category = "education" WHERE category = "Educación" OR category = "Education"');
       await db.execute('UPDATE events SET category = "holiday" WHERE category = "Festivo" OR category = "Holiday"');
+    }
+    
+    // Migración para personalización visual (versión 4)
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE events ADD COLUMN color TEXT NOT NULL DEFAULT "orange"');
+      await db.execute('ALTER TABLE events ADD COLUMN icon TEXT NOT NULL DEFAULT "celebration"');
     }
   }
 

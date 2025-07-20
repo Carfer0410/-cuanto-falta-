@@ -489,6 +489,13 @@ class LocalizationService extends ChangeNotifier {
       'guarantee_title': '✅ Garantía de funcionamiento',
       'guarantee_desc': 'Siguiendo estos pasos, recibirás todas las notificaciones a tiempo, ¡garantizado!',
       'got_it': '¡Entendido!',
+
+      // PERSONALIZACIÓN DE EVENTOS
+      'customize_appearance': 'Personalizar Apariencia',
+      'choose_color': 'Elige un color',
+      'choose_icon': 'Elige un icono',
+      'preview_event_title': 'Vista previa del evento',
+      'preview_event_subtitle': 'Así se verá tu evento personalizado',
     },
 
     'en': {
@@ -808,6 +815,13 @@ class LocalizationService extends ChangeNotifier {
       'guarantee_title': '✅ Functionality guarantee',
       'guarantee_desc': 'Following these steps, you\'ll receive all notifications on time, guaranteed!',
       'got_it': 'Got it!',
+
+      // EVENT CUSTOMIZATION
+      'customize_appearance': 'Customize Appearance',
+      'choose_color': 'Choose a color',
+      'choose_icon': 'Choose an icon',
+      'preview_event_title': 'Event preview',
+      'preview_event_subtitle': 'This is how your custom event will look',
     },
 
     'pt': {

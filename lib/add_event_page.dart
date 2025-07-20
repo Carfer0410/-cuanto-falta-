@@ -5,6 +5,7 @@ import 'event.dart';
 import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'event_customization_widget.dart';
 // import 'package:intl/intl.dart';
 
 class AddEventPage extends StatefulWidget {
@@ -19,6 +20,8 @@ class _AddEventPageState extends State<AddEventPage> {
   final _titleController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedCategory;
+  EventColor _selectedColor = EventColor.orange;
+  EventIcon _selectedIcon = EventIcon.celebration;
 
   @override
   void dispose() {
@@ -56,6 +59,8 @@ class _AddEventPageState extends State<AddEventPage> {
         targetDate: _selectedDate!,
         message: mensaje,
         category: _selectedCategory!, // Guardar el ID único
+        color: _selectedColor,
+        icon: _selectedIcon,
       );
       
       // Guardar evento en la base de datos
@@ -274,6 +279,24 @@ class _AddEventPageState extends State<AddEventPage> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 24),
+                        
+                        // Widget de personalización visual
+                        EventCustomizationWidget(
+                          selectedColor: _selectedColor,
+                          selectedIcon: _selectedIcon,
+                          onColorChanged: (color) {
+                            setState(() {
+                              _selectedColor = color;
+                            });
+                          },
+                          onIconChanged: (icon) {
+                            setState(() {
+                              _selectedIcon = icon;
+                            });
+                          },
+                        ),
+                        
                         const SizedBox(height: 36),
                         SizedBox(
                           width: double.infinity,

@@ -6,6 +6,7 @@ import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'data_migration_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 
@@ -21,6 +22,9 @@ void main() async {
   // Inicializar servicios de estadísticas y logros
   await StatisticsService.instance.loadStatistics();
   await AchievementService.instance.loadAchievements();
+  
+  // Ejecutar migración de datos existentes (solo una vez)
+  await DataMigrationService.runInitialDataMigration();
   
   runApp(const MyApp());
 }

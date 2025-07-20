@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'data_migration_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -28,6 +29,134 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Future<void> _resetAndRemigrate() async {
+    try {
+      // Mostrar indicador de carga
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Reseteando y re-migrando datos...'),
+              ],
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
+      // Ejecutar reset y migración
+      await DataMigrationService.resetAndRemigrate();
+      
+      // Recargar datos
+      await _loadData();
+
+      // Mostrar mensaje de éxito
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 16),
+                Text('¡Datos reseteados y migrados correctamente!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Mostrar mensaje de error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 16),
+                Text('Error: $e'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _forceSyncData() async {
+    try {
+      // Mostrar indicador de carga
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Resincronizando datos...'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Ejecutar sincronización forzada
+      await DataMigrationService.forceSyncAllData();
+      
+      // Recargar datos
+      await _loadData();
+
+      // Mostrar mensaje de éxito
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 16),
+                Text('¡Datos sincronizados correctamente!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Mostrar mensaje de error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 16),
+                Text('Error: $e'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,6 +169,39 @@ class _DashboardPageState extends State<DashboardPage> {
         elevation: 0,
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'sync') {
+                await _forceSyncData();
+              } else if (value == 'reset') {
+                await _resetAndRemigrate();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'sync',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh),
+                    SizedBox(width: 8),
+                    Text('Resincronizar datos'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    Icon(Icons.restart_alt, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Reset y re-migrar', style: TextStyle(color: Colors.orange)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Consumer3<LocalizationService, StatisticsService, AchievementService>(
         builder: (context, localization, statsService, achievementService, child) {

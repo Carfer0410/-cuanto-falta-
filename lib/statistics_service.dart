@@ -269,4 +269,21 @@ class StatisticsService extends ChangeNotifier {
       };
     }
   }
+
+  // Métodos públicos para migración de datos
+  void updateStatistics(UserStatistics newStats) {
+    _statistics = newStats;
+    notifyListeners();
+  }
+
+  Future<void> saveStatistics() async {
+    await _saveStatistics();
+  }
+
+  // Método para resetear estadísticas durante migración
+  Future<void> setStatisticsFromMigration(UserStatistics migratedStats) async {
+    _statistics = migratedStats;
+    await _saveStatistics();
+    notifyListeners();
+  }
 }

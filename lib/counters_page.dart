@@ -70,10 +70,9 @@ class _CountersPageState extends State<CountersPage> {
       _counters = decoded.map((e) => Counter.fromJson(e)).toList();
     }
     
-    // Actualizar estadísticas de retos
-    final activeChallenges = _counters.length;
-    final totalChallenges = activeChallenges; // Para simplificar por ahora
-    await StatisticsService.instance.updateChallengeStats(activeChallenges, totalChallenges);
+    // NOTA: No actualizar estadísticas aquí para evitar duplicación
+    // Las estadísticas se actualizan solo cuando se crean/modifican retos
+    // o durante la migración/sincronización manual
     
     setState(() {});
   }

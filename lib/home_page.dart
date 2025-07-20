@@ -7,32 +7,6 @@ import 'event.dart';
 import 'add_event_page.dart';
 import 'localization_service.dart';
 
-/// Genera un mensaje alusivo automático según el evento y los días restantes.
-String generarMensajeAlusivo(String titulo, int dias, LocalizationService locService) {
-  final lower = titulo.toLowerCase();
-  
-  // Buscar categorías por palabras clave en diferentes idiomas
-  if (lower.contains('navidad') || lower.contains('christmas') || lower.contains('noel')) {
-    return locService.t('msgChristmas');
-  } else if (lower.contains('año nuevo') || lower.contains('new year') || lower.contains('nouvel an')) {
-    if (dias > 60) {
-      return '🎉 ${locService.t('timeRemaining').replaceAll('{days}', dias.toString()).replaceAll('{hours}', '0').replaceAll('{minutes}', '0').replaceAll('{seconds}', '0')} para el próximo año';
-    } else {
-      return locService.t('msgNewYear');
-    }
-  } else if (lower.contains('cumple') || lower.contains('birthday') || lower.contains('anniversaire')) {
-    return locService.t('msgBirthday');
-  } else if (lower.contains('vacaciones') || lower.contains('vacation') || lower.contains('vacances')) {
-    return locService.t('msgVacation');
-  } else if (dias == 0) {
-    return '🚨 ¡Hoy es el gran día!';
-  } else if (dias <= 3) {
-    return '⏰ ¡Ya casi llega!';
-  } else {
-    return locService.t('msgOther');
-  }
-}
-
 /// Widget de cuenta regresiva en vivo mostrando días, horas, minutos y segundos.
 class _CountdownTimer extends StatefulWidget {
   final DateTime targetDate;
@@ -309,7 +283,7 @@ class _HomePageState extends State<HomePage> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  event.message,
+                                                  localizationService.getCategoryMessage(event.category),
                                                   style: TextStyle(
                                                     fontSize: 16,
                                                     color: Theme.of(context).textTheme.bodyMedium?.color,

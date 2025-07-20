@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'counters_page.dart';
+import 'localization_service.dart';
 
 class AddCounterPage extends StatefulWidget {
   const AddCounterPage({Key? key}) : super(key: key);
@@ -17,11 +19,12 @@ class _AddCounterPageState extends State<AddCounterPage> {
   final TextEditingController _titleController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String _selectedType = 'dejar de'; // Default value
+  late LocalizationService localizationService;
 
-  final List<String> _types = [
-    'dejar de',
-    'empezar a',
-  ]; // Options for the dropdown
+  List<String> get _types => [
+    localizationService.t('stopHabit'),
+    localizationService.t('startHabit'),
+  ];
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -71,9 +74,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
     if (_selectedDate.isAfter(DateTime.now()) || _selectedDate.isBefore(_minDate)) {
       if (!mounted) return;
       showDialog(context: context, builder: (_) => AlertDialog(
-        title: Text('Fecha inválida'),
-        content: Text('Seleccione una fecha dentro de los últimos 10 años y sin pasar hoy.'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+        title: Text(localizationService.t('invalidDate')),
+        content: Text(localizationService.t('invalidDateMessage')),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(localizationService.t('ok')))],
       ));
       return;
     }
@@ -81,16 +84,16 @@ class _AddCounterPageState extends State<AddCounterPage> {
     if (list.any((e) => (e['title'] as String) == sanitized)) {
       if (!mounted) return;
       showDialog(context: context, builder: (_) => AlertDialog(
-        title: Text('Reto duplicado'),
-        content: Text('Ya existe un reto con este título.'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+        title: Text(localizationService.t('duplicateChallenge')),
+        content: Text(localizationService.t('duplicateChallengeMessage')),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(localizationService.t('ok')))],
       ));
       return;
     }
     final newCounter = Counter(
       title: sanitized,
       startDate: _selectedDate,
-      isNegativeHabit: _selectedType == 'dejar de', // Marca hábito negativo según tipo
+      isNegativeHabit: _selectedType == localizationService.t('stopHabit'), // Marca hábito negativo según tipo
     );
     list.add(newCounter.toJson());
     await prefs.setString('counters', jsonEncode(list));
@@ -106,31 +109,41 @@ class _AddCounterPageState extends State<AddCounterPage> {
 
   @override
   Widget build(BuildContext context) {
+    localizationService = Provider.of<LocalizationService>(context);
+    
+    // Asegurar que _selectedType tenga un valor válido en el idioma actual
+    if (_selectedType == 'dejar de' || _selectedType == 'stop' || _selectedType == 'parar de' || 
+        _selectedType == 'arrêter de' || _selectedType == 'aufhören' || _selectedType == 'smettere di' ||
+        _selectedType == 'やめる' || _selectedType == '그만두기' || _selectedType == '停止' ||
+        _selectedType == 'التوقف عن' || _selectedType == 'перестать' || _selectedType == 'बंद करना') {
+      _selectedType = localizationService.t('stopHabit');
+    } else {
+      _selectedType = localizationService.t('startHabit');
+    }
+    
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Nuevo reto'),
+        title: Text(localizationService.t('newChallenge')),
         centerTitle: true,
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
         elevation: 2,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: 'Consejo',
+            tooltip: localizationService.t('titleTip'),
             onPressed: () {
               showDialog(
                 context: context,
                 builder:
                     (context) => AlertDialog(
-                      title: const Text('Consejo para el título'),
-                      content: const Text(
-                        'Usa una o dos palabras clave para tu reto. Ejemplo: "Cigarro", "Alcohol", "Ejercicio". Así la pantalla se verá limpia y profesional.',
-                      ),
+                      title: Text(localizationService.t('titleTip')),
+                      content: Text(localizationService.t('titleTipContent')),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('OK'),
+                          child: Text(localizationService.t('ok')),
                         ),
                       ],
                     ),
@@ -176,7 +189,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                         TextFormField(
                           controller: _titleController,
                           decoration: InputDecoration(
-                            labelText: '¿Qúe quieres dejar o iniciar a realizar?',
+                            labelText: localizationService.t('challengePrompt'),
                             labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
@@ -207,8 +220,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                                 width: 2,
                               ),
                             ),
-                            helperText:
-                                'Ejemplo: Dejar de fumar, Hacer ejercicio, Aprender inglés, Meditar... ',
+                            helperText: localizationService.t('challengeExample'),
                             helperStyle: TextStyle(
                               color: isDark ? Colors.grey[400] : Colors.grey,
                               fontSize: 15,
@@ -220,27 +232,27 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Ingrese un reto o hábito';
+                              return localizationService.t('enterChallenge');
                             }
                             final sanitized = _sanitizeTitle(value);
                             if (sanitized.isEmpty) {
-                              return 'Título inválido después de limpieza';
+                              return localizationService.t('invalidTitleAfterClean');
                             }
                             if (sanitized.length < 3) {
-                              return 'Título muy corto (mín. 3 caracteres)';
+                              return localizationService.t('titleTooShort');
                             }
                             final words = sanitized.split(RegExp(r'\s+'));
                             if (words.length > 2) {
-                              return 'Use máximo dos palabras clave';
+                              return localizationService.t('maxTwoWords');
                             }
                             if (sanitized.length > 20) {
-                              return 'Título muy largo (máx. 20 caracteres)';
+                              return localizationService.t('titleTooLong');
                             }
                             if (RegExp(r'^[0-9]+$').hasMatch(sanitized)) {
-                              return 'Título no puede ser solo números';
+                              return localizationService.t('titleOnlyNumbers');
                             }
                             if (words.any((w) => _bannedWords.contains(w))) {
-                              return 'Palabra no permitida';
+                              return localizationService.t('bannedWord');
                             }
                             return null;
                           },
@@ -251,7 +263,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                         DropdownButtonFormField<String>(
                           value: _selectedType,
                           decoration: InputDecoration(
-                            labelText: 'Tipo de reto',
+                            labelText: localizationService.t('challengeType'),
                             labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
@@ -297,7 +309,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           children: [
                             Expanded(
                               child: Text(
-                                'Fecha de inicio:',
+                                '${localizationService.t('startDate')}:',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.orange[900],
@@ -335,8 +347,8 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           child: ElevatedButton.icon(
                             onPressed: _saveCounter,
                             icon: const Icon(Icons.save, size: 26),
-                            label: const Text(
-                              'Guardar reto',
+                            label: Text(
+                              localizationService.t('saveChallenge'),
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,

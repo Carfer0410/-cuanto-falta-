@@ -17,6 +17,7 @@ import 'event.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
+  static const int _databaseVersion = 3;
 
   DatabaseHelper._init();
 
@@ -29,7 +30,12 @@ class DatabaseHelper {
   Future<Database> _initDB(String fileName) async {
     final directory = await getApplicationDocumentsDirectory();
     final path = join(directory.path, fileName);
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path, 
+      version: _databaseVersion, 
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
   }
 
   Future _createDB(Database db, int version) async {
@@ -38,9 +44,28 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         targetDate TEXT NOT NULL,
-        message TEXT NOT NULL
+        message TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'other'
       )
     ''');
+  }
+
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE events ADD COLUMN category TEXT NOT NULL DEFAULT "other"');
+    }
+    
+    // Migración adicional para corregir categorías en español a IDs
+    if (oldVersion < 3) {
+      await db.execute('UPDATE events SET category = "other" WHERE category = "Otro" OR category = "Other"');
+      await db.execute('UPDATE events SET category = "birthday" WHERE category = "Cumpleaños" OR category = "Birthday"');
+      await db.execute('UPDATE events SET category = "vacation" WHERE category = "Vacaciones" OR category = "Vacation"');
+      await db.execute('UPDATE events SET category = "work" WHERE category = "Trabajo" OR category = "Work"');
+      await db.execute('UPDATE events SET category = "family" WHERE category = "Familia" OR category = "Family"');
+      await db.execute('UPDATE events SET category = "health" WHERE category = "Salud" OR category = "Health"');
+      await db.execute('UPDATE events SET category = "education" WHERE category = "Educación" OR category = "Education"');
+      await db.execute('UPDATE events SET category = "holiday" WHERE category = "Festivo" OR category = "Holiday"');
+    }
   }
 
   Future<int> insertEvent(Event event) async {

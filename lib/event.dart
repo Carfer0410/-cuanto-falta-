@@ -4,6 +4,7 @@
 /// - String title
 /// - DateTime targetDate
 /// - String message
+/// - String category
 /// Métodos:
 /// - toMap(): para guardar en SQLite
 /// - fromMap(): para leer desde SQLite
@@ -12,12 +13,14 @@ class Event {
   String title;
   DateTime targetDate;
   String message;
+  String category;
 
   Event({
     this.id,
     required this.title,
     required this.targetDate,
     required this.message,
+    required this.category,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +29,7 @@ class Event {
       'title': title,
       'targetDate': targetDate.toIso8601String(),
       'message': message,
+      'category': category,
     };
   }
 
@@ -35,6 +39,7 @@ class Event {
       title: map['title'],
       targetDate: DateTime.parse(map['targetDate']),
       message: map['message'],
+      category: map['category'] ?? 'other',
     );
   }
 

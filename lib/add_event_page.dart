@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'database_helper.dart';
 import 'event.dart';
+import 'localization_service.dart';
 // import 'package:intl/intl.dart';
 
 class AddEventPage extends StatefulWidget {
@@ -15,29 +17,6 @@ class _AddEventPageState extends State<AddEventPage> {
   final _titleController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedCategory;
-
-  final Map<String, String> _categoryMessages = {
-    'Navidad':
-        '🎄 Ve preparando los regalos y el arbolito. ¡La magia está cerca!',
-    'Año Nuevo': '🎉 ¡Ya casi comienza el año! Haz tu lista de propósitos.',
-    'Cumpleaños': '🎂 ¡No se te olvide el pastel y la sorpresa!',
-    'Vacaciones': '🧳 ¡A empacar maletas desde ya! El descanso se acerca.',
-    'Examen': '📚 ¡Estudia y confía en ti, vas a lograrlo!',
-    'Viaje': '✈️ ¡Prepara tu itinerario y disfruta la aventura!',
-    'Boda': '💍 ¡El gran día se acerca, que viva el amor!',
-    'Graduación': '🎓 ¡Un logro más cerca, sigue así!',
-    'Concierto': '🎵 ¡Pronto a cantar y disfrutar tu música favorita!',
-    'Reunión': '🤝 ¡Ya casi es hora de ver a todos!',
-    'Entrega de proyecto': '📝 ¡Últimos detalles, tú puedes!',
-    'Mudanza': '🏡 ¡Un nuevo hogar te espera!',
-    'Entrevista': '💼 ¡Confía en ti, el éxito está cerca!',
-    'Día de la Madre': '🌷 ¡Prepara un detalle especial para mamá!',
-    'Día del Padre': '👔 ¡Haz sentir especial a papá!',
-    'San Valentín': '💌 ¡El amor está en el aire!',
-    'Black Friday': '🛍️ ¡Prepara tu lista de compras!',
-    'Vacuna': '💉 ¡Cuida tu salud, ya casi es el día!',
-    'Otro': '⏳ Cada día estás más cerca de tu meta.',
-  };
 
   @override
   void dispose() {
@@ -64,16 +43,17 @@ class _AddEventPageState extends State<AddEventPage> {
     if (_formKey.currentState!.validate() &&
         _selectedDate != null &&
         _selectedCategory != null) {
+      final localizationService = Provider.of<LocalizationService>(context, listen: false);
       String mensaje;
-      if (_categoryMessages.containsKey(_selectedCategory!)) {
-        mensaje = _categoryMessages[_selectedCategory!]!;
-      } else {
-        mensaje = '⏳ Cada día estás más cerca.';
-      }
+      
+      // Obtener mensaje traducido usando el ID de categoría (que ahora es _selectedCategory)
+      mensaje = localizationService.getCategoryMessage(_selectedCategory!);
+      
       final event = Event(
         title: _titleController.text,
         targetDate: _selectedDate!,
         message: mensaje,
+        category: _selectedCategory!, // Guardar el ID único
       );
       
       // Guardar evento en la base de datos
@@ -102,11 +82,13 @@ class _AddEventPageState extends State<AddEventPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
+    return Consumer<LocalizationService>(
+      builder: (context, localizationService, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Nuevo evento'),
+        title: Text(localizationService.t('newEvent')),
         centerTitle: true,
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor ?? Colors.white,
@@ -145,7 +127,7 @@ class _AddEventPageState extends State<AddEventPage> {
                         TextFormField(
                           controller: _titleController,
                           decoration: InputDecoration(
-                            labelText: 'Nombre del evento',
+                            labelText: localizationService.t('eventTitle'),
                             labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
@@ -178,7 +160,7 @@ class _AddEventPageState extends State<AddEventPage> {
                           validator:
                               (value) =>
                                   value == null || value.isEmpty
-                                      ? 'Ingrese un nombre'
+                                      ? localizationService.t('addEventTitleError')
                                       : null,
                           textInputAction: TextInputAction.done,
                           autofocus: true,
@@ -187,7 +169,7 @@ class _AddEventPageState extends State<AddEventPage> {
                         DropdownButtonFormField<String>(
                           value: _selectedCategory,
                           decoration: InputDecoration(
-                            labelText: 'Categoría',
+                            labelText: localizationService.t('eventCategory'),
                             labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
@@ -213,12 +195,11 @@ class _AddEventPageState extends State<AddEventPage> {
                               ),
                             ),
                           ),
-                          items:
-                              _categoryMessages.keys
+                          items: localizationService.getCategories()
                                   .map(
-                                    (cat) => DropdownMenuItem(
-                                      value: cat,
-                                      child: Text(cat),
+                                    (categoryEntry) => DropdownMenuItem(
+                                      value: categoryEntry.key, // Usar el ID como value
+                                      child: Text(categoryEntry.value), // Mostrar el nombre traducido
                                     ),
                                   )
                                   .toList(),
@@ -230,7 +211,7 @@ class _AddEventPageState extends State<AddEventPage> {
                           validator:
                               (value) =>
                                   value == null
-                                      ? 'Seleccione una categoría'
+                                      ? localizationService.t('addEventCategoryError')
                                       : null,
                         ),
                         const SizedBox(height: 16),
@@ -238,7 +219,9 @@ class _AddEventPageState extends State<AddEventPage> {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 16),
                             child: Text(
-                              _categoryMessages[_selectedCategory!] ?? '',
+                              _selectedCategory != null
+                                ? localizationService.getCategoryMessage(_selectedCategory!)
+                                : '',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: isDark ? Colors.greenAccent : Colors.green,
@@ -251,7 +234,7 @@ class _AddEventPageState extends State<AddEventPage> {
                             Expanded(
                               child: Text(
                                 _selectedDate == null
-                                    ? 'Seleccione una fecha'
+                                    ? localizationService.t('selectDate')
                                     : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
                                 style: TextStyle(
                                   fontSize: 16,
@@ -267,8 +250,8 @@ class _AddEventPageState extends State<AddEventPage> {
                                 color: Colors.orange,
                                 size: 18,
                               ),
-                              label: const Text(
-                                'Elegir fecha',
+                              label: Text(
+                                localizationService.t('selectDate'),
                                 style: TextStyle(
                                   color: Colors.orange,
                                   fontWeight: FontWeight.bold,
@@ -289,8 +272,8 @@ class _AddEventPageState extends State<AddEventPage> {
                           child: ElevatedButton.icon(
                             onPressed: _saveEvent,
                             icon: const Icon(Icons.save, size: 26),
-                            label: const Text(
-                              'Guardar evento',
+                            label: Text(
+                              localizationService.t('saveEvent'),
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -316,6 +299,8 @@ class _AddEventPageState extends State<AddEventPage> {
           ),
         ),
       ),
+    );
+      },
     );
   }
 }

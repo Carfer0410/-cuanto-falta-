@@ -21,11 +21,19 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
   List<PreparationTask> _preparations = [];
   Map<String, int> _stats = {'total': 0, 'completed': 0, 'pending': 0};
   bool _isLoading = true;
+  bool _isRecalibrating = false; // Para evitar múltiples recalibraciones
 
   @override
   void initState() {
     super.initState();
     _loadPreparations();
+  }
+
+  @override
+  void dispose() {
+    // Limpiar cualquier operación pendiente
+    _isRecalibrating = false;
+    super.dispose();
   }
 
   Future<void> _loadPreparations() async {
@@ -152,6 +160,161 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
     );
   }
 
+  /// 🆕 NUEVO: Diálogo para re-calibrar preparativos automáticamente
+  void _showRecalibrationDialog() {
+    final now = DateTime.now();
+    final daysUntilEvent = widget.event.targetDate.difference(now).inDays;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.auto_fix_high, color: Colors.orange),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '🔄 Re-calibrar Preparativos',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tu evento está en $daysUntilEvent días.',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              SizedBox(height: 12),
+              Text(
+                '¿Quieres que re-calibre automáticamente los preparativos para adaptarse mejor al tiempo disponible?',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '✨ La re-calibración hará:',
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blue[700]),
+                    ),
+                    SizedBox(height: 8),
+                    Text('• Eliminar preparativos obsoletos', style: TextStyle(fontSize: 13)),
+                    Text('• Crear nuevos preparativos adaptados', style: TextStyle(fontSize: 13)),
+                    Text('• Ajustar tiempos al evento próximo', style: TextStyle(fontSize: 13)),
+                    Text('• Mantener preparativos ya completados', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Note: Se mantendrán los preparativos que ya completaste.',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // Evitar múltiples ejecuciones
+              if (_isRecalibrating) return;
+              _isRecalibrating = true;
+              
+              // Cerrar diálogo
+              Navigator.pop(context);
+              
+              try {
+                // Ejecutar re-calibración directamente
+                await _performRecalibration();
+              } finally {
+                // Resetear flag
+                if (mounted) {
+                  _isRecalibrating = false;
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: Text('🔄 Re-calibrar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Método separado para realizar la re-calibración de forma segura
+  Future<void> _performRecalibration() async {
+    // Solo proceder si el widget está montado
+    if (!mounted) return;
+    
+    // Mostrar loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Expanded(child: Text('🔄 Re-calibrando preparativos...')),
+          ],
+        ),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    
+    try {
+      // Ejecutar re-calibración
+      await PreparationService.instance.recalibrateEventPreparations(widget.event.id!);
+      
+      // Solo continuar si el widget sigue montado
+      if (!mounted) return;
+      
+      // Recargar preparativos
+      await _loadPreparations();
+      
+      // Mostrar éxito solo si el widget sigue montado
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Preparativos re-calibrados exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Mostrar error solo si el widget sigue montado
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al re-calibrar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      print('❌ Error en re-calibración: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LocalizationService>(
@@ -163,6 +326,12 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
             backgroundColor: widget.event.color.color,
             foregroundColor: Colors.white,
             actions: [
+              // 🆕 NUEVO: Botón de re-calibración inteligente
+              IconButton(
+                icon: Icon(Icons.auto_fix_high),
+                onPressed: _showRecalibrationDialog,
+                tooltip: 'Re-calibrar preparativos',
+              ),
               IconButton(
                 icon: Icon(Icons.add),
                 onPressed: _showAddTaskDialog,
@@ -326,6 +495,8 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
               style: TextStyle(
                 color: task.isCompleted ? Colors.grey[500] : Colors.grey[700],
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: 4),
             Row(
@@ -340,18 +511,22 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                       : Colors.grey[500],
                 ),
                 SizedBox(width: 4),
-                Text(
-                  _getTaskTimingText(task),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: shouldShow 
-                        ? (isOverdue ? Colors.red : widget.event.color.color)
-                        : Colors.grey[500],
-                    fontWeight: shouldShow ? FontWeight.w500 : FontWeight.normal,
+                Expanded(
+                  child: Text(
+                    _getTaskTimingText(task),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: shouldShow 
+                          ? (isOverdue ? Colors.red : widget.event.color.color)
+                          : Colors.grey[500],
+                      fontWeight: shouldShow ? FontWeight.w500 : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (task.isCompleted && task.completedAt != null) ...[
-                  SizedBox(width: 12),
+                  SizedBox(width: 8),
                   Icon(Icons.check_circle, size: 14, color: Colors.green),
                   SizedBox(width: 4),
                   Text(
@@ -417,12 +592,34 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
       return 'El día del evento';
     } else if (task.shouldShowTask(widget.event.targetDate)) {
       if (task.isOverdue(widget.event.targetDate)) {
-        return '⚠️ Recomendado hace ${task.daysBeforeEvent - daysUntilEvent} días';
+        // 🆕 NUEVO: Lógica inteligente para evitar advertencias innecesarias
+        final daysDifference = task.daysBeforeEvent - daysUntilEvent;
+        
+        // Si la diferencia es pequeña y el evento es próximo, no mostrar como "vencido"
+        if (daysUntilEvent <= 7 && daysDifference <= 3) {
+          return '📍 Ajustado';
+        }
+        
+        // Si el evento es muy próximo (menos de 5 días), adaptar mensaje
+        if (daysUntilEvent <= 5) {
+          return '⚡ Urgente';
+        }
+        
+        // Para casos normales de retraso
+        return '⚠️ Hace $daysDifference días';
       } else {
-        return '📍 Recomendado ahora (${task.daysBeforeEvent} días antes)';
+        return '📍 Recomendado ahora';
       }
     } else {
-      return 'En ${daysUntilEvent - task.daysBeforeEvent} días (${task.daysBeforeEvent} días antes)';
+      // 🆕 NUEVO: Manejo inteligente de tareas futuras en eventos próximos
+      final daysUntilTask = daysUntilEvent - task.daysBeforeEvent;
+      
+      // Si el evento es muy próximo pero la tarea está en el futuro, ajustar mensaje
+      if (daysUntilEvent <= 7 && daysUntilTask > daysUntilEvent) {
+        return '⏰ Adaptado';
+      }
+      
+      return 'En $daysUntilTask días';
     }
   }
 }

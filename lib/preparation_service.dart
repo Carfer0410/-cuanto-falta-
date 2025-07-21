@@ -220,18 +220,37 @@ class PreparationService extends ChangeNotifier {
       // Obtener el estilo de planificación del usuario
       final planningStyle = PlanningStyleService.instance;
       
+      // 🆕 NUEVO: Adaptación dinámica por proximidad del evento
       final db = await DatabaseHelper.instance.database;
       
-      for (final taskData in template) {
-        // Ajustar días según el estilo del usuario
-        final originalDays = taskData['days'] as int;
-        final adjustedDays = planningStyle.getAdjustedDays(originalDays);
-        
+      // Obtener fecha del evento para calcular días disponibles
+      final eventResult = await db.query(
+        'events',
+        columns: ['targetDate'],
+        where: 'id = ?',
+        whereArgs: [eventId],
+      );
+      
+      if (eventResult.isEmpty) {
+        print('❌ No se encontró el evento $eventId');
+        return;
+      }
+      
+      final eventDate = DateTime.parse(eventResult.first['targetDate'] as String);
+      final now = DateTime.now();
+      final totalDaysAvailable = eventDate.difference(now).inDays;
+      
+      print('📅 Evento en $totalDaysAvailable días - Adaptando preparativos...');
+      
+      // Filtrar y adaptar preparativos según días disponibles
+      final adaptedTasks = _adaptTasksForTimeframe(template, totalDaysAvailable, planningStyle);
+      
+      for (final taskData in adaptedTasks) {
         final task = PreparationTask(
           eventId: eventId,
           title: taskData['title'],
           description: taskData['description'],
-          daysBeforeEvent: adjustedDays, // Usar días ajustados
+          daysBeforeEvent: taskData['adaptedDays'], // Usar días adaptados
         );
         
         await db.insert('preparation_tasks', task.toMap());
@@ -241,11 +260,183 @@ class PreparationService extends ChangeNotifier {
       final styleName = planningStyle.getStyleName(planningStyle.currentStyle);
       final multiplier = planningStyle.getMultiplier(planningStyle.currentStyle);
       
-      print('✅ Creados ${template.length} preparativos automáticos para evento $eventId (categoría: $category)');
+      print('✅ Creados ${adaptedTasks.length} preparativos adaptativos para evento $eventId (categoría: $category)');
       print('🎨 Estilo aplicado: $styleName (${multiplier}x)');
+      print('⏰ Adaptación temporal: ${totalDaysAvailable} días disponibles');
       notifyListeners();
     } catch (e) {
       print('❌ Error creando preparativos automáticos: $e');
+    }
+  }
+
+  /// 🆕 NUEVO: Sistema adaptativo inteligente para ajustar preparativos
+  List<Map<String, dynamic>> _adaptTasksForTimeframe(
+    List<Map<String, dynamic>> originalTasks, 
+    int daysAvailable, 
+    PlanningStyleService planningStyle
+  ) {
+    // Si tenemos menos de 3 días, crear preparativos de emergencia
+    if (daysAvailable <= 3) {
+      return _createEmergencyTasks(originalTasks, daysAvailable);
+    }
+    
+    // Si tenemos menos de 7 días, comprimir preparativos
+    if (daysAvailable <= 7) {
+      return _createCompressedTasks(originalTasks, daysAvailable);
+    }
+    
+    // Si tenemos menos de 21 días, usar preparativos optimizados
+    if (daysAvailable <= 21) {
+      return _createOptimizedTasks(originalTasks, daysAvailable, planningStyle);
+    }
+    
+    // Para más de 21 días, usar sistema normal con estilo
+    return _createStandardTasks(originalTasks, planningStyle);
+  }
+
+  /// Preparativos de emergencia para eventos muy próximos (1-3 días)
+  List<Map<String, dynamic>> _createEmergencyTasks(List<Map<String, dynamic>> originalTasks, int daysAvailable) {
+    final emergencyTasks = <Map<String, dynamic>>[];
+    
+    // Seleccionar solo las tareas más críticas y adaptarlas
+    final criticalTasks = originalTasks.where((task) => task['days'] <= 7).toList();
+    
+    for (int i = 0; i < criticalTasks.length && i < daysAvailable + 2; i++) {
+      final task = criticalTasks[i];
+      final adaptedDay = (daysAvailable - i).clamp(0, daysAvailable);
+      
+      emergencyTasks.add({
+        'title': '🚨 ${task['title']}',
+        'description': '${task['description']} (modo urgente)',
+        'adaptedDays': adaptedDay,
+      });
+    }
+    
+    print('🚨 Modo emergencia: ${emergencyTasks.length} preparativos críticos');
+    return emergencyTasks;
+  }
+
+  /// Preparativos comprimidos para eventos próximos (4-7 días)
+  List<Map<String, dynamic>> _createCompressedTasks(List<Map<String, dynamic>> originalTasks, int daysAvailable) {
+    final compressedTasks = <Map<String, dynamic>>[];
+    
+    // Seleccionar tareas importantes y distribuirlas en los días disponibles
+    final importantTasks = originalTasks.where((task) => task['days'] <= 14).toList();
+    
+    for (int i = 0; i < importantTasks.length && i < daysAvailable + 1; i++) {
+      final task = importantTasks[i];
+      final adaptedDay = ((daysAvailable - 1) * (i / (importantTasks.length - 1).clamp(1, double.infinity))).round().clamp(0, daysAvailable - 1);
+      
+      compressedTasks.add({
+        'title': '⚡ ${task['title']}',
+        'description': '${task['description']} (tiempo limitado)',
+        'adaptedDays': adaptedDay,
+      });
+    }
+    
+    print('⚡ Modo comprimido: ${compressedTasks.length} preparativos acelerados');
+    return compressedTasks;
+  }
+
+  /// Preparativos optimizados para eventos medianos (8-21 días)
+  List<Map<String, dynamic>> _createOptimizedTasks(List<Map<String, dynamic>> originalTasks, int daysAvailable, PlanningStyleService planningStyle) {
+    final optimizedTasks = <Map<String, dynamic>>[];
+    final multiplier = planningStyle.getMultiplier(planningStyle.currentStyle);
+    
+    for (final task in originalTasks) {
+      final originalDays = task['days'] as int;
+      var adjustedDays = (originalDays * multiplier).round();
+      
+      // Adaptar dinámicamente al tiempo disponible
+      if (adjustedDays >= daysAvailable) {
+        adjustedDays = (daysAvailable * 0.8).round().clamp(0, daysAvailable - 1);
+      }
+      
+      // Solo incluir si queda tiempo suficiente
+      if (adjustedDays >= 0) {
+        optimizedTasks.add({
+          'title': task['title'],
+          'description': '${task['description']} (optimizado)',
+          'adaptedDays': adjustedDays,
+        });
+      }
+    }
+    
+    print('🎯 Modo optimizado: ${optimizedTasks.length} preparativos ajustados');
+    return optimizedTasks;
+  }
+
+  /// Preparativos estándar con estilo de planificación normal
+  List<Map<String, dynamic>> _createStandardTasks(List<Map<String, dynamic>> originalTasks, PlanningStyleService planningStyle) {
+    final standardTasks = <Map<String, dynamic>>[];
+    
+    for (final task in originalTasks) {
+      final originalDays = task['days'] as int;
+      final adjustedDays = planningStyle.getAdjustedDays(originalDays);
+      
+      standardTasks.add({
+        'title': task['title'],
+        'description': task['description'],
+        'adaptedDays': adjustedDays,
+      });
+    }
+    
+    print('📋 Modo estándar: ${standardTasks.length} preparativos normales');
+    return standardTasks;
+  }
+
+  /// 🆕 NUEVO: Re-calibrar preparativos existentes para adaptarse a tiempo limitado
+  Future<void> recalibrateEventPreparations(int eventId) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      
+      // Obtener información del evento
+      final eventResult = await db.query(
+        'events',
+        columns: ['targetDate', 'category'],
+        where: 'id = ?',
+        whereArgs: [eventId],
+      );
+      
+      if (eventResult.isEmpty) {
+        print('❌ No se encontró el evento $eventId para re-calibrar');
+        return;
+      }
+      
+      final eventData = eventResult.first;
+      final eventDate = DateTime.parse(eventData['targetDate'] as String);
+      final category = eventData['category'] as String;
+      final now = DateTime.now();
+      final daysAvailable = eventDate.difference(now).inDays;
+      
+      // Obtener preparativos existentes no completados
+      final existingTasks = await db.query(
+        'preparation_tasks',
+        where: 'eventId = ? AND isCompleted = 0',
+        whereArgs: [eventId],
+      );
+      
+      if (existingTasks.isEmpty) {
+        print('✅ No hay preparativos pendientes para re-calibrar');
+        return;
+      }
+      
+      print('🔄 Re-calibrando ${existingTasks.length} preparativos para $daysAvailable días disponibles...');
+      
+      // Eliminar preparativos existentes no completados
+      await db.delete(
+        'preparation_tasks',
+        where: 'eventId = ? AND isCompleted = 0',
+        whereArgs: [eventId],
+      );
+      
+      // Crear nuevos preparativos adaptados
+      await createAutomaticPreparations(eventId, category);
+      
+      print('✅ Preparativos re-calibrados exitosamente para evento $eventId');
+      notifyListeners();
+    } catch (e) {
+      print('❌ Error re-calibrando preparativos: $e');
     }
   }
 

@@ -48,6 +48,20 @@ class PreparationTask {
   bool shouldShowTask(DateTime eventDate) {
     final now = DateTime.now();
     final daysUntilEvent = eventDate.difference(now).inDays;
+    
+    // 🆕 NUEVO: Lógica adaptativa para eventos próximos
+    
+    // Para eventos muy próximos (menos de 5 días), mostrar todas las tareas
+    if (daysUntilEvent <= 5) {
+      return true;
+    }
+    
+    // Para eventos próximos (menos de 14 días), ser más flexible
+    if (daysUntilEvent <= 14) {
+      return daysUntilEvent <= daysBeforeEvent + 2; // +2 días de flexibilidad
+    }
+    
+    // Para eventos normales, usar lógica estándar
     return daysUntilEvent <= daysBeforeEvent;
   }
 
@@ -55,6 +69,26 @@ class PreparationTask {
   bool isOverdue(DateTime eventDate) {
     final now = DateTime.now();
     final daysUntilEvent = eventDate.difference(now).inDays;
-    return !isCompleted && shouldShowTask(eventDate) && daysUntilEvent < daysBeforeEvent - 2;
+    
+    // Si ya está completada, no está vencida
+    if (isCompleted) return false;
+    
+    // Si no debe mostrarse aún, no está vencida
+    if (!shouldShowTask(eventDate)) return false;
+    
+    // 🆕 NUEVO: Lógica adaptativa para determinar si está vencida
+    
+    // Para eventos muy próximos (menos de 5 días), ser muy tolerante
+    if (daysUntilEvent <= 5) {
+      return daysUntilEvent < (daysBeforeEvent * 0.5).round(); // 50% tolerancia
+    }
+    
+    // Para eventos próximos (menos de 14 días), ser moderadamente tolerante
+    if (daysUntilEvent <= 14) {
+      return daysUntilEvent < daysBeforeEvent - 3; // 3 días de tolerancia
+    }
+    
+    // Para eventos normales, usar lógica estándar pero más flexible
+    return daysUntilEvent < daysBeforeEvent - 2; // 2 días de tolerancia (antes era 2)
   }
 }

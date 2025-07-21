@@ -100,6 +100,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
       title: sanitized,
       startDate: _selectedDate,
       isNegativeHabit: _selectedType == localizationService.t('stopHabit'), // Marca hábito negativo según tipo
+      challengeStartedAt: DateTime.now(), // AÑADIDO: Inicializar el momento de inicio del reto
       color: _selectedColor,
       icon: _selectedIcon,
     );

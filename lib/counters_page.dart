@@ -93,6 +93,30 @@ class _CountersPageState extends State<CountersPage> {
       _counters = decoded.map((e) => Counter.fromJson(e)).toList();
     }
     
+    // MIGRACIÓN: Inicializar challengeStartedAt para retos existentes que no lo tienen
+    bool needsSave = false;
+    for (int i = 0; i < _counters.length; i++) {
+      if (_counters[i].challengeStartedAt == null) {
+        // Para retos existentes, usar su startDate como challengeStartedAt
+        _counters[i] = Counter(
+          title: _counters[i].title,
+          startDate: _counters[i].startDate,
+          lastConfirmedDate: _counters[i].lastConfirmedDate,
+          isNegativeHabit: _counters[i].isNegativeHabit,
+          challengeStartedAt: _counters[i].startDate, // Usar startDate como inicio del cronómetro
+          color: _counters[i].color,
+          icon: _counters[i].icon,
+        );
+        needsSave = true;
+      }
+    }
+    
+    // Guardar los cambios si se hizo alguna migración
+    if (needsSave) {
+      await _saveCounters();
+      print('✅ Migración: challengeStartedAt inicializado para ${_counters.length} retos');
+    }
+    
     // Registrar todos los desafíos en el sistema de rachas individuales
     for (int i = 0; i < _counters.length; i++) {
       final challengeId = _getChallengeId(i);
@@ -1549,19 +1573,12 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
 
   void _updateDuration() {
     final now = DateTime.now();
-    final start = widget.lastConfirmedDate ?? widget.startDate;
     
-    if (widget.confirmedToday) {
-      // Si ya está confirmado hoy, mostrar tiempo desde última confirmación
-      setState(() {
-        _duration = now.difference(start);
-      });
-    } else {
-      // Si no está confirmado, mostrar tiempo desde la última confirmación
-      setState(() {
-        _duration = now.difference(start);
-      });
-    }
+    // CORREGIDO: El cronómetro debe contar desde que empezó ESTE reto específico
+    // No desde la última confirmación (eso sería para resetear el cronómetro cada día)
+    setState(() {
+      _duration = now.difference(widget.startDate);
+    });
   }
 
   @override

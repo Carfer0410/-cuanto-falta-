@@ -593,16 +593,16 @@ class _CountersPageState extends State<CountersPage> {
                                         children: [
                                           Icon(
                                             Icons.calendar_today,
-                                            color: counter.color.color,
+                                            color: Colors.black87,
                                             size: 16,
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
                                             'Reto iniciado: ${_formatStartDate(counter.challengeStartedAt ?? counter.startDate)}',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 13,
-                                              color: counter.color.color,
-                                              fontWeight: FontWeight.w600,
+                                              color: Colors.black87,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ],

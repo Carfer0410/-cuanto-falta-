@@ -277,12 +277,12 @@ class PreparationService extends ChangeNotifier {
   ) {
     // Si tenemos menos de 3 días, crear preparativos de emergencia
     if (daysAvailable <= 3) {
-      return _createEmergencyTasks(originalTasks, daysAvailable);
+      return _createEmergencyTasks(originalTasks, daysAvailable, planningStyle);
     }
     
     // Si tenemos menos de 7 días, comprimir preparativos
     if (daysAvailable <= 7) {
-      return _createCompressedTasks(originalTasks, daysAvailable);
+      return _createCompressedTasks(originalTasks, daysAvailable, planningStyle);
     }
     
     // Si tenemos menos de 21 días, usar preparativos optimizados
@@ -295,15 +295,29 @@ class PreparationService extends ChangeNotifier {
   }
 
   /// Preparativos de emergencia para eventos muy próximos (1-3 días)
-  List<Map<String, dynamic>> _createEmergencyTasks(List<Map<String, dynamic>> originalTasks, int daysAvailable) {
+  List<Map<String, dynamic>> _createEmergencyTasks(List<Map<String, dynamic>> originalTasks, int daysAvailable, PlanningStyleService planningStyle) {
     final emergencyTasks = <Map<String, dynamic>>[];
+    final multiplier = planningStyle.getMultiplier(planningStyle.currentStyle);
     
-    // Seleccionar solo las tareas más críticas y adaptarlas
+    // Seleccionar tareas críticas, pero considerar el estilo del usuario
     final criticalTasks = originalTasks.where((task) => task['days'] <= 7).toList();
     
-    for (int i = 0; i < criticalTasks.length && i < daysAvailable + 2; i++) {
+    // Usuarios perfeccionistas/metódicos: más tareas incluso en emergencia
+    // Usuarios relajados: menos tareas para reducir estrés
+    final maxTasks = multiplier >= 1.5 ? (daysAvailable + 2) : (daysAvailable + 1);
+    
+    for (int i = 0; i < criticalTasks.length && i < maxTasks; i++) {
       final task = criticalTasks[i];
-      final adaptedDay = (daysAvailable - i).clamp(0, daysAvailable);
+      var adaptedDay = (daysAvailable - i).clamp(0, daysAvailable);
+      
+      // Ajustar según estilo incluso en emergencia
+      if (multiplier <= 0.7) {
+        // Relajado: más tiempo entre tareas
+        adaptedDay = (adaptedDay * 1.2).round().clamp(0, daysAvailable);
+      } else if (multiplier >= 1.5) {
+        // Metódico/Perfeccionista: más tareas urgentes
+        adaptedDay = (adaptedDay * 0.8).round().clamp(0, daysAvailable);
+      }
       
       emergencyTasks.add({
         'title': '🚨 ${task['title']}',
@@ -312,20 +326,41 @@ class PreparationService extends ChangeNotifier {
       });
     }
     
-    print('🚨 Modo emergencia: ${emergencyTasks.length} preparativos críticos');
+    final styleName = planningStyle.getStyleName(planningStyle.currentStyle);
+    print('🚨 Modo emergencia ($styleName): ${emergencyTasks.length} preparativos críticos');
     return emergencyTasks;
   }
 
   /// Preparativos comprimidos para eventos próximos (4-7 días)
-  List<Map<String, dynamic>> _createCompressedTasks(List<Map<String, dynamic>> originalTasks, int daysAvailable) {
+  List<Map<String, dynamic>> _createCompressedTasks(List<Map<String, dynamic>> originalTasks, int daysAvailable, PlanningStyleService planningStyle) {
     final compressedTasks = <Map<String, dynamic>>[];
+    final multiplier = planningStyle.getMultiplier(planningStyle.currentStyle);
     
-    // Seleccionar tareas importantes y distribuirlas en los días disponibles
-    final importantTasks = originalTasks.where((task) => task['days'] <= 14).toList();
+    // Seleccionar tareas importantes considerando el estilo
+    var importantTasks = originalTasks.where((task) => task['days'] <= 14).toList();
     
-    for (int i = 0; i < importantTasks.length && i < daysAvailable + 1; i++) {
+    // Ajustar cantidad de tareas según estilo del usuario
+    final maxTasks = multiplier >= 1.5 
+        ? (daysAvailable + 1)  // Metódicos: más tareas
+        : multiplier <= 0.7 
+            ? (daysAvailable - 1).clamp(1, daysAvailable)  // Relajados: menos tareas
+            : daysAvailable;  // Equilibrados: cantidad normal
+    
+    // Tomar solo las tareas que caben según el estilo
+    if (importantTasks.length > maxTasks) {
+      importantTasks = importantTasks.take(maxTasks).toList();
+    }
+    
+    for (int i = 0; i < importantTasks.length; i++) {
       final task = importantTasks[i];
-      final adaptedDay = ((daysAvailable - 1) * (i / (importantTasks.length - 1).clamp(1, double.infinity))).round().clamp(0, daysAvailable - 1);
+      var adaptedDay = ((daysAvailable - 1) * (i / (importantTasks.length - 1).clamp(1, double.infinity))).round().clamp(0, daysAvailable - 1);
+      
+      // Aplicar multiplicador del estilo
+      final originalDays = task['days'] as int;
+      var styledDays = (originalDays * multiplier).round();
+      
+      // Adaptar al tiempo disponible pero respetando el estilo
+      adaptedDay = styledDays.clamp(0, daysAvailable - 1);
       
       compressedTasks.add({
         'title': '⚡ ${task['title']}',
@@ -334,7 +369,8 @@ class PreparationService extends ChangeNotifier {
       });
     }
     
-    print('⚡ Modo comprimido: ${compressedTasks.length} preparativos acelerados');
+    final styleName = planningStyle.getStyleName(planningStyle.currentStyle);
+    print('⚡ Modo comprimido ($styleName): ${compressedTasks.length} preparativos acelerados');
     return compressedTasks;
   }
 

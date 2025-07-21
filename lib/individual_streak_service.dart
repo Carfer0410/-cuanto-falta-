@@ -247,6 +247,49 @@ class IndividualStreakService extends ChangeNotifier {
     debugPrint('✅ Desafío $challengeId confirmado. Racha: $newStreak días');
   }
 
+  /// Otorgar racha retroactiva para retos registrados tarde (FUNCIÓN ESPECIAL)
+  Future<void> grantBackdatedStreak(String challengeId, String challengeTitle, DateTime startDate, int daysToGrant) async {
+    // Asegurar que el desafío existe
+    await registerChallenge(challengeId, challengeTitle);
+    
+    final current = _streaks[challengeId]!;
+    
+    // Crear historial de confirmaciones retroactivas
+    final backdatedHistory = <DateTime>[];
+    for (int i = 0; i < daysToGrant; i++) {
+      final confirmDate = startDate.add(Duration(days: i));
+      backdatedHistory.add(confirmDate);
+    }
+    
+    // Combinar con historial existente y ordenar
+    final combinedHistory = [...current.confirmationHistory, ...backdatedHistory];
+    combinedHistory.sort();
+    
+    // Calcular nueva racha basada en el historial completo
+    final tempStreak = current.copyWith(
+      confirmationHistory: combinedHistory,
+      lastConfirmedDate: backdatedHistory.isNotEmpty ? backdatedHistory.last : current.lastConfirmedDate,
+    );
+    final newStreak = _calculateStreak(tempStreak);
+    
+    // Calcular puntos totales
+    final pointsToAdd = daysToGrant * (10 + (daysToGrant * 2));
+    
+    // Actualizar racha con datos retroactivos
+    _streaks[challengeId] = current.copyWith(
+      currentStreak: newStreak,
+      longestStreak: newStreak > current.longestStreak ? newStreak : current.longestStreak,
+      lastConfirmedDate: backdatedHistory.isNotEmpty ? backdatedHistory.last : current.lastConfirmedDate,
+      confirmationHistory: combinedHistory,
+      totalPoints: current.totalPoints + pointsToAdd,
+    );
+
+    await _saveStreaks();
+    notifyListeners();
+    
+    debugPrint('🎉 Racha retroactiva otorgada: $daysToGrant días para $challengeId. Nueva racha: $newStreak');
+  }
+
   /// Fallar en un desafío (puede usar ficha de perdón)
   Future<bool> failChallenge(String challengeId, String challengeTitle, {bool useForgiveness = false}) async {
     final now = DateTime.now();

@@ -196,13 +196,13 @@ class _AddCounterPageState extends State<AddCounterPage> {
 
   /// Otorga racha completa para retos cumplidos retroactivamente
   Future<void> _grantBackdatedStreak(String challengeId, String challengeTitle, DateTime startDate, int daysPassed) async {
-    await IndividualStreakService.instance.registerChallenge(challengeId, challengeTitle);
-    
-    // Usar método público para registrar múltiples confirmaciones
-    for (int i = 0; i < daysPassed; i++) {
-      // Simular confirmación para cada día (construye la racha gradualmente)
-      await IndividualStreakService.instance.confirmChallenge(challengeId, challengeTitle);
-    }
+    // Usar el nuevo método especializado para rachas retroactivas
+    await IndividualStreakService.instance.grantBackdatedStreak(
+      challengeId, 
+      challengeTitle, 
+      startDate, 
+      daysPassed
+    );
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

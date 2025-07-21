@@ -1,6 +1,7 @@
 import 'database_helper.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'individual_streak_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -141,6 +142,54 @@ class DataMigrationService {
     } catch (e) {
       print('❌ DataMigrationService: Error en la sincronización forzada: $e');
       rethrow; // Re-lanzar el error para que las páginas puedan manejarlo
+    }
+  }
+
+  /// Migrar desde el sistema global de rachas al sistema individual
+  static Future<void> migrateToIndividualStreaks() async {
+    print('🔄 Migrando desde racha global a rachas individuales...');
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasMigrated = prefs.getBool('has_migrated_individual_streaks') ?? false;
+      
+      if (hasMigrated) {
+        print('✅ Migración de rachas individuales ya completada');
+        return;
+      }
+
+      // Obtener la racha global actual
+      final globalStats = StatisticsService.instance.statistics;
+      final globalStreak = globalStats.currentStreak;
+      
+      // Obtener todos los desafíos actuales
+      final countersJson = prefs.getString('counters');
+      if (countersJson != null) {
+        final List decoded = jsonDecode(countersJson);
+        final Map<String, String> challengeIdToTitle = {};
+        
+        for (int i = 0; i < decoded.length; i++) {
+          final counter = decoded[i];
+          final challengeId = 'challenge_$i';
+          final challengeTitle = counter['title'] ?? 'Desafío $i';
+          challengeIdToTitle[challengeId] = challengeTitle;
+        }
+        
+        // Ejecutar migración en el servicio de rachas individuales
+        await IndividualStreakService.instance.migrateFromGlobalStreak(
+          challengeIdToTitle, 
+          globalStreak
+        );
+        
+        print('✅ Migrado $globalStreak días de racha global a ${challengeIdToTitle.length} desafíos individuales');
+      }
+      
+      // Marcar como migrado
+      await prefs.setBool('has_migrated_individual_streaks', true);
+      print('✅ Migración de rachas individuales completada');
+      
+    } catch (e) {
+      print('❌ Error en migración de rachas individuales: $e');
     }
   }
 }

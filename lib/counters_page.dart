@@ -7,6 +7,7 @@ import 'add_counter_page.dart';
 import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'individual_streak_service.dart';
 import 'data_migration_service.dart';
 import 'event.dart'; // Para usar EventColor y EventIcon
 import 'challenge_strategies_page.dart';
@@ -79,12 +80,26 @@ class _CountersPageState extends State<CountersPage> {
     _loadCounters();
   }
 
+  /// Generar ID único para un desafío basado en el índice
+  String _getChallengeId(int index) {
+    return 'challenge_$index';
+  }
+
   Future<void> _loadCounters() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('counters');
     if (jsonString != null) {
       final List decoded = jsonDecode(jsonString);
       _counters = decoded.map((e) => Counter.fromJson(e)).toList();
+    }
+    
+    // Registrar todos los desafíos en el sistema de rachas individuales
+    for (int i = 0; i < _counters.length; i++) {
+      final challengeId = _getChallengeId(i);
+      await IndividualStreakService.instance.registerChallenge(
+        challengeId,
+        _counters[i].title,
+      );
     }
     
     // NOTA: No actualizar estadísticas aquí para evitar duplicación
@@ -161,7 +176,11 @@ class _CountersPageState extends State<CountersPage> {
     }
   }
 
-  void _deleteCounter(int index) {
+  void _deleteCounter(int index) async {
+    // Eliminar racha individual correspondiente
+    final challengeId = _getChallengeId(index);
+    await IndividualStreakService.instance.removeChallenge(challengeId);
+    
     setState(() {
       _counters.removeAt(index);
     });
@@ -482,7 +501,8 @@ class _CountersPageState extends State<CountersPage> {
                                     ],
                                   ),
                                   child: counter.challengeStartedAt != null
-                                    ? _LiveStreakTimer(
+                                    ? _IndividualStreakDisplay(
+                                        challengeId: _getChallengeId(index),
                                         startDate: counter.challengeStartedAt!,
                                         lastConfirmedDate: counter.lastConfirmedDate,
                                         confirmedToday: confirmedToday,
@@ -702,12 +722,23 @@ class _CountersPageState extends State<CountersPage> {
 
                                           if (result) {
                                             // Usuario cumplió el reto
-                                            await StatisticsService.instance.recordChallengeConfirmation();
+                                            final challengeId = _getChallengeId(index);
+                                            await IndividualStreakService.instance.confirmChallenge(
+                                              challengeId, 
+                                              counter.title
+                                            );
+                                            
+                                            // Obtener nueva racha individual
+                                            final streak = IndividualStreakService.instance.getStreak(challengeId);
+                                            final currentStreak = streak?.currentStreak ?? 1;
+                                            final pointsEarned = 10 + (currentStreak * 2);
+                                            
+                                            // Actualizar logros basados en estadísticas globales
                                             await AchievementService.instance.checkAndUnlockAchievements(
                                               StatisticsService.instance.statistics
                                             );
 
-                                            // Mostrar mensaje de éxito
+                                            // Mostrar mensaje de éxito con información de racha individual
                                             if (mounted) {
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
@@ -717,7 +748,7 @@ class _CountersPageState extends State<CountersPage> {
                                                       const SizedBox(width: 8),
                                                       Expanded(
                                                         child: Text(
-                                                          '¡Excelente! +${10 + (StatisticsService.instance.statistics.currentStreak * 2)} puntos',
+                                                          '¡Excelente! +$pointsEarned puntos | Racha: $currentStreak días',
                                                           style: const TextStyle(fontWeight: FontWeight.bold),
                                                         ),
                                                       ),
@@ -729,29 +760,93 @@ class _CountersPageState extends State<CountersPage> {
                                               );
                                             }
                                           } else {
-                                            // Usuario no cumplió el reto
-                                            await StatisticsService.instance.recordChallengeFailure();
-
-                                            // Mostrar mensaje motivacional
-                                            if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Row(
-                                                    children: [
-                                                      Icon(Icons.sentiment_neutral, color: Colors.white, size: 20),
-                                                      SizedBox(width: 8),
-                                                      Expanded(
-                                                        child: Text(
-                                                          'No te preocupes, mañana es un nuevo día. ¡Tú puedes!',
-                                                          style: TextStyle(fontWeight: FontWeight.bold),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  backgroundColor: Colors.orange,
-                                                  duration: Duration(seconds: 4),
-                                                ),
+                                            // Usuario no cumplió el reto - mostrar opciones de perdón
+                                            final challengeId = _getChallengeId(index);
+                                            final streak = IndividualStreakService.instance.getStreak(challengeId);
+                                            
+                                            if (streak != null && streak.canUseForgiveness && streak.currentStreak > 0) {
+                                              // Mostrar diálogo de ficha de perdón
+                                              final useForgiveness = await _showForgivenessDialog(
+                                                context, 
+                                                streak.forgivenessTokens,
+                                                streak.currentStreak
                                               );
+                                              
+                                              final wasForgiven = await IndividualStreakService.instance.failChallenge(
+                                                challengeId,
+                                                counter.title,
+                                                useForgiveness: useForgiveness ?? false
+                                              );
+                                              
+                                              if (mounted) {
+                                                if (wasForgiven) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Row(
+                                                        children: [
+                                                          const Icon(Icons.shield, color: Colors.white, size: 20),
+                                                          const SizedBox(width: 8),
+                                                          Expanded(
+                                                            child: Text(
+                                                              '🛡️ Ficha de perdón usada. Tu racha de ${streak.currentStreak} días está segura',
+                                                              style: const TextStyle(fontWeight: FontWeight.bold),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      backgroundColor: Colors.blue,
+                                                      duration: const Duration(seconds: 4),
+                                                    ),
+                                                  );
+                                                } else {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Row(
+                                                        children: [
+                                                          Icon(Icons.sentiment_neutral, color: Colors.white, size: 20),
+                                                          SizedBox(width: 8),
+                                                          Expanded(
+                                                            child: Text(
+                                                              'No te preocupes, mañana es un nuevo día. ¡Tú puedes!',
+                                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      backgroundColor: Colors.orange,
+                                                      duration: Duration(seconds: 4),
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            } else {
+                                              // Fallo directo sin opciones de perdón
+                                              await IndividualStreakService.instance.failChallenge(
+                                                challengeId,
+                                                counter.title,
+                                                useForgiveness: false
+                                              );
+                                              
+                                              if (mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Row(
+                                                      children: [
+                                                        Icon(Icons.sentiment_neutral, color: Colors.white, size: 20),
+                                                        SizedBox(width: 8),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'No te preocupes, mañana es un nuevo día. ¡Tú puedes!',
+                                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    backgroundColor: Colors.orange,
+                                                    duration: Duration(seconds: 4),
+                                                  ),
+                                                );
+                                              }
                                             }
                                           }
                                         }
@@ -1170,6 +1265,107 @@ class _CountersPageState extends State<CountersPage> {
       return 'generic';
     }
   }
+
+  /// Mostrar diálogo para usar ficha de perdón
+  Future<bool?> _showForgivenessDialog(BuildContext context, int tokensAvailable, int currentStreak) {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.shield, color: Colors.blue[600], size: 28),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  '¿Usar ficha de perdón?',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tu racha actual es de $currentStreak días.',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Fichas de perdón disponibles:',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: List.generate(3, (index) {
+                        return Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          child: Icon(
+                            index < tokensAvailable ? Icons.shield : Icons.shield_outlined,
+                            color: index < tokensAvailable ? Colors.blue[600] : Colors.grey[400],
+                            size: 24,
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '• Una ficha protege tu racha por hoy\n'
+                      '• Se regeneran 1 por semana (máximo 3)\n'
+                      '• Solo puedes usar 1 por día',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.blue[700],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'No usar (perder racha)',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: tokensAvailable > 0
+                  ? () => Navigator.of(context).pop(true)
+                  : null,
+              icon: const Icon(Icons.shield, size: 18),
+              label: Text(tokensAvailable > 0 ? 'Usar ficha' : 'Sin fichas'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[600],
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _LiveStreakTimer extends StatefulWidget {
@@ -1306,6 +1502,179 @@ class _LiveStreakTimerState extends State<_LiveStreakTimer> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _IndividualStreakDisplay extends StatefulWidget {
+  final String challengeId;
+  final DateTime startDate;
+  final DateTime? lastConfirmedDate;
+  final bool confirmedToday;
+  final double? fontSize;
+  
+  const _IndividualStreakDisplay({
+    Key? key,
+    required this.challengeId,
+    required this.startDate,
+    required this.lastConfirmedDate,
+    required this.confirmedToday,
+    this.fontSize,
+  }) : super(key: key);
+
+  @override
+  State<_IndividualStreakDisplay> createState() => _IndividualStreakDisplayState();
+}
+
+class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
+  late Duration _duration;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateDuration();
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) => _updateDuration(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateDuration() {
+    final now = DateTime.now();
+    final start = widget.lastConfirmedDate ?? widget.startDate;
+    
+    if (widget.confirmedToday) {
+      // Si ya está confirmado hoy, mostrar tiempo desde última confirmación
+      setState(() {
+        _duration = now.difference(start);
+      });
+    } else {
+      // Si no está confirmado, mostrar tiempo desde la última confirmación
+      setState(() {
+        _duration = now.difference(start);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Obtener información de racha individual
+    final streak = IndividualStreakService.instance.getStreak(widget.challengeId);
+    final currentStreak = streak?.currentStreak ?? 0;
+    final forgivenessTokens = streak?.forgivenessTokens ?? 2;
+    
+    final days = _duration.inDays;
+    final hours = _duration.inHours.remainder(24);
+    final minutes = _duration.inMinutes.remainder(60);
+    final seconds = _duration.inSeconds.remainder(60);
+    
+    final fontSize = widget.fontSize ?? 22;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Información de racha principal
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.local_fire_department,
+              color: currentStreak > 0 ? Colors.orange[600] : Colors.grey[400],
+              size: fontSize - 2,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$currentStreak días',
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: currentStreak > 0 ? Colors.orange[700] : Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        
+        // Tiempo transcurrido
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (days > 0)
+              _buildTimeUnit(days, 'd', fontSize - 4),
+            if (days > 0 || hours > 0) ...[
+              if (days > 0) const SizedBox(width: 4),
+              _buildTimeUnit(hours, 'h', fontSize - 4),
+            ],
+            if (days == 0) ...[
+              if (hours > 0) const SizedBox(width: 4),
+              _buildTimeUnit(minutes, 'm', fontSize - 4),
+              const SizedBox(width: 4),
+              _buildTimeUnit(seconds, 's', fontSize - 4),
+            ],
+          ],
+        ),
+        
+        // Fichas de perdón (solo si tiene alguna)
+        if (forgivenessTokens > 0) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ...List.generate(forgivenessTokens.clamp(0, 3), (index) {
+                return Container(
+                  margin: const EdgeInsets.only(right: 3),
+                  child: Icon(
+                    Icons.shield,
+                    color: Colors.blue[400],
+                    size: 14,
+                  ),
+                );
+              }),
+              if (forgivenessTokens > 0)
+                Text(
+                  ' $forgivenessTokens',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[600],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTimeUnit(int value, String label, double fontSize) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: '$value',
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: Colors.green[800],
+            ),
+          ),
+          TextSpan(
+            text: label,
+            style: TextStyle(
+              fontSize: fontSize - 3,
+              color: Colors.green[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

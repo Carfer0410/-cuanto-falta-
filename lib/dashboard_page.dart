@@ -4,6 +4,7 @@ import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'data_migration_service.dart';
+import 'individual_streaks_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -124,6 +125,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   
                   // Racha actual
                   _buildStreakCard(localization, stats),
+                  const SizedBox(height: 16),
+                  
+                  // Botón para ver rachas individuales
+                  _buildIndividualStreaksButton(context),
                   const SizedBox(height: 16),
                   
                   // Gráfico de actividad semanal
@@ -981,6 +986,48 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// Botón para navegar a las rachas individuales
+  Widget _buildIndividualStreaksButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const IndividualStreaksPage(),
+            ),
+          );
+        },
+        icon: Icon(
+          Icons.local_fire_department,
+          color: Colors.orange[700],
+        ),
+        label: const Text(
+          'Ver Rachas Individuales',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.orange[50],
+          foregroundColor: Colors.orange[700],
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Colors.orange[200]!,
+              width: 1,
+            ),
+          ),
+        ),
       ),
     );
   }

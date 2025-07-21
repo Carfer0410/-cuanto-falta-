@@ -11,6 +11,7 @@ import 'data_migration_service.dart';
 import 'preparation_service.dart';
 import 'planning_style_service.dart';
 import 'challenge_strategy_service.dart';
+import 'individual_streak_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 
@@ -30,8 +31,14 @@ void main() async {
   await StatisticsService.instance.loadStatistics();
   await AchievementService.instance.loadAchievements();
   
+  // Inicializar nuevo sistema de rachas individuales
+  await IndividualStreakService.instance.loadStreaks();
+  
   // Ejecutar migración de datos existentes (solo una vez)
   await DataMigrationService.runInitialDataMigration();
+  
+  // Migrar al nuevo sistema de rachas individuales
+  await DataMigrationService.migrateToIndividualStreaks();
   
   runApp(const MyApp());
 }
@@ -110,6 +117,11 @@ class _MyAppState extends State<MyApp> {
       }
     });
     
+    // Regenerar fichas de perdón semanalmente
+    Timer.periodic(Duration(hours: 24), (timer) async {
+      await IndividualStreakService.instance.regenerateForgivenessTokens();
+    });
+    
     // NUEVO: Notificación educativa para el usuario (una sola vez)
     _showOptimalUsageHint();
   }
@@ -168,6 +180,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: PreparationService.instance),
         ChangeNotifierProvider.value(value: PlanningStyleService.instance),
         ChangeNotifierProvider.value(value: ChallengeStrategyService.instance),
+        ChangeNotifierProvider.value(value: IndividualStreakService.instance),
       ],
       child: Consumer<LocalizationService>(
         builder: (context, localizationService, child) {

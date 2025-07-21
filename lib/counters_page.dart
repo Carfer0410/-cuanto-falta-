@@ -288,14 +288,21 @@ class _CountersPageState extends State<CountersPage> {
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [counter.color.color, counter.color.lightColor],
+                              colors: [
+                                counter.color.color.withOpacity(0.15),
+                                counter.color.lightColor.withOpacity(0.08),
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: counter.color.color.withOpacity(0.3),
+                              width: 2,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: counter.color.color.withOpacity(0.3),
+                                color: counter.color.color.withOpacity(0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -341,18 +348,18 @@ class _CountersPageState extends State<CountersPage> {
                                         children: [
                                           Text(
                                             localizationService.t('youHave'),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 16,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey[700],
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             _challengePhrase(counter, localizationService),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 18,
-                                              color: Colors.white,
+                                              color: Colors.grey[800],
                                               fontWeight: FontWeight.bold,
                                               height: 1.2,
                                             ),
@@ -369,13 +376,17 @@ class _CountersPageState extends State<CountersPage> {
                                         // Botón de estrategias
                                         Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.2),
+                                            color: counter.color.color.withOpacity(0.1),
                                             borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: counter.color.color.withOpacity(0.3),
+                                              width: 1,
+                                            ),
                                           ),
                                           child: IconButton(
-                                            icon: const Icon(
+                                            icon: Icon(
                                               Icons.psychology,
-                                              color: Colors.white,
+                                              color: counter.color.color,
                                               size: 24,
                                             ),
                                             tooltip: 'Ver estrategias',
@@ -397,13 +408,17 @@ class _CountersPageState extends State<CountersPage> {
                                         // Botón de eliminar
                                         Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.2),
+                                            color: Colors.red.withOpacity(0.1),
                                             borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: Colors.red.withOpacity(0.3),
+                                              width: 1,
+                                            ),
                                           ),
                                           child: IconButton(
                                             icon: const Icon(
                                               Icons.delete_outline,
-                                              color: Colors.white,
+                                              color: Colors.red,
                                               size: 24,
                                             ),
                                             tooltip: 'Eliminar reto',
@@ -455,14 +470,14 @@ class _CountersPageState extends State<CountersPage> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: counter.color.color.withOpacity(0.3),
-                                      width: 1,
+                                      color: counter.color.color.withOpacity(0.4),
+                                      width: 2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
+                                        color: counter.color.color.withOpacity(0.1),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 3),
                                       ),
                                     ],
                                   ),
@@ -493,10 +508,10 @@ class _CountersPageState extends State<CountersPage> {
                                 child: Text(
                                   '${localizationService.t('keepGoing')} ${localizationService.t('everySecondCounts')}',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white70,
-                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w600,
                                     height: 1.3,
                                   ),
                                 ),
@@ -750,11 +765,11 @@ class _CountersPageState extends State<CountersPage> {
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: Colors.green[50],
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                        color: Colors.white.withOpacity(0.3),
-                                        width: 1,
+                                        color: Colors.green[300]!,
+                                        width: 2,
                                       ),
                                     ),
                                     child: Row(
@@ -762,7 +777,7 @@ class _CountersPageState extends State<CountersPage> {
                                       children: [
                                         Icon(
                                           Icons.check_circle,
-                                          color: Colors.white,
+                                          color: Colors.green[600],
                                           size: 24,
                                         ),
                                         const SizedBox(width: 8),
@@ -770,7 +785,7 @@ class _CountersPageState extends State<CountersPage> {
                                           '¡Completado hoy!',
                                           style: TextStyle(
                                             fontSize: 18,
-                                            color: Colors.white,
+                                            color: Colors.green[700],
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),

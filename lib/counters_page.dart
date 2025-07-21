@@ -214,6 +214,38 @@ class _CountersPageState extends State<CountersPage> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  /// Formatea la fecha de inicio del reto de manera amigable
+  String _formatStartDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+    
+    // Nombres de meses en español
+    const monthNames = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    
+    if (difference == 0) {
+      return 'hoy';
+    } else if (difference == 1) {
+      return 'ayer';
+    } else if (difference < 7) {
+      return 'hace $difference días';
+    } else if (difference < 30) {
+      final weeks = (difference / 7).floor();
+      return weeks == 1 ? 'hace 1 semana' : 'hace $weeks semanas';
+    } else if (difference < 365) {
+      final day = date.day;
+      final month = monthNames[date.month - 1];
+      return '$day de $month';
+    } else {
+      final day = date.day;
+      final month = monthNames[date.month - 1];
+      final year = date.year;
+      return '$day de $month de $year';
+    }
+  }
+
   String _challengePhrase(Counter counter, LocalizationService localizationService) {
     final basePhrase = counter.title.toLowerCase();
     // Lógica especial para "año nuevo"
@@ -524,40 +556,71 @@ class _CountersPageState extends State<CountersPage> {
                                       ),
                                     ],
                                   ),
-                                  child: counter.challengeStartedAt != null
-                                    ? _IndividualStreakDisplay(
-                                        challengeId: _getChallengeId(index),
-                                        startDate: counter.challengeStartedAt!,
-                                        lastConfirmedDate: counter.lastConfirmedDate,
-                                        confirmedToday: confirmedToday,
-                                        fontSize: 22,
-                                      )
-                                    : Text(
-                                        '0d 0h 0m 0s',
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          color: Colors.green[800],
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                  child: _IndividualStreakDisplay(
+                                    challengeId: _getChallengeId(index),
+                                    startDate: counter.challengeStartedAt ?? counter.startDate,
+                                    lastConfirmedDate: counter.lastConfirmedDate,
+                                    confirmedToday: confirmedToday,
+                                    fontSize: 22,
+                                  ),
                                 ),
                               ),
                               
-                              // Mensaje motivacional
+                              // Mensaje motivacional y fecha de inicio
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 12,
                                 ),
-                                child: Text(
-                                  '${localizationService.t('keepGoing')} ${localizationService.t('everySecondCounts')}',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.3,
-                                  ),
+                                child: Column(
+                                  children: [
+                                    // Fecha de inicio del reto
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: counter.color.color.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: counter.color.color.withOpacity(0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today,
+                                            color: counter.color.color,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Reto iniciado: ${_formatStartDate(counter.challengeStartedAt ?? counter.startDate)}',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: counter.color.color,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Mensaje motivacional
+                                    Text(
+                                      '${localizationService.t('keepGoing')} ${localizationService.t('everySecondCounts')}',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               
@@ -600,7 +663,7 @@ class _CountersPageState extends State<CountersPage> {
                                         label: const Text('Iniciar reto'),
                                       ),
                                     )
-                                  : !_isSameDay(counter.lastConfirmedDate!, now)
+                                  : counter.lastConfirmedDate != null && !_isSameDay(counter.lastConfirmedDate!, now)
                                     ? SizedBox(
                                         width: double.infinity,
                                         child: ElevatedButton.icon(

@@ -1535,6 +1535,8 @@ class _LiveStreakTimerState extends State<_LiveStreakTimer> {
 
     List<Widget> timeWidgets = [];
     final fontSize = widget.fontSize ?? 15;
+    
+    // SIEMPRE mostrar todo el tiempo completo disponible
     if (years > 0) {
       timeWidgets.add(_buildTimeBox(years, 'a', fontSize));
       timeWidgets.add(const SizedBox(width: 2));
@@ -1543,17 +1545,18 @@ class _LiveStreakTimerState extends State<_LiveStreakTimer> {
       timeWidgets.add(_buildTimeBox(months, 'm', fontSize - 2));
       timeWidgets.add(const SizedBox(width: 2));
     }
-    if (days >= 30) {
-      timeWidgets.add(_buildTimeBox(remDays, 'd', fontSize - 4));
-    } else {
-      timeWidgets.add(_buildTimeBox(days, 'd', fontSize));
-      timeWidgets.add(const SizedBox(width: 2));
-      timeWidgets.add(_buildTimeBox(hours, 'h', fontSize - 2));
-      timeWidgets.add(const SizedBox(width: 2));
-      timeWidgets.add(_buildTimeBox(minutes, 'm', fontSize - 4));
-      timeWidgets.add(const SizedBox(width: 2));
-      timeWidgets.add(_buildTimeBox(seconds, 's', fontSize - 6));
-    }
+    
+    // Siempre mostrar días (usar remDays si hay más de 30 días total, sino days normal)
+    final displayDays = days >= 30 ? remDays : days;
+    timeWidgets.add(_buildTimeBox(displayDays, 'd', fontSize - 4));
+    timeWidgets.add(const SizedBox(width: 2));
+    
+    // SIEMPRE mostrar horas, minutos y segundos sin importar cuántos días/meses/años hayan pasado
+    timeWidgets.add(_buildTimeBox(hours, 'h', fontSize - 2));
+    timeWidgets.add(const SizedBox(width: 2));
+    timeWidgets.add(_buildTimeBox(minutes, 'm', fontSize - 4));
+    timeWidgets.add(const SizedBox(width: 2));
+    timeWidgets.add(_buildTimeBox(seconds, 's', fontSize - 6));
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: timeWidgets,
@@ -1656,6 +1659,29 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
     final minutes = _duration.inMinutes.remainder(60);
     final seconds = _duration.inSeconds.remainder(60);
     
+    // Calcular años, meses y días remanentes para mostrar tiempo completo
+    int years = 0;
+    int months = 0;
+    int remDays = days;
+    
+    if (days >= 30) {
+      // Calcular meses y años aproximados igual que el otro cronómetro
+      final start = widget.startDate;
+      final end = DateTime.now();
+      years = end.year - start.year;
+      months = end.month - start.month;
+      remDays = end.day - start.day;
+      if (remDays < 0) {
+        final prevMonth = DateTime(end.year, end.month, 0).day;
+        remDays += prevMonth;
+        months--;
+      }
+      if (months < 0) {
+        months += 12;
+        years--;
+      }
+    }
+    
     final fontSize = widget.fontSize ?? 22;
 
     return Column(
@@ -1683,22 +1709,34 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
         ),
         const SizedBox(height: 4),
         
-        // Tiempo transcurrido
+        // Tiempo transcurrido completo (SIEMPRE muestra años, meses, días, horas, minutos y segundos cuando aplique)
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (days > 0)
-              _buildTimeUnit(days, 'd', fontSize - 4),
-            if (days > 0 || hours > 0) ...[
-              if (days > 0) const SizedBox(width: 4),
-              _buildTimeUnit(hours, 'h', fontSize - 4),
-            ],
-            if (days == 0) ...[
-              if (hours > 0) const SizedBox(width: 4),
-              _buildTimeUnit(minutes, 'm', fontSize - 4),
+            // Mostrar años si existen
+            if (years > 0) ...[
+              _buildTimeUnit(years, 'a', fontSize - 6),
               const SizedBox(width: 4),
-              _buildTimeUnit(seconds, 's', fontSize - 4),
             ],
+            // Mostrar meses si existen (o si hay años)
+            if (months > 0 || years > 0) ...[
+              _buildTimeUnit(months, 'm', fontSize - 5),
+              const SizedBox(width: 4),
+            ],
+            // Siempre mostrar días (usar remDays si calculamos meses/años, sino days normal)
+            if (days >= 30) ...[
+              _buildTimeUnit(remDays, 'd', fontSize - 4),
+              const SizedBox(width: 4),
+            ] else if (days > 0) ...[
+              _buildTimeUnit(days, 'd', fontSize - 4),
+              const SizedBox(width: 4),
+            ],
+            // SIEMPRE mostrar horas, minutos y segundos
+            _buildTimeUnit(hours, 'h', fontSize - 4),
+            const SizedBox(width: 4),
+            _buildTimeUnit(minutes, 'm', fontSize - 4),
+            const SizedBox(width: 4),
+            _buildTimeUnit(seconds, 's', fontSize - 4),
           ],
         ),
         

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'home_page.dart';
 import 'counters_page.dart';
-import 'settings_page.dart';
+import 'settings_page_new.dart';
 import 'dashboard_page.dart';
 import 'localization_service.dart';
 

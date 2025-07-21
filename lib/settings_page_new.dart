@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'notification_service.dart';
 import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
+import 'planning_style_service.dart';
+import 'planning_style_selection_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -209,6 +212,72 @@ class _SettingsPageState extends State<SettingsPage> {
                       widget.onThemeChanged(val ? ThemeMode.dark : ThemeMode.light);
                     },
                     secondary: const Icon(Icons.dark_mode),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          SizedBox(height: 16),
+          
+          // Sección de Personalización
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.psychology, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text(
+                        'Personalización',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                  Divider(),
+                  Consumer<PlanningStyleService>(
+                    builder: (context, planningService, child) {
+                      final currentStyle = planningService.currentStyle;
+                      final styleInfo = planningService.styleInfo[currentStyle]!;
+                      
+                      return ListTile(
+                        leading: Text(
+                          styleInfo['emoji'],
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                        title: const Text('Estilo de Planificación'),
+                        subtitle: Text(
+                          '${styleInfo['name']} - ${styleInfo['description']}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'x${styleInfo['multiplier']}',
+                              style: TextStyle(
+                                color: Colors.orange.shade600,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward_ios),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PlanningStyleSelectionPage(),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ],
               ),

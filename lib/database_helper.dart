@@ -17,7 +17,7 @@ import 'event.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _databaseVersion = 5;
+  static const int _databaseVersion = 6;
 
   DatabaseHelper._init();
 
@@ -64,6 +64,21 @@ class DatabaseHelper {
         FOREIGN KEY (eventId) REFERENCES events (id) ON DELETE CASCADE
       )
     ''');
+    
+    // Crear tabla de estrategias para retos
+    await db.execute('''
+      CREATE TABLE challenge_strategies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        challengeId INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 3,
+        isCompleted INTEGER NOT NULL DEFAULT 0,
+        completedAt INTEGER,
+        createdAt INTEGER NOT NULL
+      )
+    ''');
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -101,6 +116,23 @@ class DatabaseHelper {
           daysBeforeEvent INTEGER NOT NULL,
           completedAt TEXT,
           FOREIGN KEY (eventId) REFERENCES events (id) ON DELETE CASCADE
+        )
+      ''');
+    }
+    
+    // Migración para tabla de estrategias de retos (versión 6)
+    if (oldVersion < 6) {
+      await db.execute('''
+        CREATE TABLE challenge_strategies (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          challengeId INTEGER NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          category TEXT NOT NULL,
+          priority INTEGER NOT NULL DEFAULT 3,
+          isCompleted INTEGER NOT NULL DEFAULT 0,
+          completedAt INTEGER,
+          createdAt INTEGER NOT NULL
         )
       ''');
     }

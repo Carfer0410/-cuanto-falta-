@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'preparation_task.dart';
 import 'database_helper.dart';
+import 'planning_style_service.dart';
 
 class PreparationService extends ChangeNotifier {
   static final PreparationService _instance = PreparationService._internal();
@@ -216,20 +217,32 @@ class PreparationService extends ChangeNotifier {
       // Obtener template de la categoría (o usar 'other' como fallback)
       final template = _preparationTemplates[category] ?? _preparationTemplates['other']!;
       
+      // Obtener el estilo de planificación del usuario
+      final planningStyle = PlanningStyleService.instance;
+      
       final db = await DatabaseHelper.instance.database;
       
       for (final taskData in template) {
+        // Ajustar días según el estilo del usuario
+        final originalDays = taskData['days'] as int;
+        final adjustedDays = planningStyle.getAdjustedDays(originalDays);
+        
         final task = PreparationTask(
           eventId: eventId,
           title: taskData['title'],
           description: taskData['description'],
-          daysBeforeEvent: taskData['days'],
+          daysBeforeEvent: adjustedDays, // Usar días ajustados
         );
         
         await db.insert('preparation_tasks', task.toMap());
       }
       
+      // Log con información del estilo aplicado
+      final styleName = planningStyle.getStyleName(planningStyle.currentStyle);
+      final multiplier = planningStyle.getMultiplier(planningStyle.currentStyle);
+      
       print('✅ Creados ${template.length} preparativos automáticos para evento $eventId (categoría: $category)');
+      print('🎨 Estilo aplicado: $styleName (${multiplier}x)');
       notifyListeners();
     } catch (e) {
       print('❌ Error creando preparativos automáticos: $e');

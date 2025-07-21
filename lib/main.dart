@@ -9,6 +9,8 @@ import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'data_migration_service.dart';
 import 'preparation_service.dart';
+import 'planning_style_service.dart';
+import 'challenge_strategy_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 
@@ -20,6 +22,9 @@ void main() async {
   
   // Cargar el idioma guardado
   await LocalizationService.instance.loadLanguage();
+  
+  // Cargar el estilo de planificación del usuario
+  await PlanningStyleService.instance.loadPlanningStyle();
   
   // Inicializar servicios de estadísticas y logros
   await StatisticsService.instance.loadStatistics();
@@ -60,12 +65,34 @@ class _MyAppState extends State<MyApp> {
     // NUEVO: Sistema de recuperación automática
     _setupTimerRecovery();
     
+    // NUEVO: Verificar si necesita configurar estilo de planificación
+    _checkPlanningStyleSetup();
+    
     print('🔄 Sistema Timer mejorado iniciado:');
     print('  ✅ Verificaciones frecuentes mientras app está activa');
     print('  ✅ Verificaciones críticas cada minuto para eventos urgentes');
     print('  ✅ Motivación activa cada 30 minutos para retos');
     print('  ✅ Sistema de recuperación automática');
     print('  ⚠️  Funciona solo con app abierta (solución más confiable)');
+  }
+
+  /// Verificar si necesita mostrar configuración de estilo de planificación
+  Future<void> _checkPlanningStyleSetup() async {
+    final planningService = PlanningStyleService.instance;
+    final hasConfigured = await planningService.hasConfiguredStyle();
+    
+    if (!hasConfigured) {
+      // Esperar 5 segundos para que la app se cargue completamente
+      Timer(Duration(seconds: 5), () async {
+        await NotificationService.instance.showImmediateNotification(
+          id: 99998,
+          title: '🎨 ¡Personaliza tu experiencia!',
+          body: 'Configura tu estilo de planificación para que los preparativos se adapten a ti. Ve a Configuración → Personalización',
+        );
+        
+        print('🎨 Recordatorio para configurar estilo de planificación enviado');
+      });
+    }
   }
 
   /// Sistema de recuperación automática del Timer
@@ -139,6 +166,8 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: StatisticsService.instance),
         ChangeNotifierProvider.value(value: AchievementService.instance),
         ChangeNotifierProvider.value(value: PreparationService.instance),
+        ChangeNotifierProvider.value(value: PlanningStyleService.instance),
+        ChangeNotifierProvider.value(value: ChallengeStrategyService.instance),
       ],
       child: Consumer<LocalizationService>(
         builder: (context, localizationService, child) {

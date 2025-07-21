@@ -817,25 +817,355 @@ class _CountersPageState extends State<CountersPage> {
   String _getChallengeType(String title) {
     final titleLower = title.toLowerCase();
     
-    // Detectar tipo de reto por palabras clave
-    if (titleLower.contains('agua') || titleLower.contains('water') || titleLower.contains('hidratar')) {
+    // 💧 AGUA / HIDRATACIÓN
+    if (titleLower.contains('agua') || titleLower.contains('water') || titleLower.contains('hidratar') || 
+        titleLower.contains('tomar agua') || titleLower.contains('beber') || titleLower.contains('hidratación') ||
+        titleLower.contains('litros') || titleLower.contains('vasos')) {
       return 'water';
-    } else if (titleLower.contains('ejercicio') || titleLower.contains('gym') || titleLower.contains('correr') || 
-               titleLower.contains('exercise') || titleLower.contains('workout') || titleLower.contains('fitness')) {
+    }
+    
+    // 🏃‍♂️ EJERCICIO / FITNESS
+    else if (titleLower.contains('ejercicio') || titleLower.contains('gym') || titleLower.contains('correr') || 
+             titleLower.contains('exercise') || titleLower.contains('workout') || titleLower.contains('fitness') ||
+             titleLower.contains('deporte') || titleLower.contains('entrenar') || titleLower.contains('caminar') ||
+             titleLower.contains('trotar') || titleLower.contains('cardio') || titleLower.contains('musculo') ||
+             titleLower.contains('peso') || titleLower.contains('abdominales') || titleLower.contains('flexiones') ||
+             titleLower.contains('yoga') || titleLower.contains('pilates') || titleLower.contains('crossfit') ||
+             titleLower.contains('natación') || titleLower.contains('nadar') || titleLower.contains('ciclismo') ||
+             titleLower.contains('bicicleta') || titleLower.contains('pesas') || titleLower.contains('físico')) {
       return 'exercise';
-    } else if (titleLower.contains('leer') || titleLower.contains('libro') || titleLower.contains('reading') || 
-               titleLower.contains('book') || titleLower.contains('lectura')) {
+    }
+    
+    // 📚 LECTURA / ESTUDIO
+    else if (titleLower.contains('leer') || titleLower.contains('libro') || titleLower.contains('reading') || 
+             titleLower.contains('book') || titleLower.contains('lectura') || titleLower.contains('estudiar') ||
+             titleLower.contains('aprender') || titleLower.contains('curso') || titleLower.contains('páginas') ||
+             titleLower.contains('novela') || titleLower.contains('educación') || titleLower.contains('conocimiento') ||
+             titleLower.contains('idioma') || titleLower.contains('inglés') || titleLower.contains('francés') ||
+             titleLower.contains('programación') || titleLower.contains('código') || titleLower.contains('skill')) {
       return 'reading';
-    } else if (titleLower.contains('meditar') || titleLower.contains('meditation') || titleLower.contains('mindfulness') ||
-               titleLower.contains('relajar') || titleLower.contains('respirar')) {
+    }
+    
+    // 🧘‍♀️ MEDITACIÓN / MINDFULNESS
+    else if (titleLower.contains('meditar') || titleLower.contains('meditation') || titleLower.contains('mindfulness') ||
+             titleLower.contains('relajar') || titleLower.contains('respirar') || titleLower.contains('calma') ||
+             titleLower.contains('paz') || titleLower.contains('zen') || titleLower.contains('tranquilo') ||
+             titleLower.contains('estrés') || titleLower.contains('ansiedad') || titleLower.contains('mental') ||
+             titleLower.contains('espiritual') || titleLower.contains('consciencia') || titleLower.contains('presente')) {
       return 'meditation';
-    } else if (titleLower.contains('fumar') || titleLower.contains('cigarro') || titleLower.contains('smoke') ||
-               titleLower.contains('tabaco') || titleLower.contains('nicotina')) {
+    }
+    
+    // 🚭 DEJAR DE FUMAR
+    else if (titleLower.contains('fumar') || titleLower.contains('cigarro') || titleLower.contains('smoke') ||
+             titleLower.contains('tabaco') || titleLower.contains('nicotina') || titleLower.contains('cigarrillo') ||
+             titleLower.contains('puro') || titleLower.contains('vaper') || titleLower.contains('vape') ||
+             titleLower.contains('hookah') || titleLower.contains('shisha') || titleLower.contains('marlboro') ||
+             titleLower.contains('camel') || titleLower.contains('dejar de fumar') || titleLower.contains('quit smoking')) {
       return 'quit_smoking';
-    } else if (titleLower.contains('ahorrar') || titleLower.contains('dinero') || titleLower.contains('money') ||
-               titleLower.contains('save') || titleLower.contains('financiero')) {
+    }
+    
+    // 💰 AHORRAR DINERO / FINANZAS
+    else if (titleLower.contains('ahorrar') || titleLower.contains('dinero') || titleLower.contains('money') ||
+             titleLower.contains('save') || titleLower.contains('financiero') || titleLower.contains('economia') ||
+             titleLower.contains('gasto') || titleLower.contains('presupuesto') || titleLower.contains('inversión') ||
+             titleLower.contains('deuda') || titleLower.contains('banco') || titleLower.contains('peso') ||
+             titleLower.contains('dólar') || titleLower.contains('euro') || titleLower.contains('comprar menos') ||
+             titleLower.contains('gastar menos') || titleLower.contains('economizar')) {
       return 'save_money';
-    } else {
+    }
+    
+    // 🍎 ALIMENTACIÓN SALUDABLE
+    else if (titleLower.contains('comer sano') || titleLower.contains('dieta') || titleLower.contains('vegetales') ||
+             titleLower.contains('frutas') || titleLower.contains('verduras') || titleLower.contains('ensalada') ||
+             titleLower.contains('proteína') || titleLower.contains('vitamina') || titleLower.contains('nutrición') ||
+             titleLower.contains('saludable') || titleLower.contains('orgánico') || titleLower.contains('natural') ||
+             titleLower.contains('fibra') || titleLower.contains('calcio') || titleLower.contains('omega') ||
+             titleLower.contains('antioxidante') || titleLower.contains('superfood') || titleLower.contains('detox')) {
+      return 'healthy_eating';
+    }
+    
+    // 🍟 DEJAR COMIDA CHATARRA
+    else if (titleLower.contains('chatarra') || titleLower.contains('junk food') || titleLower.contains('comida rápida') ||
+             titleLower.contains('mcdonalds') || titleLower.contains('burger') || titleLower.contains('pizza') ||
+             titleLower.contains('papas fritas') || titleLower.contains('refresco') || titleLower.contains('coca cola') ||
+             titleLower.contains('dulces') || titleLower.contains('chocolate') || titleLower.contains('galletas') ||
+             titleLower.contains('chips') || titleLower.contains('frituras') || titleLower.contains('azúcar') ||
+             titleLower.contains('grasa') || titleLower.contains('procesado') || titleLower.contains('fast food') ||
+             titleLower.contains('carbohidratos') || titleLower.contains('harinas') || titleLower.contains('postres')) {
+      return 'quit_junk_food';
+    }
+    
+    // 🍺 DEJAR ALCOHOL
+    else if (titleLower.contains('alcohol') || titleLower.contains('beber') || titleLower.contains('cerveza') ||
+             titleLower.contains('vino') || titleLower.contains('whisky') || titleLower.contains('vodka') ||
+             titleLower.contains('ron') || titleLower.contains('tequila') || titleLower.contains('licor') ||
+             titleLower.contains('trago') || titleLower.contains('copa') || titleLower.contains('bar') ||
+             titleLower.contains('borracho') || titleLower.contains('drunk') || titleLower.contains('drinking') ||
+             titleLower.contains('alcoholismo') || titleLower.contains('sobrio') || titleLower.contains('abstemio')) {
+      return 'quit_alcohol';
+    }
+    
+    // 📱 REDUCIR REDES SOCIALES / PANTALLAS
+    else if (titleLower.contains('redes sociales') || titleLower.contains('facebook') || titleLower.contains('instagram') ||
+             titleLower.contains('tiktok') || titleLower.contains('twitter') || titleLower.contains('youtube') ||
+             titleLower.contains('whatsapp') || titleLower.contains('snapchat') || titleLower.contains('telefono') ||
+             titleLower.contains('celular') || titleLower.contains('pantalla') || titleLower.contains('movil') ||
+             titleLower.contains('social media') || titleLower.contains('scroll') || titleLower.contains('likes') ||
+             titleLower.contains('netflix') || titleLower.contains('streaming') || titleLower.contains('series') ||
+             titleLower.contains('videojuegos') || titleLower.contains('gaming') || titleLower.contains('internet') ||
+             titleLower.contains('digital') || titleLower.contains('screen time') || titleLower.contains('adicción al móvil')) {
+      return 'reduce_screen_time';
+    }
+    
+    // 😴 DORMIR MEJOR
+    else if (titleLower.contains('dormir') || titleLower.contains('sueño') || titleLower.contains('sleep') ||
+             titleLower.contains('descanso') || titleLower.contains('insomnio') || titleLower.contains('cama') ||
+             titleLower.contains('temprano') || titleLower.contains('madrugar') || titleLower.contains('rutina nocturna') ||
+             titleLower.contains('horas de sueño') || titleLower.contains('despertar') || titleLower.contains('siesta') ||
+             titleLower.contains('relajarse') || titleLower.contains('bed time') || titleLower.contains('acostarse')) {
+      return 'better_sleep';
+    }
+    
+    // 💊 DEJAR DROGAS
+    else if (titleLower.contains('droga') || titleLower.contains('marihuana') || titleLower.contains('cannabis') ||
+             titleLower.contains('cocaina') || titleLower.contains('heroina') || titleLower.contains('lsd') ||
+             titleLower.contains('extasis') || titleLower.contains('anfetamina') || titleLower.contains('crack') ||
+             titleLower.contains('meth') || titleLower.contains('opioides') || titleLower.contains('porro') ||
+             titleLower.contains('joint') || titleLower.contains('weed') || titleLower.contains('hash') ||
+             titleLower.contains('sustancia') || titleLower.contains('estupefaciente') || titleLower.contains('adicción')) {
+      return 'quit_drugs';
+    }
+    
+    // 🎮 REDUCIR VIDEOJUEGOS
+    else if (titleLower.contains('videojuegos') || titleLower.contains('gaming') || titleLower.contains('ps5') ||
+             titleLower.contains('xbox') || titleLower.contains('nintendo') || titleLower.contains('pc gaming') ||
+             titleLower.contains('fortnite') || titleLower.contains('call of duty') || titleLower.contains('fifa') ||
+             titleLower.contains('league of legends') || titleLower.contains('valorant') || titleLower.contains('minecraft') ||
+             titleLower.contains('steam') || titleLower.contains('twitch') || titleLower.contains('console') ||
+             titleLower.contains('online gaming') || titleLower.contains('jugar menos') || titleLower.contains('game addiction')) {
+      return 'reduce_gaming';
+    }
+    
+    // 🔞 DEJAR PORNOGRAFÍA / MASTURBACIÓN
+    else if (titleLower.contains('masturbación') || titleLower.contains('masturbarse') || titleLower.contains('masturbar') ||
+             titleLower.contains('masturbation') || titleLower.contains('pornografía') || titleLower.contains('porn') ||
+             titleLower.contains('porno') || titleLower.contains('xxx') || titleLower.contains('contenido adulto') ||
+             titleLower.contains('sexual') || titleLower.contains('nofap') || titleLower.contains('noporn') ||
+             titleLower.contains('abstinencia sexual') || titleLower.contains('adicción sexual')) {
+      return 'quit_sexual_habits';
+    }
+    
+    // 🛏️ DEJAR PROCRASTINACIÓN
+    else if (titleLower.contains('procrastinar') || titleLower.contains('procrastinación') || titleLower.contains('pereza') ||
+             titleLower.contains('flojera') || titleLower.contains('productividad') || titleLower.contains('tareas') ||
+             titleLower.contains('responsabilidades') || titleLower.contains('postponer') || titleLower.contains('delay') ||
+             titleLower.contains('lazy') || titleLower.contains('motivación') || titleLower.contains('disciplina') ||
+             titleLower.contains('organización') || titleLower.contains('tiempo') || titleLower.contains('eficiencia')) {
+      return 'stop_procrastination';
+    }
+    
+    // 🤬 CONTROLAR IRA / AGRESIVIDAD
+    else if (titleLower.contains('ira') || titleLower.contains('enojo') || titleLower.contains('agresividad') ||
+             titleLower.contains('gritar') || titleLower.contains('violencia') || titleLower.contains('anger') ||
+             titleLower.contains('furioso') || titleLower.contains('berrinche') || titleLower.contains('mal genio') ||
+             titleLower.contains('explotar') || titleLower.contains('pelear') || titleLower.contains('discutir') ||
+             titleLower.contains('paciencia') || titleLower.contains('calma') || titleLower.contains('autocontrol')) {
+      return 'anger_management';
+    }
+    
+    // 😰 REDUCIR ANSIEDAD / ESTRÉS
+    else if (titleLower.contains('ansiedad') || titleLower.contains('anxiety') || titleLower.contains('estrés') ||
+             titleLower.contains('stress') || titleLower.contains('nervios') || titleLower.contains('worry') ||
+             titleLower.contains('preocupación') || titleLower.contains('pánico') || titleLower.contains('tensión') ||
+             titleLower.contains('agobio') || titleLower.contains('overwhelmed') || titleLower.contains('mental health') ||
+             titleLower.contains('salud mental') || titleLower.contains('depresión') || titleLower.contains('tristeza')) {
+      return 'reduce_anxiety';
+    }
+    
+    // 🚗 MANEJAR MEJOR / SEGURIDAD VIAL
+    else if (titleLower.contains('manejar') || titleLower.contains('conducir') || titleLower.contains('driving') ||
+             titleLower.contains('carro') || titleLower.contains('auto') || titleLower.contains('velocidad') ||
+             titleLower.contains('tráfico') || titleLower.contains('road rage') || titleLower.contains('seguridad vial') ||
+             titleLower.contains('accidente') || titleLower.contains('multa') || titleLower.contains('licencia')) {
+      return 'better_driving';
+    }
+    
+    // 💕 RELACIONES / AMOR
+    else if (titleLower.contains('relación') || titleLower.contains('pareja') || titleLower.contains('amor') ||
+             titleLower.contains('novio') || titleLower.contains('novia') || titleLower.contains('esposo') ||
+             titleLower.contains('esposa') || titleLower.contains('matrimonio') || titleLower.contains('comunicación') ||
+             titleLower.contains('celos') || titleLower.contains('confianza') || titleLower.contains('romance') ||
+             titleLower.contains('dating') || titleLower.contains('relationship') || titleLower.contains('compromiso')) {
+      return 'better_relationships';
+    }
+    
+    // 👥 HABILIDADES SOCIALES
+    else if (titleLower.contains('hablar en público') || titleLower.contains('timidez') || titleLower.contains('social') ||
+             titleLower.contains('amigos') || titleLower.contains('networking') || titleLower.contains('conversación') ||
+             titleLower.contains('shy') || titleLower.contains('introvertido') || titleLower.contains('confianza') ||
+             titleLower.contains('público') || titleLower.contains('presentación') || titleLower.contains('comunicar')) {
+      return 'social_skills';
+    }
+    
+    // 🧹 ORGANIZACIÓN / LIMPIEZA
+    else if (titleLower.contains('limpiar') || titleLower.contains('organizar') || titleLower.contains('ordenar') ||
+             titleLower.contains('casa') || titleLower.contains('cuarto') || titleLower.contains('cocina') ||
+             titleLower.contains('baño') || titleLower.contains('closet') || titleLower.contains('limpieza') ||
+             titleLower.contains('organize') || titleLower.contains('cleaning') || titleLower.contains('messy') ||
+             titleLower.contains('desorden') || titleLower.contains('marie kondo') || titleLower.contains('minimalismo')) {
+      return 'organization';
+    }
+    
+    // 💼 TRABAJO / CARRERA
+    else if (titleLower.contains('trabajo') || titleLower.contains('carrera') || titleLower.contains('profesional') ||
+             titleLower.contains('empleo') || titleLower.contains('job') || titleLower.contains('career') ||
+             titleLower.contains('oficina') || titleLower.contains('jefe') || titleLower.contains('empresa') ||
+             titleLower.contains('salario') || titleLower.contains('promotion') || titleLower.contains('cv') ||
+             titleLower.contains('resume') || titleLower.contains('entrevista') || titleLower.contains('networking')) {
+      return 'career_development';
+    }
+    
+    // 🎨 CREATIVIDAD / ARTE
+    else if (titleLower.contains('dibujar') || titleLower.contains('pintar') || titleLower.contains('arte') ||
+             titleLower.contains('creatividad') || titleLower.contains('música') || titleLower.contains('tocar') ||
+             titleLower.contains('guitarra') || titleLower.contains('piano') || titleLower.contains('cantar') ||
+             titleLower.contains('escribir') || titleLower.contains('poesía') || titleLower.contains('fotografía') ||
+             titleLower.contains('creative') || titleLower.contains('artístico') || titleLower.contains('manualidades')) {
+      return 'creativity';
+    }
+    
+    // � APRENDER INSTRUMENTO MUSICAL
+    else if (titleLower.contains('guitarra') || titleLower.contains('piano') || titleLower.contains('violin') ||
+             titleLower.contains('batería') || titleLower.contains('bajo') || titleLower.contains('flauta') ||
+             titleLower.contains('saxofón') || titleLower.contains('trompeta') || titleLower.contains('ukulele') ||
+             titleLower.contains('armónica') || titleLower.contains('instrumento') || titleLower.contains('música') ||
+             titleLower.contains('tocar') || titleLower.contains('cantar') || titleLower.contains('aprender música') ||
+             titleLower.contains('clases de música') || titleLower.contains('conservatorio') || titleLower.contains('música')) {
+      return 'learn_instrument';
+    }
+    
+    // 🌍 APRENDER IDIOMAS
+    else if (titleLower.contains('inglés') || titleLower.contains('francés') || titleLower.contains('alemán') ||
+             titleLower.contains('japonés') || titleLower.contains('chino') || titleLower.contains('italiano') ||
+             titleLower.contains('portugués') || titleLower.contains('ruso') || titleLower.contains('árabe') ||
+             titleLower.contains('coreano') || titleLower.contains('idioma') || titleLower.contains('language') ||
+             titleLower.contains('speaking') || titleLower.contains('grammar') || titleLower.contains('vocabulary') ||
+             titleLower.contains('duolingo') || titleLower.contains('babbel') || titleLower.contains('rosetta') ||
+             titleLower.contains('conversación') || titleLower.contains('pronunciación') || titleLower.contains('traducir')) {
+      return 'learn_language';
+    }
+    
+    // 🍳 APRENDER A COCINAR
+    else if (titleLower.contains('cocinar') || titleLower.contains('cooking') || titleLower.contains('recetas') ||
+             titleLower.contains('chef') || titleLower.contains('cocina') || titleLower.contains('hornear') ||
+             titleLower.contains('repostería') || titleLower.contains('panadería') || titleLower.contains('pastelería') ||
+             titleLower.contains('sartén') || titleLower.contains('horno') || titleLower.contains('ingredientes') ||
+             titleLower.contains('cortar') || titleLower.contains('mezclar') || titleLower.contains('freír') ||
+             titleLower.contains('hervir') || titleLower.contains('asar') || titleLower.contains('gastronomía')) {
+      return 'learn_cooking';
+    }
+    
+    // 💪 GANAR PESO/MÚSCULO
+    else if (titleLower.contains('ganar peso') || titleLower.contains('ganar músculo') || titleLower.contains('masa muscular') ||
+             titleLower.contains('bulking') || titleLower.contains('hipertrofia') || titleLower.contains('fuerza') ||
+             titleLower.contains('proteína') || titleLower.contains('suplementos') || titleLower.contains('creatina') ||
+             titleLower.contains('gym') || titleLower.contains('pesas') || titleLower.contains('entrenar') ||
+             titleLower.contains('bíceps') || titleLower.contains('pectorales') || titleLower.contains('abdominales') ||
+             titleLower.contains('glúteos') || titleLower.contains('piernas') || titleLower.contains('definir')) {
+      return 'gain_muscle';
+    }
+    
+    // 🧠 ESTUDIAR/EDUCACIÓN
+    else if (titleLower.contains('estudiar') || titleLower.contains('examen') || titleLower.contains('university') ||
+             titleLower.contains('universidad') || titleLower.contains('colegio') || titleLower.contains('school') ||
+             titleLower.contains('matemáticas') || titleLower.contains('ciencias') || titleLower.contains('historia') ||
+             titleLower.contains('literatura') || titleLower.contains('química') || titleLower.contains('física') ||
+             titleLower.contains('biología') || titleLower.contains('filosofía') || titleLower.contains('psicología') ||
+             titleLower.contains('economía') || titleLower.contains('derecho') || titleLower.contains('medicina') ||
+             titleLower.contains('ingeniería') || titleLower.contains('tesis') || titleLower.contains('investigación')) {
+      return 'study_education';
+    }
+    
+    // 🤝 VOLUNTARIADO
+    else if (titleLower.contains('voluntariado') || titleLower.contains('volunteer') || titleLower.contains('ayudar') ||
+             titleLower.contains('caridad') || titleLower.contains('charity') || titleLower.contains('donación') ||
+             titleLower.contains('comunidad') || titleLower.contains('social') || titleLower.contains('ong') ||
+             titleLower.contains('fundación') || titleLower.contains('causas') || titleLower.contains('beneficencia') ||
+             titleLower.contains('solidaridad') || titleLower.contains('servicio') || titleLower.contains('misión') ||
+             titleLower.contains('altruismo') || titleLower.contains('humanitario')) {
+      return 'volunteering';
+    }
+    
+    // 📝 ESCRIBIR/JOURNALING
+    else if (titleLower.contains('escribir') || titleLower.contains('writing') || titleLower.contains('diario') ||
+             titleLower.contains('journal') || titleLower.contains('blog') || titleLower.contains('novela') ||
+             titleLower.contains('cuento') || titleLower.contains('poesía') || titleLower.contains('poema') ||
+             titleLower.contains('artículo') || titleLower.contains('ensayo') || titleLower.contains('redactar') ||
+             titleLower.contains('autor') || titleLower.contains('escritor') || titleLower.contains('manuscrito') ||
+             titleLower.contains('guión') || titleLower.contains('screenplay') || titleLower.contains('copywriting')) {
+      return 'writing';
+    }
+    
+    // 🚶‍♂️ CAMINAR DIARIAMENTE
+    else if (titleLower.contains('caminar') || titleLower.contains('walking') || titleLower.contains('pasos') ||
+             titleLower.contains('steps') || titleLower.contains('senderismo') || titleLower.contains('hiking') ||
+             titleLower.contains('paseo') || titleLower.contains('caminata') || titleLower.contains('trotar') ||
+             titleLower.contains('jogging') || titleLower.contains('correr') || titleLower.contains('running') ||
+             titleLower.contains('maratón') || titleLower.contains('kilómetros') || titleLower.contains('millas') ||
+             titleLower.contains('cardio') || titleLower.contains('resistencia')) {
+      return 'daily_walking';
+    }
+    
+    // 🧘‍♀️ YOGA/ESTIRAMIENTOS
+    else if (titleLower.contains('yoga') || titleLower.contains('estirar') || titleLower.contains('stretching') ||
+             titleLower.contains('pilates') || titleLower.contains('flexibilidad') || titleLower.contains('postura') ||
+             titleLower.contains('relajación') || titleLower.contains('namaste') || titleLower.contains('asanas') ||
+             titleLower.contains('vinyasa') || titleLower.contains('hatha') || titleLower.contains('ashtanga') ||
+             titleLower.contains('meditación') || titleLower.contains('chakras') || titleLower.contains('equilibrio') ||
+             titleLower.contains('respiración') || titleLower.contains('mindfulness')) {
+      return 'yoga_stretching';
+    }
+    
+    // 📸 FOTOGRAFÍA
+    else if (titleLower.contains('fotografía') || titleLower.contains('photography') || titleLower.contains('cámara') ||
+             titleLower.contains('camera') || titleLower.contains('foto') || titleLower.contains('picture') ||
+             titleLower.contains('imagen') || titleLower.contains('retrato') || titleLower.contains('paisaje') ||
+             titleLower.contains('macro') || titleLower.contains('selfie') || titleLower.contains('instagram') ||
+             titleLower.contains('exposición') || titleLower.contains('apertura') || titleLower.contains('iso') ||
+             titleLower.contains('photoshop') || titleLower.contains('lightroom') || titleLower.contains('edición')) {
+      return 'photography';
+    }
+    
+    // 🏡 JARDINERÍA
+    else if (titleLower.contains('jardín') || titleLower.contains('garden') || titleLower.contains('plantas') ||
+             titleLower.contains('plant') || titleLower.contains('flores') || titleLower.contains('flower') ||
+             titleLower.contains('sembrar') || titleLower.contains('plantar') || titleLower.contains('cultivar') ||
+             titleLower.contains('regar') || titleLower.contains('tierra') || titleLower.contains('semillas') ||
+             titleLower.contains('macetas') || titleLower.contains('huerto') || titleLower.contains('vegetables') ||
+             titleLower.contains('hierbas') || titleLower.contains('herbs') || titleLower.contains('compost')) {
+      return 'gardening';
+    }
+    
+    // 💻 PROGRAMACIÓN
+    else if (titleLower.contains('programar') || titleLower.contains('programming') || titleLower.contains('código') ||
+             titleLower.contains('code') || titleLower.contains('python') || titleLower.contains('javascript') ||
+             titleLower.contains('java') || titleLower.contains('react') || titleLower.contains('flutter') ||
+             titleLower.contains('html') || titleLower.contains('css') || titleLower.contains('sql') ||
+             titleLower.contains('github') || titleLower.contains('developer') || titleLower.contains('app') ||
+             titleLower.contains('website') || titleLower.contains('software') || titleLower.contains('algoritmo') ||
+             titleLower.contains('database') || titleLower.contains('backend') || titleLower.contains('frontend')) {
+      return 'programming';
+    }
+    
+    // �🌱 MEDIO AMBIENTE
+    else if (titleLower.contains('reciclar') || titleLower.contains('medio ambiente') || titleLower.contains('ecológico') ||
+             titleLower.contains('sustentable') || titleLower.contains('verde') || titleLower.contains('planeta') ||
+             titleLower.contains('cambio climático') || titleLower.contains('plastic') || titleLower.contains('waste') ||
+             titleLower.contains('energy') || titleLower.contains('sostenible') || titleLower.contains('natura')) {
+      return 'environment';
+    }
+    
+    else {
       // Tipo genérico para retos no específicos
       return 'generic';
     }

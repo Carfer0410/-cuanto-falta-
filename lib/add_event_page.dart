@@ -5,6 +5,7 @@ import 'event.dart';
 import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
+import 'preparation_service.dart';
 import 'event_customization_widget.dart';
 // import 'package:intl/intl.dart';
 
@@ -64,7 +65,12 @@ class _AddEventPageState extends State<AddEventPage> {
       );
       
       // Guardar evento en la base de datos
-      await DatabaseHelper.instance.insertEvent(event);
+      final eventId = await DatabaseHelper.instance.insertEvent(event);
+      
+      // 🆕 NUEVO: Crear preparativos automáticos para el evento
+      if (eventId > 0) {
+        await PreparationService.instance.createAutomaticPreparations(eventId, _selectedCategory!);
+      }
       
       // Registrar estadísticas y verificar logros
       await StatisticsService.instance.recordEventActivity();
@@ -72,17 +78,18 @@ class _AddEventPageState extends State<AddEventPage> {
         StatisticsService.instance.statistics
       );
       
-      // Mensaje informativo sobre notificaciones
+      // Mensaje informativo sobre notificaciones Y preparativos
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               '✅ Evento guardado exitosamente.\n'
-              '🔔 Recibirás recordatorios:\n'
+              '� Lista de preparativos creada automáticamente.\n'
+              '�🔔 Recibirás recordatorios:\n'
               '📅 30 días, 15 días, 7 días, 3 días, 1 día antes y el día del evento.\n'
               '💡 Sistema inteligente activo.',
             ),
-            duration: Duration(seconds: 5),
+            duration: Duration(seconds: 6),
             backgroundColor: Colors.green,
           ),
         );

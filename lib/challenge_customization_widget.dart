@@ -46,7 +46,7 @@ class ChallengeCustomizationWidget extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                localization.t('customize_challenge'),
+                localization.t('Personalizar Reto'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -91,30 +91,44 @@ class ChallengeCustomizationWidget extends StatelessWidget {
   }
 
   Widget _buildChallengePreview(BuildContext context, LocalizationService localization) {
+    // Función para calcular el mejor color de texto según el fondo
+    Color getTextColorForBackground(Color backgroundColor) {
+      // Calcular luminancia del color de fondo
+      double luminance = backgroundColor.computeLuminance();
+      // Si es claro (>0.5), usar texto oscuro; si es oscuro, usar texto claro
+      return luminance > 0.5 ? Colors.black87 : Colors.white;
+    }
+
+    final textColor = getTextColorForBackground(selectedColor.color);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [selectedColor.color, selectedColor.lightColor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: selectedColor.color.withOpacity(0.2),
+            color: selectedColor.color.withOpacity(0.3),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Título de la sección
           Row(
             children: [
-              // Icono del reto
               Container(
-                width: 50,
-                height: 50,
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: selectedColor.color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(25),
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   selectedIcon.icon,
@@ -131,10 +145,10 @@ class ChallengeCustomizationWidget extends StatelessWidget {
                   children: [
                     Text(
                       localization.t('preview_challenge_title'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D3748),
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -144,54 +158,55 @@ class ChallengeCustomizationWidget extends StatelessWidget {
                         : localization.t('preview_start_habit'),
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade600,
+                        color: textColor.withOpacity(0.7),
                       ),
                     ),
                   ],
                 ),
               ),
-              
-              // Estado del reto
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: selectedColor.color,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '7 días',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          
+          // Texto motivacional
+          Text(
+            localization.t('challenge_preview_time'),
+            style: TextStyle(
+              fontSize: 18,
+              color: textColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
           
           // Timer de progreso
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: selectedColor.lightColor,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: selectedColor.color.withOpacity(0.3),
-                width: 1,
-              ),
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
               child: Text(
                 '7d 12h 35m 42s',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: selectedColor.color,
                   fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          // Texto de streak
+          Text(
+            '${localization.t('challenge_preview_streak')}',
+            style: TextStyle(
+              fontSize: 16,
+              color: textColor.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

@@ -9,6 +9,8 @@ import 'localization_service.dart';
 import 'data_migration_service.dart';
 import 'optimal_usage_guide.dart';
 import 'event_customization_widget.dart';
+import 'event_preparations_page.dart';
+import 'preparation_service.dart';
 
 /// Widget de cuenta regresiva en vivo mostrando días, horas, minutos y segundos.
 class _CountdownTimer extends StatefulWidget {
@@ -277,6 +279,8 @@ class _HomePageState extends State<HomePage> {
                             ),
                             onDismissed: (_) async {
                               final deleted = event;
+                              // Eliminar preparativos del evento también
+                              await PreparationService.instance.deleteEventPreparations(deleted.id!);
                               await DatabaseHelper.instance.deleteEvent(
                                 deleted.id!,
                               );
@@ -284,13 +288,20 @@ class _HomePageState extends State<HomePage> {
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Evento eliminado'),
+                                  content: const Text('Evento y preparativos eliminados'),
                                   action: SnackBarAction(
                                     label: 'Deshacer',
                                     onPressed: () async {
-                                      await DatabaseHelper.instance.insertEvent(
+                                      final newEventId = await DatabaseHelper.instance.insertEvent(
                                         deleted,
                                       );
+                                      // Recrear preparativos automáticos
+                                      if (newEventId > 0) {
+                                        await PreparationService.instance.createAutomaticPreparations(
+                                          newEventId, 
+                                          deleted.category,
+                                        );
+                                      }
                                       _loadEvents();
                                     },
                                   ),
@@ -377,6 +388,33 @@ class _HomePageState extends State<HomePage> {
                                       _CountdownTimer(
                                         targetDate: event.targetDate,
                                         eventColor: event.color,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // Botón de preparativos
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          ElevatedButton.icon(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => EventPreparationsPage(
+                                                    event: event,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            icon: Icon(Icons.checklist, size: 18),
+                                            label: Text('Preparativos'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: event.color.color,
+                                              foregroundColor: Colors.white,
+                                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              textStyle: TextStyle(fontSize: 12),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),

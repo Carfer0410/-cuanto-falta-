@@ -17,7 +17,7 @@ import 'event.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
 
   DatabaseHelper._init();
 
@@ -50,6 +50,20 @@ class DatabaseHelper {
         icon TEXT NOT NULL DEFAULT 'celebration'
       )
     ''');
+    
+    // Crear tabla de preparativos
+    await db.execute('''
+      CREATE TABLE preparation_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        eventId INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        isCompleted INTEGER NOT NULL DEFAULT 0,
+        daysBeforeEvent INTEGER NOT NULL,
+        completedAt TEXT,
+        FOREIGN KEY (eventId) REFERENCES events (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -73,6 +87,22 @@ class DatabaseHelper {
     if (oldVersion < 4) {
       await db.execute('ALTER TABLE events ADD COLUMN color TEXT NOT NULL DEFAULT "orange"');
       await db.execute('ALTER TABLE events ADD COLUMN icon TEXT NOT NULL DEFAULT "celebration"');
+    }
+    
+    // Migración para tabla de preparativos (versión 5)
+    if (oldVersion < 5) {
+      await db.execute('''
+        CREATE TABLE preparation_tasks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          eventId INTEGER NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          isCompleted INTEGER NOT NULL DEFAULT 0,
+          daysBeforeEvent INTEGER NOT NULL,
+          completedAt TEXT,
+          FOREIGN KEY (eventId) REFERENCES events (id) ON DELETE CASCADE
+        )
+      ''');
     }
   }
 

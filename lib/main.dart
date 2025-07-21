@@ -8,6 +8,7 @@ import 'challenge_notification_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'data_migration_service.dart';
+import 'preparation_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 
@@ -137,6 +138,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: LocalizationService.instance),
         ChangeNotifierProvider.value(value: StatisticsService.instance),
         ChangeNotifierProvider.value(value: AchievementService.instance),
+        ChangeNotifierProvider.value(value: PreparationService.instance),
       ],
       child: Consumer<LocalizationService>(
         builder: (context, localizationService, child) {

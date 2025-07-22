@@ -216,34 +216,12 @@ class _CountersPageState extends State<CountersPage> {
 
   /// Formatea la fecha de inicio del reto de manera amigable
   String _formatStartDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date).inDays;
+    // Mostrar fecha exacta en formato dd/mm/yyyy para mayor claridad
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
     
-    // Nombres de meses en español
-    const monthNames = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-    ];
-    
-    if (difference == 0) {
-      return 'hoy';
-    } else if (difference == 1) {
-      return 'ayer';
-    } else if (difference < 7) {
-      return 'hace $difference días';
-    } else if (difference < 30) {
-      final weeks = (difference / 7).floor();
-      return weeks == 1 ? 'hace 1 semana' : 'hace $weeks semanas';
-    } else if (difference < 365) {
-      final day = date.day;
-      final month = monthNames[date.month - 1];
-      return '$day de $month';
-    } else {
-      final day = date.day;
-      final month = monthNames[date.month - 1];
-      final year = date.year;
-      return '$day de $month de $year';
-    }
+    return 'el $day/$month/$year';
   }
 
   String _challengePhrase(Counter counter, LocalizationService localizationService) {

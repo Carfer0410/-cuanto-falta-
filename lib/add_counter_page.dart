@@ -220,9 +220,11 @@ class _AddCounterPageState extends State<AddCounterPage> {
             children: [
               Icon(Icons.military_tech, color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              Text(
-                '🎉 ¡Racha de $daysPassed días otorgada! Cronómetro sincronizado.',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  '🎉 ¡Racha de $daysPassed días otorgada! Cronómetro sincronizado.',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),

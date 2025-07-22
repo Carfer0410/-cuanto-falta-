@@ -130,7 +130,34 @@ class _CountersPageState extends State<CountersPage> {
     // Las estadísticas se actualizan solo cuando se crean/modifican retos
     // o durante la migración/sincronización manual
     
+    // 🆕 NUEVO: Debug de estado de botones
+    _debugButtonStates();
+    
     setState(() {});
+  }
+
+  /// 🆕 DEBUG: Verifica el estado de los botones para identificar problemas
+  void _debugButtonStates() {
+    final now = DateTime.now();
+    print('\n🔍 === DEBUG ESTADO DE BOTONES (${now.day}/${now.month} ${now.hour}:${now.minute.toString().padLeft(2, '0')}) ===');
+    
+    for (int i = 0; i < _counters.length; i++) {
+      final counter = _counters[i];
+      final challengeId = _getChallengeId(i);
+      final streak = IndividualStreakService.instance.getStreak(challengeId);
+      
+      final shouldShow = _shouldShowConfirmationButton(counter, now);
+      final buttonType = counter.challengeStartedAt == null ? 'INICIAR' : 
+                        shouldShow ? 'CONFIRMAR' : 'COMPLETADO';
+      
+      print('📱 "${counter.title}" → $buttonType');
+      print('   • Iniciado: ${counter.challengeStartedAt != null ? _formatStartDate(counter.challengeStartedAt!) : 'NO'}');
+      print('   • Última confirmación: ${counter.lastConfirmedDate != null ? '${counter.lastConfirmedDate!.day}/${counter.lastConfirmedDate!.month}' : 'NUNCA'}');
+      print('   • Racha actual: ${streak?.currentStreak ?? 0} días');
+      print('   • Completado hoy (streak): ${streak?.isCompletedToday ?? false}');
+      print('');
+    }
+    print('=== FIN DEBUG ===\n');
   }
 
   // Función específica para pull-to-refresh que incluye sincronización
@@ -190,6 +217,27 @@ class _CountersPageState extends State<CountersPage> {
     await prefs.setString('counters', jsonEncode(list));
   }
 
+  /// 🆕 NUEVO: Fuerza la sincronización manual si hay problemas de estado
+  Future<void> _forceSyncAllCounters() async {
+    print('🔄 Forzando sincronización de todos los retos...');
+    
+    for (int i = 0; i < _counters.length; i++) {
+      final counter = _counters[i];
+      final challengeId = _getChallengeId(i);
+      
+      // Asegurar que el reto esté registrado en el sistema de rachas
+      await IndividualStreakService.instance.registerChallenge(
+        challengeId,
+        counter.title,
+      );
+    }
+    
+    // Refrescar el estado de la UI
+    setState(() {});
+    
+    print('✅ Sincronización forzada completada');
+  }
+
   void _navigateToAddCounter() async {
     final result = await Navigator.push(
       context,
@@ -213,6 +261,50 @@ class _CountersPageState extends State<CountersPage> {
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// 🆕 MEJORADO: Determina si debe mostrar el botón de confirmación
+  /// Combina lógica del Counter y del sistema de rachas individuales
+  bool _shouldShowConfirmationButton(Counter counter, DateTime now) {
+    // 1. Verificar que el reto esté iniciado
+    if (counter.challengeStartedAt == null) return false;
+    
+    // 2. Verificar que no esté confirmado hoy según Counter
+    final notConfirmedTodayByCounter = counter.lastConfirmedDate == null || 
+                                      !_isSameDay(counter.lastConfirmedDate!, now);
+    
+    // 3. Verificar que no esté confirmado hoy según sistema de rachas individuales
+    final challengeId = _getChallengeId(_counters.indexOf(counter));
+    final streak = IndividualStreakService.instance.getStreak(challengeId);
+    final notConfirmedTodayByStreak = streak?.isCompletedToday != true;
+    
+    // 4. Debe cumplir AMBAS condiciones para mostrar el botón
+    final shouldShow = notConfirmedTodayByCounter && notConfirmedTodayByStreak;
+    
+    // 5. CORREGIR INCONSISTENCIAS: Si hay desincronización, corregir
+    if (notConfirmedTodayByCounter != notConfirmedTodayByStreak) {
+      print('⚠️ INCONSISTENCIA detectada en "${counter.title}":');
+      print('  • Counter dice no confirmado: $notConfirmedTodayByCounter');
+      print('  • Streak dice no confirmado: $notConfirmedTodayByStreak');
+      
+      // Si el streak dice que está completado pero el counter no, sincronizar
+      if (!notConfirmedTodayByStreak && notConfirmedTodayByCounter) {
+        print('  → Sincronizando: Counter marca como completado hoy');
+        counter.lastConfirmedDate = DateTime(now.year, now.month, now.day);
+        _saveCounters(); // Guardar la corrección
+      }
+    }
+    
+    // 6. Debug logging para identificar problemas
+    if (!shouldShow) {
+      print('🔍 Debug - No se muestra botón para "${counter.title}":');
+      print('  • Counter lastConfirmed: ${counter.lastConfirmedDate}');
+      print('  • Streak completedToday: ${streak?.isCompletedToday}');
+      print('  • Counter dice no confirmado: $notConfirmedTodayByCounter');
+      print('  • Streak dice no confirmado: $notConfirmedTodayByStreak');
+    }
+    
+    return shouldShow;
+  }
 
   /// Formatea la fecha de inicio del reto de manera amigable
   String _formatStartDate(DateTime date) {
@@ -272,6 +364,32 @@ class _CountersPageState extends State<CountersPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // 🆕 NUEVO: Botón de debug y sincronización forzada
+          IconButton(
+            icon: const Icon(Icons.build),
+            tooltip: 'Debug & Sync',
+            onPressed: () async {
+              print('🔧 DEBUG: Sincronización forzada iniciada');
+              await _forceSyncAllCounters();
+              _debugButtonStates();
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.build, color: Colors.white, size: 16),
+                        SizedBox(width: 8),
+                        Text('Debug y sincronización completados'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 2),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             tooltip: 'Información',
@@ -641,7 +759,7 @@ class _CountersPageState extends State<CountersPage> {
                                         label: const Text('Iniciar reto'),
                                       ),
                                     )
-                                  : counter.lastConfirmedDate != null && !_isSameDay(counter.lastConfirmedDate!, now)
+                                  : _shouldShowConfirmationButton(counter, now)
                                     ? SizedBox(
                                         width: double.infinity,
                                         child: ElevatedButton.icon(
@@ -1437,13 +1555,11 @@ class _LiveStreakTimer extends StatefulWidget {
   final DateTime startDate;
   final DateTime? lastConfirmedDate;
   final bool confirmedToday;
-  final double? fontSize;
   const _LiveStreakTimer({
     Key? key,
     required this.startDate,
     required this.lastConfirmedDate,
     required this.confirmedToday,
-    this.fontSize,
   }) : super(key: key);
   @override
   State<_LiveStreakTimer> createState() => _LiveStreakTimerState();
@@ -1512,7 +1628,7 @@ class _LiveStreakTimerState extends State<_LiveStreakTimer> {
     }
 
     List<Widget> timeWidgets = [];
-    final fontSize = widget.fontSize ?? 15;
+    const double fontSize = 15;
     
     // SIEMPRE mostrar todo el tiempo completo disponible
     if (years > 0) {

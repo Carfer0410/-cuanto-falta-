@@ -209,10 +209,21 @@ class IndividualStreakService extends ChangeNotifier {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
+    debugPrint('🔍 === INICIO confirmChallenge ===');
+    debugPrint('🔍 Challenge ID: $challengeId');
+    debugPrint('🔍 Challenge Title: $challengeTitle');
+    debugPrint('🔍 Fecha de confirmación: ${today.day}/${today.month}/${today.year}');
+
     // Asegurar que el desafío existe
     await registerChallenge(challengeId, challengeTitle);
     
     final current = _streaks[challengeId]!;
+    
+    debugPrint('🔍 Estado ANTES de confirmar:');
+    debugPrint('🔍   Racha actual: ${current.currentStreak}');
+    debugPrint('🔍   Última confirmación: ${current.lastConfirmedDate}');
+    debugPrint('🔍   Historial confirmaciones: ${current.confirmationHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
+    debugPrint('🔍   isCompletedToday: ${current.isCompletedToday}');
     
     // No permitir confirmar dos veces el mismo día
     if (current.isCompletedToday) {
@@ -223,14 +234,20 @@ class IndividualStreakService extends ChangeNotifier {
     // Agregar confirmación al historial
     final newHistory = [...current.confirmationHistory, now];
     
+    debugPrint('🔍 Nuevo historial: ${newHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
+    
     // Calcular nueva racha
     int newStreak = _calculateStreak(current.copyWith(
       confirmationHistory: newHistory,
       lastConfirmedDate: now,
     ));
     
+    debugPrint('🔍 Nueva racha calculada: $newStreak');
+    
     // Calcular puntos con bonus de racha
     int pointsToAdd = 10 + (newStreak * 2);
+    
+    debugPrint('🔍 Puntos a agregar: $pointsToAdd');
     
     // Actualizar racha
     _streaks[challengeId] = current.copyWith(
@@ -244,7 +261,12 @@ class IndividualStreakService extends ChangeNotifier {
     await _saveStreaks();
     notifyListeners();
     
+    debugPrint('🔍 Estado DESPUÉS de confirmar:');
+    final updated = _streaks[challengeId]!;
+    debugPrint('🔍   Racha actualizada: ${updated.currentStreak}');
+    debugPrint('🔍   Historial final: ${updated.confirmationHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
     debugPrint('✅ Desafío $challengeId confirmado. Racha: $newStreak días');
+    debugPrint('🔍 === FIN confirmChallenge ===');
   }
 
   /// Otorgar racha retroactiva para retos registrados tarde (FUNCIÓN ESPECIAL)
@@ -331,7 +353,12 @@ class IndividualStreakService extends ChangeNotifier {
 
   /// Calcular racha actual basada en el historial
   int _calculateStreak(ChallengeStreak streak) {
-    if (streak.confirmationHistory.isEmpty) return 0;
+    debugPrint('🧮 === INICIO _calculateStreak ===');
+    
+    if (streak.confirmationHistory.isEmpty) {
+      debugPrint('🧮 Historial vacío, retornar 0');
+      return 0;
+    }
     
     // Simplificado: contar todas las confirmaciones únicas consecutivas
     // empezando desde la fecha más reciente hacia atrás
@@ -339,16 +366,23 @@ class IndividualStreakService extends ChangeNotifier {
     final sortedConfirmations = [...streak.confirmationHistory];
     sortedConfirmations.sort((a, b) => b.compareTo(a)); // Más reciente primero
     
+    debugPrint('🧮 Confirmaciones ordenadas: ${sortedConfirmations.map((d) => '${d.day}/${d.month}').join(', ')}');
+    
     if (sortedConfirmations.isEmpty) return 0;
     
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     int currentStreak = 0;
-    DateTime? expectedDate = today;
+    DateTime expectedDate = today;
+    
+    debugPrint('🧮 Empezando desde hoy: ${expectedDate.day}/${expectedDate.month}');
     
     // Revisar confirmaciones desde hoy hacia atrás
     for (final confirmation in sortedConfirmations) {
       final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
+      
+      debugPrint('🧮 Verificando: ${confirmDate.day}/${confirmDate.month}');
+      debugPrint('🧮   Esperada: ${expectedDate.day}/${expectedDate.month}');
       
       // Si hay un fallo registrado para esta fecha, parar
       final hasFailed = streak.failedDays.any((failDate) {
@@ -356,22 +390,32 @@ class IndividualStreakService extends ChangeNotifier {
         return failed.isAtSameMomentAs(confirmDate);
       });
       
-      if (hasFailed) break;
+      if (hasFailed) {
+        debugPrint('🧮   ❌ Hay fallo registrado, parar');
+        break;
+      }
       
       // Si esta confirmación es para la fecha que esperamos, continuar racha
-      if (expectedDate != null && confirmDate.isAtSameMomentAs(expectedDate)) {
+      if (confirmDate.isAtSameMomentAs(expectedDate)) {
         currentStreak++;
         expectedDate = expectedDate.subtract(Duration(days: 1));
+        debugPrint('🧮   ✅ Racha aumenta a: $currentStreak');
+        debugPrint('🧮   Siguiente esperada: ${expectedDate.day}/${expectedDate.month}');
       } else if (currentStreak == 0) {
         // Si es la primera confirmación pero no es de hoy, empezar racha desde ahí
         currentStreak = 1;
         expectedDate = confirmDate.subtract(Duration(days: 1));
+        debugPrint('🧮   🔄 Primera confirmación no es hoy, empezar desde aquí: $currentStreak');
+        debugPrint('🧮   Siguiente esperada: ${expectedDate.day}/${expectedDate.month}');
       } else {
         // Hueco en la racha, parar
+        debugPrint('🧮   ❌ Hueco en la racha, parar');
         break;
       }
     }
 
+    debugPrint('🧮 Racha final calculada: $currentStreak');
+    debugPrint('🧮 === FIN _calculateStreak ===');
     return currentStreak;
   }
 

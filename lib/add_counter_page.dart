@@ -72,6 +72,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final start = DateTime(startDate.year, startDate.month, startDate.day);
+    
+    // CORREGIDO: Calcular días correctamente incluyendo el día de inicio
+    // Ejemplo: 18 julio → 21 julio = 3 días (18, 19, 20)
     final daysPassed = today.difference(start).inDays;
     
     // Solo activar si el reto empezó al menos 1 día antes
@@ -204,6 +207,12 @@ class _AddCounterPageState extends State<AddCounterPage> {
       daysPassed
     );
     
+    // NUEVO: Calcular fecha de inicio exacta para sincronizar cronómetro
+    final now = DateTime.now();
+    final calculatedStartDate = now.subtract(Duration(days: daysPassed));
+    final exactStartTime = DateTime(calculatedStartDate.year, calculatedStartDate.month, calculatedStartDate.day); // Inicio del día
+    await _updateCounterStartTimeForConsistency(challengeTitle, exactStartTime);
+    
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -212,7 +221,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
               Icon(Icons.military_tech, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
-                '🎉 ¡Racha de $daysPassed días otorgada! Excelente constancia.',
+                '🎉 ¡Racha de $daysPassed días otorgada! Cronómetro sincronizado.',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -221,6 +230,35 @@ class _AddCounterPageState extends State<AddCounterPage> {
           duration: const Duration(seconds: 4),
         ),
       );
+    }
+  }
+
+  /// Actualiza el challengeStartedAt del counter para sincronizar cronómetro con racha
+  Future<void> _updateCounterStartTimeForConsistency(String challengeTitle, DateTime newStartTime) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString('counters');
+      if (jsonString == null) return;
+      
+      List<dynamic> list = jsonDecode(jsonString);
+      bool updated = false;
+      
+      // Buscar y actualizar el counter específico
+      for (int i = 0; i < list.length; i++) {
+        if (list[i]['title'] == challengeTitle) {
+          // Actualizar la fecha de inicio del cronómetro para que sea consistente con la racha
+          list[i]['challengeStartedAt'] = newStartTime.toIso8601String();
+          updated = true;
+          break;
+        }
+      }
+      
+      if (updated) {
+        await prefs.setString('counters', jsonEncode(list));
+        print('✅ Cronómetro sincronizado: $challengeTitle ahora cuenta desde $newStartTime');
+      }
+    } catch (e) {
+      print('❌ Error sincronizando cronómetro: $e');
     }
   }
 

@@ -331,35 +331,43 @@ class IndividualStreakService extends ChangeNotifier {
 
   /// Calcular racha actual basada en el historial
   int _calculateStreak(ChallengeStreak streak) {
-    if (streak.confirmationHistory.isEmpty) return 1;
+    if (streak.confirmationHistory.isEmpty) return 0;
+    
+    // Simplificado: contar todas las confirmaciones únicas consecutivas
+    // empezando desde la fecha más reciente hacia atrás
+    
+    final sortedConfirmations = [...streak.confirmationHistory];
+    sortedConfirmations.sort((a, b) => b.compareTo(a)); // Más reciente primero
+    
+    if (sortedConfirmations.isEmpty) return 0;
     
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    int currentStreak = 1;
-
-    // Revisar hacia atrás desde hoy
-    for (int i = 1; i <= 365; i++) {
-      final checkDate = today.subtract(Duration(days: i));
+    int currentStreak = 0;
+    DateTime? expectedDate = today;
+    
+    // Revisar confirmaciones desde hoy hacia atrás
+    for (final confirmation in sortedConfirmations) {
+      final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
       
-      // Si hay un fallo en esta fecha, romper la racha
+      // Si hay un fallo registrado para esta fecha, parar
       final hasFailed = streak.failedDays.any((failDate) {
         final failed = DateTime(failDate.year, failDate.month, failDate.day);
-        return failed.isAtSameMomentAs(checkDate);
+        return failed.isAtSameMomentAs(confirmDate);
       });
       
-      if (hasFailed) {
-        break;
-      }
+      if (hasFailed) break;
       
-      // Si hay confirmación en esta fecha, continuar racha
-      final hasConfirmation = streak.confirmationHistory.any((confirmation) {
-        final confirmed = DateTime(confirmation.year, confirmation.month, confirmation.day);
-        return confirmed.isAtSameMomentAs(checkDate);
-      });
-
-      if (hasConfirmation) {
+      // Si esta confirmación es para la fecha que esperamos, continuar racha
+      if (expectedDate != null && confirmDate.isAtSameMomentAs(expectedDate)) {
         currentStreak++;
+        expectedDate = expectedDate.subtract(Duration(days: 1));
+      } else if (currentStreak == 0) {
+        // Si es la primera confirmación pero no es de hoy, empezar racha desde ahí
+        currentStreak = 1;
+        expectedDate = confirmDate.subtract(Duration(days: 1));
       } else {
+        // Hueco en la racha, parar
         break;
       }
     }

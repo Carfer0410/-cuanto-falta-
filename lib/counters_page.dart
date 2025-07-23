@@ -8,6 +8,7 @@ import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'individual_streak_service.dart';
+import 'individual_streaks_page.dart';
 import 'data_migration_service.dart';
 import 'event.dart'; // Para usar EventColor y EventIcon
 import 'challenge_strategies_page.dart';
@@ -349,7 +350,12 @@ class _CountersPageState extends State<CountersPage> {
             icon: const Icon(Icons.local_fire_department),
             tooltip: 'Ver todas las rachas',
             onPressed: () {
-              Navigator.pushNamed(context, '/individual_streaks');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const IndividualStreaksPage(),
+                ),
+              );
             },
           ),
           IconButton(
@@ -1217,56 +1223,6 @@ class _CountersPageState extends State<CountersPage> {
       'total': totalDays,
       'progress': progress,
     };
-  }
-
-  /// Widget para mostrar items de información en el diálogo de ayuda
-  Widget _buildInfoItem(String emoji, String title, String description) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: Colors.orange[50],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   /// Widget para mostrar estadísticas en cards pequeñas

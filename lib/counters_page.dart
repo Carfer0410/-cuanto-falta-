@@ -217,26 +217,6 @@ class _CountersPageState extends State<CountersPage> {
     await prefs.setString('counters', jsonEncode(list));
   }
 
-  /// 🆕 NUEVO: Fuerza la sincronización manual si hay problemas de estado
-  Future<void> _forceSyncAllCounters() async {
-    print('🔄 Forzando sincronización de todos los retos...');
-    
-    for (int i = 0; i < _counters.length; i++) {
-      final counter = _counters[i];
-      final challengeId = _getChallengeId(i);
-      
-      // Asegurar que el reto esté registrado en el sistema de rachas
-      await IndividualStreakService.instance.registerChallenge(
-        challengeId,
-        counter.title,
-      );
-    }
-    
-    // Refrescar el estado de la UI
-    setState(() {});
-    
-    print('✅ Sincronización forzada completada');
-  }
 
   void _navigateToAddCounter() async {
     final result = await Navigator.push(
@@ -364,30 +344,12 @@ class _CountersPageState extends State<CountersPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          // 🆕 NUEVO: Botón de debug y sincronización forzada
+          // 🆕 NUEVO: Botón de acceso rápido a rachas individuales
           IconButton(
-            icon: const Icon(Icons.build),
-            tooltip: 'Debug & Sync',
-            onPressed: () async {
-              print('🔧 DEBUG: Sincronización forzada iniciada');
-              await _forceSyncAllCounters();
-              _debugButtonStates();
-              
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(Icons.build, color: Colors.white, size: 16),
-                        SizedBox(width: 8),
-                        Text('Debug y sincronización completados'),
-                      ],
-                    ),
-                    duration: Duration(seconds: 2),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              }
+            icon: const Icon(Icons.local_fire_department),
+            tooltip: 'Ver todas las rachas',
+            onPressed: () {
+              Navigator.pushNamed(context, '/individual_streaks');
             },
           ),
           IconButton(
@@ -402,7 +364,7 @@ class _CountersPageState extends State<CountersPage> {
                     'En esta pantalla puedes llevar el control de tus retos o hábitos, como dejar de fumar o empezar a hacer ejercicio.\n\n'
                     '- Agrega un reto con el botón naranja (+) abajo a la derecha.\n'
                     '- Cada tarjeta muestra el nombre del reto, el tiempo que llevas cumpliéndolo y una frase motivacional.\n'
-                    '- Pulsa “Iniciar reto” para comenzar a contar tu progreso.\n'
+                    '- Pulsa “Guardar reto” para comenzar a contar tu progreso.\n'
                     '- Cada día, confirma si cumpliste tu reto pulsando “¿Cumpliste hoy?”.\n'
                     '- Desliza un reto hacia la izquierda para eliminarlo.\n\n'
                     '¡Haz seguimiento a tus logros y mantente motivado para cumplir tus objetivos!'
@@ -419,9 +381,77 @@ class _CountersPageState extends State<CountersPage> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: RefreshIndicator(
+      body: Column(
+        children: [
+          // 📊 NUEVO: Header con estadísticas globales
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.orange[100]!, Colors.orange[50]!],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Consumer<IndividualStreakService>(
+              builder: (context, streakService, child) {
+                final globalStats = streakService.getGlobalStats();
+                final activeCount = globalStats['activeChallenges'] ?? 0;
+                final totalPoints = globalStats['totalPoints'] ?? 0;
+                final avgStreak = (globalStats['averageStreak'] ?? 0.0) as double;
+                
+                return Row(
+                  children: [
+                    // Retos activos
+                    Expanded(
+                      child: _buildStatCard(
+                        '🎯',
+                        '$activeCount',
+                        'Retos activos',
+                        Colors.blue[600]!,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Puntos totales
+                    Expanded(
+                      child: _buildStatCard(
+                        '⭐',
+                        '$totalPoints',
+                        'Puntos',
+                        Colors.amber[600]!,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Racha promedio
+                    Expanded(
+                      child: _buildStatCard(
+                        '🔥',
+                        '${avgStreak.toStringAsFixed(1)}',
+                        'Promedio',
+                        Colors.orange[600]!,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          
+          // Lista de retos existente
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: RefreshIndicator(
           onRefresh: _onRefresh,
           child:
               _counters.isEmpty
@@ -670,6 +700,60 @@ class _CountersPageState extends State<CountersPage> {
                                 ),
                                 child: Column(
                                   children: [
+                                    // 🆕 NUEVO: Progreso semanal
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: counter.color.color.withOpacity(0.05),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: counter.color.color.withOpacity(0.2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Consumer<IndividualStreakService>(
+                                        builder: (context, streakService, child) {
+                                          final streak = streakService.getStreak(_getChallengeId(index));
+                                          final weeklyProgress = _calculateWeeklyProgress(streak);
+                                          
+                                          return Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    'Esta semana',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.grey[700],
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '${weeklyProgress['completed']}/${weeklyProgress['total']} días',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: counter.color.color,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              // Barra de progreso semanal
+                                              LinearProgressIndicator(
+                                                value: weeklyProgress['progress'] as double,
+                                                backgroundColor: Colors.grey[300],
+                                                valueColor: AlwaysStoppedAnimation<Color>(counter.color.color),
+                                                minHeight: 6,
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    
                                     // Fecha de inicio del reto
                                     Container(
                                       padding: const EdgeInsets.symmetric(
@@ -1077,7 +1161,10 @@ class _CountersPageState extends State<CountersPage> {
                       );
                     },
                   ),
-        ),
+              ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'countersFab',
@@ -1088,6 +1175,143 @@ class _CountersPageState extends State<CountersPage> {
       ),
     );
       },
+    );
+  }
+
+  /// Calcula el progreso de la semana actual para un reto
+  Map<String, dynamic> _calculateWeeklyProgress(ChallengeStreak? streak) {
+    if (streak == null) {
+      return {'completed': 0, 'total': 0, 'progress': 0.0};
+    }
+
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final today = DateTime(now.year, now.month, now.day);
+    
+    int completedDays = 0;
+    int totalDays = 0;
+
+    // Contar días de esta semana
+    for (int i = 0; i < 7; i++) {
+      final day = startOfWeek.add(Duration(days: i));
+      final dayDate = DateTime(day.year, day.month, day.day);
+      
+      if (dayDate.isAfter(today)) break; // No contar días futuros
+      totalDays++;
+
+      // Verificar si se completó este día
+      final wasCompleted = streak.confirmationHistory.any((confirmation) {
+        final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
+        return confirmDate.isAtSameMomentAs(dayDate);
+      });
+
+      if (wasCompleted) {
+        completedDays++;
+      }
+    }
+
+    final progress = totalDays > 0 ? completedDays / totalDays : 0.0;
+    
+    return {
+      'completed': completedDays,
+      'total': totalDays,
+      'progress': progress,
+    };
+  }
+
+  /// Widget para mostrar items de información en el diálogo de ayuda
+  Widget _buildInfoItem(String emoji, String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: Colors.orange[50],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Widget para mostrar estadísticas en cards pequeñas
+  Widget _buildStatCard(String emoji, String value, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            emoji,
+            style: const TextStyle(fontSize: 20),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -1731,6 +1955,88 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
     super.dispose();
   }
 
+  /// Muestra explicación sobre la diferencia entre racha y cronómetro
+  void _showStreakExplanation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.help_outline, color: Colors.blue[600]),
+              const SizedBox(width: 12),
+              const Text('Racha vs Cronómetro'),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+              Row(
+                children: [
+                  Icon(Icons.local_fire_department, color: Colors.orange[600], size: 24),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Racha (días cumplidos)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Cuenta cuántos días calendario has cumplido tu reto.\n\n📅 Ejemplo: Si empezaste el 19/07 y cumpliste:\n• 19/07 ✅ (día 1)\n• 20/07 ✅ (día 2)\n• 21/07 ✅ (día 3)\n• 22/07 ✅ (día 4)\n\nResultado: 4 días cumplidos',
+                style: TextStyle(height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(Icons.access_time, color: Colors.green[600], size: 24),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Cronómetro (tiempo corrido)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Muestra el tiempo exacto transcurrido desde que iniciaste.\n\n⏰ Ejemplo: Del 19/07 (8:00 AM) al 22/07 (4:50 AM):\nResultado: 3 días, 20 horas, 50 minutos\n\n(Depende de la hora exacta de inicio)',
+                style: TextStyle(height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: const Text(
+                  '💡 Ambos números son correctos, solo miden cosas diferentes. La racha te motiva día a día, el cronómetro muestra tu persistencia total.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _updateDuration() {
     final now = DateTime.now();
     
@@ -1781,7 +2087,7 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Información de racha principal
+        // Información de racha principal con tooltip explicativo
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1792,16 +2098,36 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
             ),
             const SizedBox(width: 6),
             Text(
-              '$currentStreak días',
+              '$currentStreak días cumplidos',
               style: TextStyle(
                 fontSize: fontSize,
                 fontWeight: FontWeight.bold,
                 color: currentStreak > 0 ? Colors.orange[700] : Colors.grey[500],
               ),
             ),
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: () => _showStreakExplanation(context),
+              child: Icon(
+                Icons.info_outline,
+                size: 16,
+                color: Colors.grey[600],
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
+        
+        // Etiqueta para el cronómetro
+        Text(
+          'Tiempo corrido:',
+          style: TextStyle(
+            fontSize: fontSize - 8,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
         
         // Tiempo transcurrido completo (SIEMPRE muestra años, meses, días, horas, minutos y segundos cuando aplique)
         Row(

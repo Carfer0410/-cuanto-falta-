@@ -7,6 +7,7 @@ import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'preparation_service.dart';
 import 'event_customization_widget.dart';
+import 'theme_service.dart';
 // import 'package:intl/intl.dart';
 
 class AddEventPage extends StatefulWidget {
@@ -104,27 +105,26 @@ class _AddEventPageState extends State<AddEventPage> {
   Widget build(BuildContext context) {
     return Consumer<LocalizationService>(
       builder: (context, localizationService, child) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(localizationService.t('newEvent')),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor ?? Colors.white,
-        elevation: 2,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text(localizationService.t('newEvent')),
+            centerTitle: true,
+            backgroundColor: context.orangeVariant,
+            foregroundColor: Colors.white,
+            elevation: 2,
+          ),
+          body: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
             child: Container(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Card(
-                shape: isDark
+                shape: context.isDark
                     ? RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(28),
-                        side: const BorderSide(color: Colors.orange, width: 2),
+                        side: BorderSide(color: context.orangeVariant, width: 2),
                       )
                     : RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(28),
@@ -244,7 +244,7 @@ class _AddEventPageState extends State<AddEventPage> {
                                 : '',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: isDark ? Colors.greenAccent : Colors.green,
+                                color: context.successColor,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),

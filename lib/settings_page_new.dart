@@ -6,6 +6,7 @@ import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
 import 'planning_style_service.dart';
 import 'planning_style_selection_page.dart';
+import 'theme_service.dart';
 
 class SettingsPage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -180,7 +181,7 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Ajustes'),
-        backgroundColor: Colors.orange,
+        backgroundColor: context.orangeVariant,
         foregroundColor: Colors.white,
       ),
       body: ListView(
@@ -195,30 +196,43 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.palette, color: Colors.orange),
-                      SizedBox(width: 8),
+                      Icon(Icons.palette, color: context.orangeVariant),
+                      const SizedBox(width: 8),
                       Text(
                         'Apariencia',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.primaryTextColor,
+                        ),
                       ),
                     ],
                   ),
-                  Divider(),
+                  Divider(color: context.dividerColor),
                   SwitchListTile(
-                    title: const Text('Modo oscuro'),
-                    subtitle: const Text('Cambia entre tema claro y oscuro'),
+                    title: Text(
+                      'Modo claro o oscuro',
+                      style: TextStyle(color: context.primaryTextColor),
+                    ),
+                    subtitle: Text(
+                      'Cambia entre tema claro y oscuro',
+                      style: TextStyle(color: context.secondaryTextColor),
+                    ),
                     value: widget.themeMode == ThemeMode.dark,
                     onChanged: (val) {
-                      widget.onThemeChanged(val ? ThemeMode.dark : ThemeMode.light);
+                      final newMode = val ? ThemeMode.dark : ThemeMode.light;
+                      widget.onThemeChanged(newMode);
+                      _showSnackBar(val ? '🌙 Modo oscuro activado' : '☀️ Modo claro activado');
                     },
-                    secondary: const Icon(Icons.dark_mode),
+                    secondary: Icon(
+                      widget.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+                      color: context.orangeVariant,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           
           // Sección de Personalización
           Card(
@@ -229,15 +243,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.psychology, color: Colors.orange),
-                      SizedBox(width: 8),
+                      Icon(Icons.psychology, color: context.orangeVariant),
+                      const SizedBox(width: 8),
                       Text(
                         'Personalización',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.primaryTextColor,
+                        ),
                       ),
                     ],
                   ),
-                  Divider(),
+                  Divider(color: context.dividerColor),
                   Consumer<PlanningStyleService>(
                     builder: (context, planningService, child) {
                       final currentStyle = planningService.currentStyle;
@@ -248,11 +264,15 @@ class _SettingsPageState extends State<SettingsPage> {
                           styleInfo['emoji'],
                           style: const TextStyle(fontSize: 24),
                         ),
-                        title: const Text('Estilo de Planificación'),
+                        title: Text(
+                          'Estilo de Planificación',
+                          style: TextStyle(color: context.primaryTextColor),
+                        ),
                         subtitle: Text(
                           '${styleInfo['name']} - ${styleInfo['description']}',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: context.secondaryTextColor),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -260,12 +280,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             Text(
                               'x${styleInfo['multiplier']}',
                               style: TextStyle(
-                                color: Colors.orange.shade600,
+                                color: context.orangeVariant,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward_ios),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: context.iconColor,
+                            ),
                           ],
                         ),
                         onTap: () {
@@ -284,7 +307,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           
           // Sección de Notificaciones
           Card(
@@ -295,22 +318,30 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.notifications, color: Colors.orange),
-                      SizedBox(width: 8),
+                      Icon(Icons.notifications, color: context.orangeVariant),
+                      const SizedBox(width: 8),
                       Text(
                         'Notificaciones',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.primaryTextColor,
+                        ),
                       ),
                     ],
                   ),
-                  Divider(),
+                  Divider(color: context.dividerColor),
                   
                   // Notificaciones de Eventos
                   SwitchListTile(
-                    title: const Text('Recordatorios de Eventos'),
-                    subtitle: Text(_eventNotificationsEnabled 
-                      ? 'Recibirás notificaciones cada $_eventFrequency minutos'
-                      : 'No recibirás recordatorios de eventos'),
+                    title: Text(
+                      'Recordatorios de Eventos',
+                      style: TextStyle(color: context.primaryTextColor),
+                    ),
+                    subtitle: Text(
+                      _eventNotificationsEnabled 
+                        ? 'Recibirás notificaciones cada $_eventFrequency minutos'
+                        : 'No recibirás recordatorios de eventos',
+                      style: TextStyle(color: context.secondaryTextColor),
+                    ),
                     value: _eventNotificationsEnabled,
                     onChanged: _toggleEventNotifications,
                     secondary: const Icon(Icons.event),

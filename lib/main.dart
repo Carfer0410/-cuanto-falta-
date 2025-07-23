@@ -14,6 +14,7 @@ import 'challenge_strategy_service.dart';
 import 'individual_streak_service.dart';
 import 'milestone_notification_service.dart';
 import 'event_dashboard_service.dart';
+import 'theme_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 import 'splash_screen.dart';
@@ -55,6 +56,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
+  final ValueNotifier<ThemeMode> _themeModeNotifier = ValueNotifier(ThemeMode.light);
 
   @override
   void initState() {
@@ -160,22 +162,48 @@ class _MyAppState extends State<MyApp> {
     final prefs = await SharedPreferences.getInstance();
     final modeString = prefs.getString('themeMode');
     if (modeString != null) {
-      final mode = ThemeMode.values.firstWhere(
-        (e) => e.toString() == modeString,
-        orElse: () => ThemeMode.light,
-      );
-      setState(() {
-        _themeMode = mode;
-      });
+      try {
+        final mode = ThemeMode.values.firstWhere(
+          (e) => e.toString() == modeString,
+          orElse: () => ThemeMode.light,
+        );
+        if (mounted) {
+          setState(() {
+            _themeMode = mode;
+          });
+          _themeModeNotifier.value = mode;
+        }
+      } catch (e) {
+        print('Error loading theme: $e');
+        // Fallback a modo claro si hay error
+        if (mounted) {
+          setState(() {
+            _themeMode = ThemeMode.light;
+          });
+          _themeModeNotifier.value = ThemeMode.light;
+        }
+      }
+    } else {
+      _themeModeNotifier.value = ThemeMode.light;
     }
   }
 
   Future<void> _onThemeChanged(ThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('themeMode', mode.toString());
-    setState(() {
-      _themeMode = mode;
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('themeMode', mode.toString());
+      
+      if (mounted) {
+        setState(() {
+          _themeMode = mode;
+        });
+        _themeModeNotifier.value = mode;
+      }
+      
+      print('🎨 Tema cambiado a: ${mode.toString()}');
+    } catch (e) {
+      print('Error saving theme: $e');
+    }
   }
 
   @override
@@ -195,27 +223,18 @@ class _MyAppState extends State<MyApp> {
         builder: (context, localizationService, child) {
           return MaterialApp(
             title: localizationService.t('appTitle'),
-            theme: ThemeData(
-              primarySwatch: Colors.orange,
-              brightness: Brightness.light,
-              floatingActionButtonTheme: const FloatingActionButtonThemeData(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-            ),
-            darkTheme: ThemeData(
-              primarySwatch: Colors.orange,
-              brightness: Brightness.dark,
-              floatingActionButtonTheme: const FloatingActionButtonThemeData(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-            ),
+            theme: ThemeService.lightTheme,
+            darkTheme: ThemeService.darkTheme,
             themeMode: _themeMode,
             home: SplashScreen(
-              child: RootPage(
-                themeMode: _themeMode,
-                onThemeChanged: _onThemeChanged,
+              child: ValueListenableBuilder<ThemeMode>(
+                valueListenable: _themeModeNotifier,
+                builder: (context, themeMode, child) {
+                  return RootPage(
+                    themeMode: themeMode,
+                    onThemeChanged: _onThemeChanged,
+                  );
+                },
               ),
             ),
             debugShowCheckedModeBanner: false,

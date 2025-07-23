@@ -12,6 +12,7 @@ import 'event_customization_widget.dart';
 import 'event_preparations_page.dart';
 import 'preparation_service.dart';
 import 'event_dashboard_service.dart';
+import 'theme_service.dart';
 
 /// Widget de cuenta regresiva en vivo mostrando días, horas, minutos y segundos.
 class _CountdownTimer extends StatefulWidget {
@@ -192,16 +193,14 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Consumer<LocalizationService>(
       builder: (context, localizationService, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             title: Text(localizationService.t('events')),
-            backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
-            foregroundColor: Theme.of(context).appBarTheme.foregroundColor ?? (isDark ? Colors.white : Colors.white),
+            backgroundColor: context.orangeVariant,
+            foregroundColor: Colors.white,
             elevation: 0,
         actions: [
           IconButton(
@@ -251,12 +250,15 @@ class _HomePageState extends State<HomePage> {
                 _events.isEmpty
                     ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        SizedBox(height: 150),
+                      children: [
+                        const SizedBox(height: 150),
                         Center(
                           child: Text(
                             'Aún no hay eventos. ¡Agrega uno!',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 18, 
+                              color: context.secondaryTextColor,
+                            ),
                           ),
                         ),
                       ],
@@ -325,20 +327,19 @@ class _HomePageState extends State<HomePage> {
                                 vertical: 10,
                               ),
                               child: Card(
-                                shape:
-                                    isDark
-                                        ? RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
-                                            side: const BorderSide(
-                                              color: Colors.orange,
-                                              width: 2,
-                                            ),
-                                          )
-                                        : RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
-                                          ),
+                                shape: context.isDark
+                                    ? RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        side: BorderSide(
+                                          color: context.orangeVariant,
+                                          width: 2,
+                                        ),
+                                      )
+                                    : RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
                                 elevation: 6,
-                                color: Theme.of(context).cardColor,
+                                color: context.cardColor,
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Column(
@@ -539,9 +540,9 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ],
                             if (wellPrepared > 0 && needsAttention > 0) ...[
-                              SizedBox(width: 12),
-                              Text('•', style: TextStyle(color: Colors.grey)),
-                              SizedBox(width: 12),
+                              const SizedBox(width: 12),
+                              Text('•', style: TextStyle(color: context.secondaryTextColor)),
+                              const SizedBox(width: 12),
                             ],
                             if (needsAttention > 0) ...[
                               Icon(Icons.schedule, size: 16, color: Colors.orange),

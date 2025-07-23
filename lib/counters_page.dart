@@ -13,6 +13,7 @@ import 'milestone_notification_service.dart';
 import 'data_migration_service.dart';
 import 'event.dart'; // Para usar EventColor y EventIcon
 import 'challenge_strategies_page.dart';
+import 'theme_service.dart';
 
 class Counter {
   final String title;
@@ -339,12 +340,12 @@ class _CountersPageState extends State<CountersPage> {
     return Consumer<LocalizationService>(
       builder: (context, localizationService, child) {
         return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Retos'),
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
-        elevation: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: const Text('Retos'),
+            backgroundColor: context.orangeVariant,
+            foregroundColor: Colors.white,
+            elevation: 0,
         actions: [
           // 🆕 NUEVO: Botón de acceso rápido a rachas individuales
           IconButton(

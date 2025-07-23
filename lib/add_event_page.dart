@@ -91,7 +91,7 @@ class _AddEventPageState extends State<AddEventPage> {
               '💡 Sistema inteligente activo.',
             ),
             duration: Duration(seconds: 6),
-            backgroundColor: Colors.green,
+            backgroundColor: context.successColor,
           ),
         );
       }
@@ -142,7 +142,7 @@ class _AddEventPageState extends State<AddEventPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.event, color: Colors.orange, size: 54),
+                        Icon(Icons.event, color: context.orangeVariant, size: 54),
                         const SizedBox(height: 20),
                         TextFormField(
                           controller: _titleController,
@@ -150,32 +150,34 @@ class _AddEventPageState extends State<AddEventPage> {
                             labelText: localizationService.t('eventTitle'),
                             labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.orange,
+                              color: context.orangeVariant,
                               fontSize: 18,
                             ),
                             filled: true,
-                            fillColor: Theme.of(context).cardColor,
+                            fillColor: context.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: const BorderSide(color: Colors.orange),
+                              borderSide: BorderSide(color: context.orangeVariant),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
                               borderSide: BorderSide(
-                                color: Colors.orange.shade100,
+                                color: context.isDark 
+                                  ? context.orangeVariant.withOpacity(0.5)
+                                  : context.orangeVariant.withOpacity(0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: const BorderSide(
-                                color: Colors.orange,
+                              borderSide: BorderSide(
+                                color: context.orangeVariant,
                                 width: 2,
                               ),
                             ),
                           ),
                           style: TextStyle(
                             fontSize: 20,
-                            color: Theme.of(context).textTheme.titleLarge?.color,
+                            color: context.primaryTextColor,
                           ),
                           validator:
                               (value) =>
@@ -192,34 +194,44 @@ class _AddEventPageState extends State<AddEventPage> {
                             labelText: localizationService.t('eventCategory'),
                             labelStyle: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.orange,
+                              color: context.orangeVariant,
                               fontSize: 18,
                             ),
                             filled: true,
-                            fillColor: Theme.of(context).cardColor,
+                            fillColor: context.cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: const BorderSide(color: Colors.orange),
+                              borderSide: BorderSide(color: context.orangeVariant),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
                               borderSide: BorderSide(
-                                color: Colors.orange.shade100,
+                                color: context.isDark 
+                                  ? context.orangeVariant.withOpacity(0.5)
+                                  : context.orangeVariant.withOpacity(0.3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: const BorderSide(
-                                color: Colors.orange,
+                              borderSide: BorderSide(
+                                color: context.orangeVariant,
                                 width: 2,
                               ),
                             ),
+                          ),
+                          dropdownColor: context.cardColor,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: context.primaryTextColor,
                           ),
                           items: localizationService.getCategories()
                                   .map(
                                     (categoryEntry) => DropdownMenuItem(
                                       value: categoryEntry.key, // Usar el ID como value
-                                      child: Text(categoryEntry.value), // Mostrar el nombre traducido
+                                      child: Text(
+                                        categoryEntry.value,
+                                        style: TextStyle(color: context.primaryTextColor),
+                                      ), // Mostrar el nombre traducido
                                     ),
                                   )
                                   .toList(),
@@ -258,27 +270,27 @@ class _AddEventPageState extends State<AddEventPage> {
                                     : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.orange,
+                                  color: context.orangeVariant,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                             TextButton.icon(
                               onPressed: _pickDate,
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.calendar_today,
-                                color: Colors.orange,
+                                color: context.orangeVariant,
                                 size: 18,
                               ),
                               label: Text(
                                 localizationService.t('selectDate'),
                                 style: TextStyle(
-                                  color: Colors.orange,
+                                  color: context.orangeVariant,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               style: TextButton.styleFrom(
-                                foregroundColor: Colors.orange,
+                                foregroundColor: context.orangeVariant,
                                 textStyle: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -318,7 +330,7 @@ class _AddEventPageState extends State<AddEventPage> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
+                              backgroundColor: context.orangeVariant,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               shape: RoundedRectangleBorder(

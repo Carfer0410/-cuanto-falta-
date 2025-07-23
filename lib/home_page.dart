@@ -11,6 +11,7 @@ import 'optimal_usage_guide.dart';
 import 'event_customization_widget.dart';
 import 'event_preparations_page.dart';
 import 'preparation_service.dart';
+import 'event_dashboard_service.dart';
 
 /// Widget de cuenta regresiva en vivo mostrando días, horas, minutos y segundos.
 class _CountdownTimer extends StatefulWidget {
@@ -123,6 +124,9 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _events = events;
     });
+    
+    // 🚀 NUEVO: Actualizar estadísticas del dashboard
+    await EventDashboardService.instance.updateDashboardStats();
   }
 
   // Función específica para pull-to-refresh que incluye sincronización
@@ -132,7 +136,7 @@ class _HomePageState extends State<HomePage> {
       // Sincronizar estadísticas de eventos con datos reales
       await DataMigrationService.forceSyncAllData();
       
-      // Cargar eventos
+      // Cargar eventos y actualizar dashboard
       await _loadEvents();
       
       print('✅ HomePage: Pull-to-refresh completado exitosamente');
@@ -145,7 +149,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Icon(Icons.refresh, color: Colors.white, size: 16),
                 SizedBox(width: 8),
-                Text('Eventos sincronizados'),
+                Text('Eventos y estadísticas actualizados'),
               ],
             ),
             duration: Duration(seconds: 2),
@@ -258,13 +262,20 @@ class _HomePageState extends State<HomePage> {
                       ],
                     )
                     : ListView.builder(
-                        itemCount: _events.length + 1,
+                        itemCount: _events.length + 2, // +2 para dashboard y espacio final
                         itemBuilder: (context, index) {
-                          if (index == _events.length) {
-                            // Espacio extra al final para el FAB (más alto para asegurar separación)
+                          // Primer elemento: Mini Dashboard
+                          if (index == 0) {
+                            return _buildMiniDashboard();
+                          }
+                          
+                          // Último elemento: Espacio para FAB
+                          if (index == _events.length + 1) {
                             return const SizedBox(height: 80);
                           }
-                          final event = _events[index];
+                          
+                          // Eventos (ajustar índice por el dashboard)
+                          final event = _events[index - 1];
                           return Dismissible(
                             key: ValueKey(event.id),
                             direction: DismissDirection.endToStart,
@@ -439,6 +450,154 @@ class _HomePageState extends State<HomePage> {
         onPressed: _navigateToAddEvent,
       ),
     );
+      },
+    );
+  }
+
+  /// 🚀 NUEVO: Construye el mini-dashboard de estadísticas
+  Widget _buildMiniDashboard() {
+    return Consumer<EventDashboardService>(
+      builder: (context, dashboardService, child) {
+        final stats = dashboardService.dashboardStats;
+        final total = stats['totalEvents'] as int;
+        final wellPrepared = stats['wellPreparedEvents'] as int;
+        final needsAttention = stats['needsAttentionEvents'] as int;
+        final streak = stats['preparationStreak'] as int;
+        
+        // Si no hay eventos, no mostrar el dashboard
+        if (total == 0) return SizedBox.shrink();
+        
+        // Determinar color según el estado general
+        Color dashboardColor;
+        IconData dashboardIcon;
+        
+        if (wellPrepared == total) {
+          dashboardColor = Colors.green;
+          dashboardIcon = Icons.check_circle;
+        } else if (wellPrepared > needsAttention) {
+          dashboardColor = Colors.orange;
+          dashboardIcon = Icons.trending_up;
+        } else {
+          dashboardColor = Colors.amber;
+          dashboardIcon = Icons.warning;
+        }
+        
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                dashboardColor.withOpacity(0.1),
+                dashboardColor.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: dashboardColor.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            children: [
+              // Fila principal con estadísticas
+              Row(
+                children: [
+                  Icon(
+                    dashboardIcon,
+                    color: dashboardColor,
+                    size: 24,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '📊 Resumen: $total eventos',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).textTheme.titleMedium?.color,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (wellPrepared > 0) ...[
+                              Icon(Icons.check_circle, size: 16, color: Colors.green),
+                              SizedBox(width: 4),
+                              Text(
+                                '$wellPrepared listos',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                            if (wellPrepared > 0 && needsAttention > 0) ...[
+                              SizedBox(width: 12),
+                              Text('•', style: TextStyle(color: Colors.grey)),
+                              SizedBox(width: 12),
+                            ],
+                            if (needsAttention > 0) ...[
+                              Icon(Icons.schedule, size: 16, color: Colors.orange),
+                              SizedBox(width: 4),
+                              Text(
+                                '$needsAttention pendientes',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Fila de racha (si es significativa)
+              if (streak >= 3) ...[
+                SizedBox(height: 12),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_fire_department, 
+                           size: 16, 
+                           color: Colors.orange),
+                      SizedBox(width: 6),
+                      Text(
+                        'Racha de preparación: $streak días',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
       },
     );
   }

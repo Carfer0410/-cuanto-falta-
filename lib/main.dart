@@ -13,6 +13,7 @@ import 'planning_style_service.dart';
 import 'challenge_strategy_service.dart';
 import 'individual_streak_service.dart';
 import 'milestone_notification_service.dart';
+import 'event_dashboard_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 import 'splash_screen.dart';
@@ -188,6 +189,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: PlanningStyleService.instance),
         ChangeNotifierProvider.value(value: ChallengeStrategyService.instance),
         ChangeNotifierProvider.value(value: IndividualStreakService.instance),
+        ChangeNotifierProvider.value(value: EventDashboardService.instance),
       ],
       child: Consumer<LocalizationService>(
         builder: (context, localizationService, child) {

@@ -632,4 +632,60 @@ class PreparationService extends ChangeNotifier {
       return {'total': 0, 'completed': 0, 'pending': 0, 'active': 0, 'future': 0};
     }
   }
+
+  /// 🚀 NUEVO: Obtiene el próximo preparativo pendiente para un evento
+  Future<Map<String, dynamic>?> getNextPreparationTask(int eventId) async {
+    try {
+      final preparations = await getEventPreparations(eventId);
+      
+      // Obtener fecha del evento
+      final db = await DatabaseHelper.instance.database;
+      final eventResult = await db.query(
+        'events',
+        columns: ['targetDate'],
+        where: 'id = ?',
+        whereArgs: [eventId],
+      );
+      
+      if (eventResult.isEmpty) return null;
+      
+      final eventDate = DateTime.parse(eventResult.first['targetDate'] as String);
+      final now = DateTime.now();
+      
+      // Filtrar solo preparativos activos y no completados
+      final activePendingTasks = preparations
+          .where((p) => p.shouldShowTask(eventDate) && !p.isCompleted)
+          .toList();
+      
+      if (activePendingTasks.isEmpty) return null;
+      
+      // Ordenar por urgencia (menos días antes del evento = más urgente)
+      activePendingTasks.sort((a, b) => a.daysBeforeEvent.compareTo(b.daysBeforeEvent));
+      
+      final nextTask = activePendingTasks.first;
+      final daysUntilEvent = eventDate.difference(now).inDays;
+      final shouldBeActiveInDays = nextTask.daysBeforeEvent - daysUntilEvent;
+      
+      String timing;
+      if (shouldBeActiveInDays <= 0) {
+        timing = 'Disponible ahora';
+      } else if (shouldBeActiveInDays == 1) {
+        timing = 'Mañana';
+      } else if (shouldBeActiveInDays <= 7) {
+        timing = 'En $shouldBeActiveInDays días';
+      } else {
+        timing = 'En ${(shouldBeActiveInDays / 7).ceil()} semanas';
+      }
+      
+      return {
+        'title': nextTask.title,
+        'description': nextTask.description,
+        'timing': timing,
+        'isUrgent': shouldBeActiveInDays <= 0,
+      };
+    } catch (e) {
+      print('❌ Error obteniendo próximo preparativo: $e');
+      return null;
+    }
+  }
 }

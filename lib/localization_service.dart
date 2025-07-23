@@ -200,6 +200,7 @@ class LocalizationService extends ChangeNotifier {
       'chooseDate': 'Elegir fecha',
       'targetDate': 'Fecha objetivo',
       'selectCategory': 'Seleccionar categoría',
+      'eventCategory': 'Categoría del evento',
       'saveEvent': 'Guardar evento',
       'noEvents': 'Aún no hay eventos. ¡Agrega uno!',
       'deleteEvent': 'Eliminar evento',
@@ -304,6 +305,7 @@ class LocalizationService extends ChangeNotifier {
       'sound': 'Sonido',
       'vibration': 'Vibración',
       'language': 'Idioma',
+      'selectLanguage': 'Seleccionar idioma',
       'about': 'Acerca de',
       'version': 'Versión',
       'advancedSettings': 'Configuración Avanzada',
@@ -557,6 +559,7 @@ class LocalizationService extends ChangeNotifier {
       'chooseDate': 'Choose date',
       'targetDate': 'Target date',
       'selectCategory': 'Select category',
+      'eventCategory': 'Event category',
       'saveEvent': 'Save event',
       'noEvents': 'No events yet. Add one!',
       'deleteEvent': 'Delete event',
@@ -661,6 +664,7 @@ class LocalizationService extends ChangeNotifier {
       'sound': 'Sound',
       'vibration': 'Vibration',
       'language': 'Language',
+      'selectLanguage': 'Select language',
       'about': 'About',
       'version': 'Version',
       'advancedSettings': 'Advanced Settings',
@@ -949,6 +953,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': 'Novo evento',
+      'chooseDate': 'Escolher data',
+      'targetDate': 'Data objetivo',
+      'selectCategory': 'Selecionar categoria',
+      'eventCategory': 'Categoria do evento',
+      'saveEvent': 'Salvar evento',
+      'noEvents': 'Ainda não há eventos. Adicione um!',
+      'deleteEvent': 'Excluir evento',
+      'deleteEventConfirm': 'Tem certeza de que deseja excluir este evento? Esta ação não pode ser desfeita.',
       'addEventSaved': 'Evento salvo',
       'addEventTitleError': 'Digite o título do evento',
       'addEventDateError': 'Selecione a data do evento',
@@ -1077,6 +1089,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'Nível',
 
       'language': 'Idioma',
+      'selectLanguage': 'Selecionar idioma',
     },
 
     'fr': {
@@ -1142,6 +1155,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': 'Nouvel événement',
+      'chooseDate': 'Choisir la date',
+      'targetDate': 'Date cible',
+      'selectCategory': 'Sélectionner une catégorie',
+      'eventCategory': 'Catégorie d\'événement',
+      'saveEvent': 'Sauvegarder l\'événement',
+      'noEvents': 'Aucun événement pour le moment. Ajoutez-en un!',
+      'deleteEvent': 'Supprimer l\'événement',
+      'deleteEventConfirm': 'Êtes-vous sûr de vouloir supprimer cet événement? Cette action ne peut pas être annulée.',
       'addEventSaved': 'Événement sauvegardé',
       'addEventTitleError': 'Entrez le titre de l\'événement',
       'addEventDateError': 'Sélectionnez la date de l\'événement',
@@ -1270,6 +1291,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'Niveau',
 
       'language': 'Langue',
+      'selectLanguage': 'Sélectionner la langue',
     },
 
     'de': {
@@ -1335,6 +1357,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': 'Neues Ereignis',
+      'chooseDate': 'Datum wählen',
+      'targetDate': 'Zieldatum',
+      'selectCategory': 'Kategorie auswählen',
+      'eventCategory': 'Ereigniskategorie',
+      'saveEvent': 'Ereignis speichern',
+      'noEvents': 'Noch keine Ereignisse. Fügen Sie eines hinzu!',
+      'deleteEvent': 'Ereignis löschen',
+      'deleteEventConfirm': 'Sind Sie sicher, dass Sie dieses Ereignis löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
       'addEventSaved': 'Ereignis gespeichert',
       'addEventTitleError': 'Geben Sie den Ereignistitel ein',
       'addEventDateError': 'Wählen Sie das Ereignisdatum',
@@ -1463,6 +1493,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'Level',
 
       'language': 'Sprache',
+      'selectLanguage': 'Sprache auswählen',
     },
 
     'it': {
@@ -1528,6 +1559,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': 'Nuovo evento',
+      'chooseDate': 'Scegli data',
+      'targetDate': 'Data obiettivo',
+      'selectCategory': 'Seleziona categoria',
+      'eventCategory': 'Categoria evento',
+      'saveEvent': 'Salva evento',
+      'noEvents': 'Nessun evento ancora. Aggiungine uno!',
+      'deleteEvent': 'Elimina evento',
+      'deleteEventConfirm': 'Sei sicuro di voler eliminare questo evento? Questa azione non può essere annullata.',
       'addEventSaved': 'Evento salvato',
       'addEventTitleError': 'Inserisci il titolo dell\'evento',
       'addEventDateError': 'Seleziona la data dell\'evento',
@@ -1622,6 +1661,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'Livello',
 
       'language': 'Lingua',
+      'selectLanguage': 'Seleziona lingua',
     },
 
     'ja': {
@@ -1682,6 +1722,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': '新しいイベント',
+      'chooseDate': '日付を選択',
+      'targetDate': '目標日',
+      'selectCategory': 'カテゴリを選択',
+      'eventCategory': 'イベントカテゴリ',
+      'saveEvent': 'イベントを保存',
+      'noEvents': 'まだイベントがありません。追加してください！',
+      'deleteEvent': 'イベントを削除',
+      'deleteEventConfirm': 'このイベントを削除してもよろしいですか？この操作は元に戻せません。',
       'addEventSaved': 'イベントが保存されました',
       'addEventTitleError': 'イベントのタイトルを入力してください',
       'addEventDateError': 'イベントの日付を選択してください',
@@ -1718,6 +1766,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'レベル',
       
       'language': '言語',
+      'selectLanguage': '言語を選択',
     },
 
     'ko': {
@@ -1778,6 +1827,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': '새 이벤트',
+      'chooseDate': '날짜 선택',
+      'targetDate': '목표 날짜',
+      'selectCategory': '카테고리 선택',
+      'eventCategory': '이벤트 카테고리',
+      'saveEvent': '이벤트 저장',
+      'noEvents': '아직 이벤트가 없습니다. 하나 추가하세요!',
+      'deleteEvent': '이벤트 삭제',
+      'deleteEventConfirm': '이 이벤트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
       'addEventSaved': '이벤트가 저장되었습니다',
       'addEventTitleError': '이벤트 제목을 입력하세요',
       'addEventDateError': '이벤트 날짜를 선택하세요',
@@ -1814,6 +1871,7 @@ class LocalizationService extends ChangeNotifier {
       'level': '레벨',
       
       'language': '언어',
+      'selectLanguage': '언어 선택',
     },
 
     'zh': {
@@ -1874,6 +1932,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': '新事件',
+      'chooseDate': '选择日期',
+      'targetDate': '目标日期',
+      'selectCategory': '选择类别',
+      'eventCategory': '事件类别',
+      'saveEvent': '保存事件',
+      'noEvents': '还没有事件。添加一个！',
+      'deleteEvent': '删除事件',
+      'deleteEventConfirm': '您确定要删除此事件吗？此操作无法撤销。',
       'addEventSaved': '事件已保存',
       'addEventTitleError': '请输入事件标题',
       'addEventDateError': '请选择事件日期',
@@ -1910,6 +1976,7 @@ class LocalizationService extends ChangeNotifier {
       'level': '等级',
       
       'language': '语言',
+      'selectLanguage': '选择语言',
     },
 
     'ar': {
@@ -1970,6 +2037,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': 'حدث جديد',
+      'chooseDate': 'اختر التاريخ',
+      'targetDate': 'التاريخ المستهدف',
+      'selectCategory': 'اختر فئة',
+      'eventCategory': 'فئة الحدث',
+      'saveEvent': 'حفظ الحدث',
+      'noEvents': 'لا توجد أحداث بعد. أضف واحداً!',
+      'deleteEvent': 'حذف الحدث',
+      'deleteEventConfirm': 'هل أنت متأكد من رغبتك في حذف هذا الحدث؟ لا يمكن التراجع عن هذا الإجراء.',
       'addEventSaved': 'تم حفظ الحدث',
       'addEventTitleError': 'أدخل عنوان الحدث',
       'addEventDateError': 'اختر تاريخ الحدث',
@@ -2006,6 +2081,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'المستوى',
       
       'language': 'اللغة',
+      'selectLanguage': 'اختر اللغة',
     },
 
     'ru': {
@@ -2066,6 +2142,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': 'Новое событие',
+      'chooseDate': 'Выбрать дату',
+      'targetDate': 'Целевая дата',
+      'selectCategory': 'Выбрать категорию',
+      'eventCategory': 'Категория события',
+      'saveEvent': 'Сохранить событие',
+      'noEvents': 'Пока нет событий. Добавьте одно!',
+      'deleteEvent': 'Удалить событие',
+      'deleteEventConfirm': 'Вы уверены, что хотите удалить это событие? Это действие нельзя отменить.',
       'addEventSaved': 'Событие сохранено',
       'addEventTitleError': 'Введите название события',
       'addEventDateError': 'Выберите дату события',
@@ -2102,6 +2186,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'Уровень',
       
       'language': 'Язык',
+      'selectLanguage': 'Выбрать язык',
     },
 
     'hi': {
@@ -2162,6 +2247,14 @@ class LocalizationService extends ChangeNotifier {
 
       // PANTALLA AGREGAR EVENTO
       'newEvent': 'नया इवेंट',
+      'chooseDate': 'तारीख चुनें',
+      'targetDate': 'लक्ष्य तारीख',
+      'selectCategory': 'श्रेणी चुनें',
+      'eventCategory': 'इवेंट श्रेणी',
+      'saveEvent': 'इवेंट सेव करें',
+      'noEvents': 'अभी तक कोई इवेंट नहीं। एक जोड़ें!',
+      'deleteEvent': 'इवेंट डिलीट करें',
+      'deleteEventConfirm': 'क्या आप वाकई इस इवेंट को डिलीट करना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।',
       'addEventSaved': 'इवेंट सेव हो गया',
       'addEventTitleError': 'इवेंट का शीर्षक दर्ज करें',
       'addEventDateError': 'इवेंट की तारीख चुनें',
@@ -2198,6 +2291,7 @@ class LocalizationService extends ChangeNotifier {
       'level': 'स्तर',
       
       'language': 'भाषा',
+      'selectLanguage': 'भाषा चुनें',
     },
   };
 }

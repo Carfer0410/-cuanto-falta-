@@ -321,11 +321,15 @@ class _SettingsPageState extends State<SettingsPage> {
                     children: [
                       Icon(Icons.language, color: context.orangeVariant),
                       const SizedBox(width: 8),
-                      Text(
-                        'Idioma',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: context.primaryTextColor,
-                        ),
+                      Consumer<LocalizationService>(
+                        builder: (context, localizationService, child) {
+                          return Text(
+                            localizationService.t('language'),
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: context.primaryTextColor,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -338,7 +342,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           color: context.iconColor,
                         ),
                         title: Text(
-                          'Seleccionar idioma',
+                          localizationService.t('selectLanguage'),
                           style: TextStyle(color: context.primaryTextColor),
                         ),
                         subtitle: Text(

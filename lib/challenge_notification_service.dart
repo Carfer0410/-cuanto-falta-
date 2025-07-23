@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'notification_service.dart';
 import 'reminder_tracker.dart';
+import 'milestone_notification_service.dart';
 
 class ChallengeNotificationService {
   static Timer? _timer;
@@ -271,41 +272,9 @@ class ChallengeNotificationService {
       final enabled = prefs.getBool('challenge_notifications_enabled') ?? true;
       if (!enabled) return;
       
-      // Enviar mensaje motivacional aleatorio si han pasado más de 2 horas desde la última
-      final lastMotivationKey = 'last_motivation_${DateTime.now().day}';
-      final lastMotivation = prefs.getString(lastMotivationKey);
-      final now = DateTime.now();
+      // 🆕 MEJORADO: Usar el nuevo sistema de motivación más avanzado
+      await MilestoneNotificationService.sendMotivationalMessage();
       
-      bool shouldSendMotivation = false;
-      if (lastMotivation == null) {
-        shouldSendMotivation = true;
-      } else {
-        final lastTime = DateTime.parse(lastMotivation);
-        final hoursSince = now.difference(lastTime).inHours;
-        shouldSendMotivation = hoursSince >= 2;
-      }
-      
-      if (shouldSendMotivation) {
-        final messages = [
-          '💪 ¡Tu constancia está creando resultados!',
-          '🌟 Cada decisión cuenta hacia tu meta',
-          '🔥 ¡Mantén viva la llama de tu motivación!',
-          '🎯 Un paso más cerca de ser tu mejor versión',
-          '⚡ La disciplina de hoy es el éxito de mañana',
-        ];
-        
-        final randomMessage = messages[now.minute % messages.length];
-        
-        await NotificationService.instance.showImmediateNotification(
-          id: 60000 + now.hour, // ID único por hora
-          title: '🎯 Motivación Activa',
-          body: randomMessage,
-        );
-        
-        // Guardar timestamp
-        await prefs.setString(lastMotivationKey, now.toIso8601String());
-        print('💪 Motivación activa enviada: $randomMessage');
-      }
     } catch (e) {
       print('❌ Error en motivación activa: $e');
     }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'milestone_notification_service.dart';
 
 /// Información de racha individual para un desafío específico
 class ChallengeStreak {
@@ -205,13 +206,14 @@ class IndividualStreakService extends ChangeNotifier {
   }
 
   /// Confirmar un desafío (mantener/aumentar racha)
-  Future<void> confirmChallenge(String challengeId, String challengeTitle) async {
+  Future<void> confirmChallenge(String challengeId, String challengeTitle, {bool isNegativeHabit = false}) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     debugPrint('🔍 === INICIO confirmChallenge ===');
     debugPrint('🔍 Challenge ID: $challengeId');
     debugPrint('🔍 Challenge Title: $challengeTitle');
+    debugPrint('🔍 Is Negative Habit: $isNegativeHabit');
     debugPrint('🔍 Fecha de confirmación: ${today.day}/${today.month}/${today.year}');
 
     // Asegurar que el desafío existe
@@ -260,6 +262,14 @@ class IndividualStreakService extends ChangeNotifier {
 
     await _saveStreaks();
     notifyListeners();
+    
+    // 🆕 NUEVO: Verificar y enviar notificaciones de hitos
+    await MilestoneNotificationService.checkMilestoneNotification(
+      challengeId,
+      challengeTitle,
+      newStreak,
+      isNegativeHabit: isNegativeHabit,
+    );
     
     debugPrint('🔍 Estado DESPUÉS de confirmar:');
     final updated = _streaks[challengeId]!;
@@ -489,6 +499,10 @@ class IndividualStreakService extends ChangeNotifier {
   Future<void> removeChallenge(String challengeId) async {
     _streaks.remove(challengeId);
     await _saveStreaks();
+    
+    // 🆕 NUEVO: Limpiar datos de hitos asociados
+    await MilestoneNotificationService.clearMilestoneData(challengeId);
+    
     notifyListeners();
   }
 

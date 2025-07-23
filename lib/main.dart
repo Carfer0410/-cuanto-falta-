@@ -12,6 +12,7 @@ import 'preparation_service.dart';
 import 'planning_style_service.dart';
 import 'challenge_strategy_service.dart';
 import 'individual_streak_service.dart';
+import 'milestone_notification_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
 
@@ -120,6 +121,11 @@ class _MyAppState extends State<MyApp> {
     // Regenerar fichas de perdón semanalmente
     Timer.periodic(Duration(hours: 24), (timer) async {
       await IndividualStreakService.instance.regenerateForgivenessTokens();
+    });
+    
+    // 🆕 NUEVO: Timer adicional para mensajes motivacionales aleatorios
+    Timer.periodic(Duration(hours: 3), (timer) async {
+      await MilestoneNotificationService.sendMotivationalMessage();
     });
     
     // NUEVO: Notificación educativa para el usuario (una sola vez)

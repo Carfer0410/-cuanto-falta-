@@ -9,6 +9,7 @@ import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'individual_streak_service.dart';
 import 'individual_streaks_page.dart';
+import 'milestone_notification_service.dart';
 import 'data_migration_service.dart';
 import 'event.dart'; // Para usar EventColor y EventIcon
 import 'challenge_strategies_page.dart';
@@ -998,7 +999,8 @@ class _CountersPageState extends State<CountersPage> {
                                             final challengeId = _getChallengeId(index);
                                             await IndividualStreakService.instance.confirmChallenge(
                                               challengeId, 
-                                              counter.title
+                                              counter.title,
+                                              isNegativeHabit: counter.isNegativeHabit,
                                             );
                                             
                                             // Obtener nueva racha individual
@@ -1223,6 +1225,27 @@ class _CountersPageState extends State<CountersPage> {
       'total': totalDays,
       'progress': progress,
     };
+  }
+  
+  /// 🔮 FUTURO: Obtener información del próximo hito (para versiones futuras)
+  Future<String> _getNextMilestoneInfo(String challengeId, int currentStreak) async {
+    try {
+      final milestoneStats = await MilestoneNotificationService.getMilestoneStats(challengeId);
+      final nextMilestone = milestoneStats['nextMilestone'] as int;
+      final daysToNext = nextMilestone - currentStreak;
+      
+      if (daysToNext <= 0) return '';
+      
+      String milestoneLabel = '';
+      if (nextMilestone == 7) milestoneLabel = 'una semana';
+      else if (nextMilestone == 30) milestoneLabel = 'un mes';
+      else if (nextMilestone == 365) milestoneLabel = 'un año';
+      else milestoneLabel = '$nextMilestone días';
+      
+      return 'Próximo hito: $milestoneLabel (faltan $daysToNext días)';
+    } catch (e) {
+      return '';
+    }
   }
 
   /// Widget para mostrar estadísticas en cards pequeñas

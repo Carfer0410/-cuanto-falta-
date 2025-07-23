@@ -559,7 +559,7 @@ class _CountersPageState extends State<CountersPage> {
                                             localizationService.t('youHave'),
                                             style: TextStyle(
                                               fontSize: 16,
-                                              color: Colors.grey[700],
+                                              color: context.secondaryTextColor,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -568,7 +568,7 @@ class _CountersPageState extends State<CountersPage> {
                                             _challengePhrase(counter, localizationService),
                                             style: TextStyle(
                                               fontSize: 18,
-                                              color: Colors.grey[800],
+                                              color: context.primaryTextColor,
                                               fontWeight: FontWeight.bold,
                                               height: 1.2,
                                             ),
@@ -733,7 +733,7 @@ class _CountersPageState extends State<CountersPage> {
                                                     'Esta semana',
                                                     style: TextStyle(
                                                       fontSize: 13,
-                                                      color: Colors.grey[700],
+                                                      color: context.secondaryTextColor,
                                                       fontWeight: FontWeight.w600,
                                                     ),
                                                   ),
@@ -751,7 +751,7 @@ class _CountersPageState extends State<CountersPage> {
                                               // Barra de progreso semanal
                                               LinearProgressIndicator(
                                                 value: weeklyProgress['progress'] as double,
-                                                backgroundColor: Colors.grey[300],
+                                                backgroundColor: context.borderColor,
                                                 valueColor: AlwaysStoppedAnimation<Color>(counter.color.color),
                                                 minHeight: 6,
                                               ),
@@ -781,15 +781,15 @@ class _CountersPageState extends State<CountersPage> {
                                         children: [
                                           Icon(
                                             Icons.calendar_today,
-                                            color: Colors.black87,
+                                            color: context.primaryTextColor,
                                             size: 16,
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
                                             'Reto iniciado: ${_formatStartDate(counter.challengeStartedAt ?? counter.startDate)}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
-                                              color: Colors.black87,
+                                              color: context.primaryTextColor,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -803,7 +803,7 @@ class _CountersPageState extends State<CountersPage> {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: context.secondaryTextColor,
                                         fontWeight: FontWeight.w600,
                                         height: 1.3,
                                       ),
@@ -1707,7 +1707,7 @@ class _CountersPageState extends State<CountersPage> {
                           margin: const EdgeInsets.only(right: 8),
                           child: Icon(
                             index < tokensAvailable ? Icons.shield : Icons.shield_outlined,
-                            color: index < tokensAvailable ? Colors.blue[600] : Colors.grey[400],
+                            color: index < tokensAvailable ? Colors.blue[600] : context.iconColor,
                             size: 24,
                           ),
                         );
@@ -1734,7 +1734,7 @@ class _CountersPageState extends State<CountersPage> {
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(
                 'No usar (perder racha)',
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(color: context.secondaryTextColor),
               ),
             ),
             ElevatedButton.icon(
@@ -2073,7 +2073,7 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
           children: [
             Icon(
               Icons.local_fire_department,
-              color: currentStreak > 0 ? Colors.orange[600] : Colors.grey[400],
+              color: currentStreak > 0 ? context.orangeVariant : context.iconColor,
               size: fontSize - 2,
             ),
             const SizedBox(width: 6),
@@ -2082,7 +2082,7 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
               style: TextStyle(
                 fontSize: fontSize,
                 fontWeight: FontWeight.bold,
-                color: currentStreak > 0 ? Colors.orange[700] : Colors.grey[500],
+                color: currentStreak > 0 ? context.orangeVariant : context.secondaryTextColor,
               ),
             ),
             const SizedBox(width: 6),
@@ -2091,7 +2091,7 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
               child: Icon(
                 Icons.info_outline,
                 size: 16,
-                color: Colors.grey[600],
+                color: context.iconColor,
               ),
             ),
           ],
@@ -2103,7 +2103,7 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
           'Tiempo corrido:',
           style: TextStyle(
             fontSize: fontSize - 8,
-            color: Colors.grey[600],
+            color: context.secondaryTextColor,
             fontWeight: FontWeight.w500,
           ),
         ),

@@ -5,6 +5,7 @@ import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'data_migration_service.dart';
 import 'individual_streaks_page.dart';
+import 'theme_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -840,11 +841,11 @@ class _DashboardPageState extends State<DashboardPage> {
             Center(
               child: Column(
                 children: [
-                  Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey[400]),
+                  Icon(Icons.emoji_events_outlined, size: 48, color: context.iconColor),
                   const SizedBox(height: 8),
                   Text(
                     localization.t('continue_completing_challenges'),
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: context.secondaryTextColor),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),

@@ -654,23 +654,23 @@ class _HomePageState extends State<HomePage> {
           return Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
+              color: context.surfaceColor,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: Colors.grey.withOpacity(0.3),
+                color: context.borderColor,
                 width: 1,
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.schedule, color: Colors.grey, size: 16),
+                Icon(Icons.schedule, color: context.iconColor, size: 16),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '⏳ ${total} preparativos creados - Se activarán cuando sea el momento',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey[600],
+                      color: context.secondaryTextColor,
                       fontStyle: FontStyle.italic,
                     ),
                   ),

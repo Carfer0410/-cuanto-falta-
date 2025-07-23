@@ -9,6 +9,7 @@ import 'achievement_service.dart';
 import 'individual_streak_service.dart';
 import 'event.dart';
 import 'challenge_customization_widget.dart';
+import 'theme_service.dart';
 
 class AddCounterPage extends StatefulWidget {
   const AddCounterPage({Key? key}) : super(key: key);
@@ -154,14 +155,14 @@ class _AddCounterPageState extends State<AddCounterPage> {
               onPressed: () => Navigator.of(context).pop('no'),
               child: Text(
                 'No, empiezo hoy',
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(color: context.secondaryTextColor),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop('partial'),
-              child: const Text(
+              child: Text(
                 'Solo algunos días',
-                style: TextStyle(color: Colors.orange),
+                style: TextStyle(color: context.orangeVariant),
               ),
             ),
             ElevatedButton(

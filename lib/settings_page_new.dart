@@ -7,6 +7,7 @@ import 'challenge_notification_service.dart';
 import 'planning_style_service.dart';
 import 'planning_style_selection_page.dart';
 import 'theme_service.dart';
+import 'localization_service.dart';
 
 class SettingsPage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -309,6 +310,71 @@ class _SettingsPageState extends State<SettingsPage> {
           
           const SizedBox(height: 16),
           
+          // Sección de Idioma
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.language, color: context.orangeVariant),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Idioma',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.primaryTextColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Divider(color: context.dividerColor),
+                  Consumer<LocalizationService>(
+                    builder: (context, localizationService, child) {
+                      return ListTile(
+                        leading: Icon(
+                          Icons.translate,
+                          color: context.iconColor,
+                        ),
+                        title: Text(
+                          'Seleccionar idioma',
+                          style: TextStyle(color: context.primaryTextColor),
+                        ),
+                        subtitle: Text(
+                          LocalizationService.supportedLanguages[localizationService.currentLanguage] ?? 'Español',
+                          style: TextStyle(color: context.secondaryTextColor),
+                        ),
+                        trailing: DropdownButton<String>(
+                          value: localizationService.currentLanguage,
+                          dropdownColor: context.cardColor,
+                          items: LocalizationService.supportedLanguages.entries.map((entry) {
+                            return DropdownMenuItem<String>(
+                              value: entry.key,
+                              child: Text(
+                                entry.value,
+                                style: TextStyle(color: context.primaryTextColor),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newLanguage) async {
+                            if (newLanguage != null) {
+                              await localizationService.setLanguage(newLanguage);
+                              final languageName = LocalizationService.supportedLanguages[newLanguage] ?? newLanguage;
+                              _showSnackBar('🌍 Idioma cambiado a $languageName');
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
           // Sección de Notificaciones
           Card(
             child: Padding(
@@ -403,11 +469,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.tune, color: Colors.orange),
+                      Icon(Icons.tune, color: context.orangeVariant),
                       SizedBox(width: 8),
                       Text(
                         'Configuración Avanzada',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.primaryTextColor,
+                        ),
                       ),
                     ],
                   ),
@@ -484,11 +552,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.info, color: Colors.orange),
+                      Icon(Icons.info, color: context.orangeVariant),
                       SizedBox(width: 8),
                       Text(
                         'Información',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.primaryTextColor,
+                        ),
                       ),
                     ],
                   ),

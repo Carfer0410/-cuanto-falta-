@@ -4,6 +4,7 @@ import 'event.dart';
 import 'preparation_task.dart';
 import 'preparation_service.dart';
 import 'localization_service.dart';
+import 'theme_service.dart';
 
 class EventPreparationsPage extends StatefulWidget {
   final Event event;
@@ -221,7 +222,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
               SizedBox(height: 8),
               Text(
                 'Note: Se mantendrán los preparativos que ya completaste.',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
+                style: TextStyle(fontSize: 12, color: context.secondaryTextColor, fontStyle: FontStyle.italic),
               ),
             ],
           ),
@@ -250,7 +251,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            style: ElevatedButton.styleFrom(backgroundColor: context.orangeVariant),
             child: Text('🔄 Re-calibrar', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -348,7 +349,9 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                       width: double.infinity,
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: widget.event.color.lightColor,
+                        color: context.isDark 
+                            ? widget.event.color.color.withOpacity(0.2)
+                            : widget.event.color.lightColor,
                         border: Border(
                           bottom: BorderSide(
                             color: widget.event.color.color.withOpacity(0.3),
@@ -372,7 +375,9 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: widget.event.color.color,
+                                    color: context.isDark 
+                                        ? Colors.white
+                                        : widget.event.color.color,
                                   ),
                                 ),
                               ),
@@ -383,7 +388,9 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                             _getDaysUntilEvent(),
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: context.isDark 
+                                  ? Colors.white70
+                                  : context.secondaryTextColor,
                             ),
                           ),
                           SizedBox(height: 12),
@@ -395,7 +402,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                                   value: _stats['total']! > 0 
                                       ? _stats['completed']! / _stats['total']! 
                                       : 0,
-                                  backgroundColor: Colors.grey[300],
+                                  backgroundColor: context.borderColor,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     widget.event.color.color,
                                   ),
@@ -406,7 +413,9 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                                 '${_stats['completed']}/${_stats['total']}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: widget.event.color.color,
+                                  color: context.isDark 
+                                      ? Colors.white
+                                      : widget.event.color.color,
                                 ),
                               ),
                             ],
@@ -425,14 +434,14 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                                   Icon(
                                     Icons.checklist,
                                     size: 64,
-                                    color: Colors.grey[400],
+                                    color: context.iconColor,
                                   ),
                                   SizedBox(height: 16),
                                   Text(
                                     'No hay preparativos aún',
                                     style: TextStyle(
                                       fontSize: 18,
-                                      color: Colors.grey[600],
+                                      color: context.secondaryTextColor,
                                     ),
                                   ),
                                   SizedBox(height: 8),
@@ -440,7 +449,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                                     'Agrega preparativos personalizados',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey[500],
+                                      color: context.hintColor,
                                     ),
                                   ),
                                 ],
@@ -469,6 +478,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       elevation: 2,
+      color: context.cardColor,
       child: ListTile(
         leading: Checkbox(
           value: task.isCompleted,
@@ -481,10 +491,10 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
             decoration: task.isCompleted ? TextDecoration.lineThrough : null,
             fontWeight: task.isCompleted ? FontWeight.normal : FontWeight.w500,
             color: task.isCompleted 
-                ? Colors.grey[600] 
+                ? context.secondaryTextColor
                 : isOverdue 
                     ? Colors.red[700]
-                    : null,
+                    : context.primaryTextColor,
           ),
         ),
         subtitle: Column(
@@ -493,7 +503,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
             Text(
               task.description,
               style: TextStyle(
-                color: task.isCompleted ? Colors.grey[500] : Colors.grey[700],
+                color: task.isCompleted ? context.hintColor : context.secondaryTextColor,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -508,7 +518,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                   size: 14,
                   color: shouldShow 
                       ? (isOverdue ? Colors.red : widget.event.color.color)
-                      : Colors.grey[500],
+                      : context.hintColor,
                 ),
                 SizedBox(width: 4),
                 Expanded(
@@ -518,7 +528,7 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                       fontSize: 12,
                       color: shouldShow 
                           ? (isOverdue ? Colors.red : widget.event.color.color)
-                          : Colors.grey[500],
+                          : context.hintColor,
                       fontWeight: shouldShow ? FontWeight.w500 : FontWeight.normal,
                     ),
                     maxLines: 1,
@@ -565,8 +575,8 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
             : null,
         enabled: shouldShow,
         tileColor: shouldShow 
-            ? (isOverdue ? Colors.red[50] : null)
-            : Colors.grey[100],
+            ? (isOverdue ? (context.isDark ? Colors.red[900]?.withOpacity(0.3) : Colors.red[50]) : null)
+            : context.surfaceColor,
       ),
     );
   }

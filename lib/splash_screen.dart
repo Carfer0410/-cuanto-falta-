@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'localization_service.dart';
+import 'theme_service.dart';
 
 /// 🎨 Splash Screen hermoso y profesional para "¿Cuánto Falta?"
 /// 
@@ -408,7 +409,7 @@ class _SplashScreenState extends State<SplashScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: context.secondaryTextColor,
                     fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),

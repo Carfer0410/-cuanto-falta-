@@ -390,28 +390,32 @@ class _HomePageState extends State<HomePage> {
                                         eventColor: event.color,
                                       ),
                                       const SizedBox(height: 12),
-                                      // Botón de preparativos
+                                      // 🆕 NUEVO: Progress de preparativos
+                                      _buildPreparationProgress(event),
+                                      const SizedBox(height: 12),
+                                      // Botón de preparativos mejorado
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
-                                          ElevatedButton.icon(
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => EventPreparationsPage(
-                                                    event: event,
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EventPreparationsPage(
+                                                      event: event,
+                                                    ),
                                                   ),
-                                                ),
-                                              );
-                                            },
-                                            icon: Icon(Icons.checklist, size: 18),
-                                            label: Text('Preparativos'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: event.color.color,
-                                              foregroundColor: Colors.white,
-                                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                              textStyle: TextStyle(fontSize: 12),
+                                                ).then((_) => _loadEvents()); // Refrescar al volver
+                                              },
+                                              icon: Icon(Icons.checklist, size: 18),
+                                              label: Text('Ver Preparativos'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: event.color.color,
+                                                foregroundColor: Colors.white,
+                                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                                textStyle: TextStyle(fontSize: 13),
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -435,6 +439,190 @@ class _HomePageState extends State<HomePage> {
         onPressed: _navigateToAddEvent,
       ),
     );
+      },
+    );
+  }
+
+  /// 🆕 NUEVO: Construye el widget de progreso de preparativos
+  Widget _buildPreparationProgress(Event event) {
+    return FutureBuilder<Map<String, int>>(
+      future: PreparationService.instance.getEventPreparationStats(event.id!),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return SizedBox.shrink(); // No mostrar nada mientras carga
+        }
+        
+        final stats = snapshot.data!;
+        final total = stats['total'] ?? 0;
+        final active = stats['active'] ?? 0; // Solo los que deberían estar activos
+        final completed = stats['completed'] ?? 0; // Solo activos completados
+        final future = stats['future'] ?? 0; // Preparativos futuros
+        
+        // Si no hay preparativos, mostrar mensaje sugerente
+        if (total == 0) {
+          return Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Colors.blue.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.blue, size: 16),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '📋 Toca "Ver Preparativos" para crear tu lista automática',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.blue,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        // Si no hay preparativos activos todavía (faltan muchos días)
+        if (active == 0 && future > 0) {
+          return Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Colors.grey.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.schedule, color: Colors.grey, size: 16),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '⏳ ${total} preparativos creados - Se activarán cuando sea el momento',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        // Calcular progreso solo basado en preparativos activos
+        final progress = active > 0 ? completed / active : 0.0;
+        
+        // Determinar color del progreso según el porcentaje
+        Color progressColor;
+        IconData statusIcon;
+        String statusText;
+        
+        if (progress >= 0.8) {
+          progressColor = Colors.green;
+          statusIcon = Icons.check_circle;
+          statusText = '¡Bien preparado!';
+        } else if (progress >= 0.5) {
+          progressColor = Colors.orange;
+          statusIcon = Icons.schedule;
+          statusText = 'En progreso';
+        } else if (progress >= 0.2) {
+          progressColor = Colors.amber;
+          statusIcon = Icons.warning;
+          statusText = 'Necesita atención';
+        } else {
+          progressColor = Colors.red;
+          statusIcon = Icons.priority_high;
+          statusText = 'Urgente';
+        }
+        
+        return Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: progressColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: progressColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header con ícono y estado
+              Row(
+                children: [
+                  Icon(
+                    statusIcon,
+                    color: progressColor,
+                    size: 16,
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      statusText,
+                      style: TextStyle(
+                        color: progressColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '$completed/$active completados',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              // Barra de progreso
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Theme.of(context).dividerColor.withOpacity(0.3),
+                  valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                  minHeight: 6,
+                ),
+              ),
+              SizedBox(height: 6),
+              // Detalles adicionales
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    future > 0 ? '📋 $active activos, $future pendientes' : '📋 Preparativos activos',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  Text(
+                    '${(progress * 100).toInt()}% completado',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: progressColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
       },
     );
   }

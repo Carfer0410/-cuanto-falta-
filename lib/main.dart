@@ -15,6 +15,7 @@ import 'individual_streak_service.dart';
 import 'milestone_notification_service.dart';
 import 'root_page.dart';
 import 'localization_service.dart';
+import 'splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -209,11 +210,11 @@ class _MyAppState extends State<MyApp> {
               ),
             ),
             themeMode: _themeMode,
-            home: RootPage(
-              themeMode: _themeMode,
-              onThemeChanged: _onThemeChanged,
-              // Forzar color naranja en el botón flotante desde aquí si el tema no lo respeta
-              // (esto requiere que RootPage/FAB acepte parámetros, si no, el tema global lo debe forzar)
+            home: SplashScreen(
+              child: RootPage(
+                themeMode: _themeMode,
+                onThemeChanged: _onThemeChanged,
+              ),
             ),
             debugShowCheckedModeBanner: false,
           );

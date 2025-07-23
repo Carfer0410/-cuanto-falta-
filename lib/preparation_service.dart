@@ -596,18 +596,40 @@ class PreparationService extends ChangeNotifier {
   Future<Map<String, int>> getEventPreparationStats(int eventId) async {
     try {
       final preparations = await getEventPreparations(eventId);
-      final total = preparations.length;
-      final completed = preparations.where((p) => p.isCompleted).length;
-      final pending = total - completed;
+      
+      // Obtener fecha del evento para calcular qué preparativos deberían estar activos
+      final db = await DatabaseHelper.instance.database;
+      final eventResult = await db.query(
+        'events',
+        columns: ['targetDate'],
+        where: 'id = ?',
+        whereArgs: [eventId],
+      );
+      
+      if (eventResult.isEmpty) {
+        return {'total': 0, 'completed': 0, 'pending': 0, 'active': 0, 'future': 0};
+      }
+      
+      final eventDate = DateTime.parse(eventResult.first['targetDate'] as String);
+      
+      // Filtrar preparativos según si deberían estar activos o no
+      final activePreparations = preparations.where((p) => p.shouldShowTask(eventDate)).toList();
+      final futurePreparations = preparations.where((p) => !p.shouldShowTask(eventDate)).toList();
+      
+      final totalActive = activePreparations.length;
+      final completedActive = activePreparations.where((p) => p.isCompleted).length;
+      final pendingActive = totalActive - completedActive;
       
       return {
-        'total': total,
-        'completed': completed,
-        'pending': pending,
+        'total': preparations.length, // Total de preparativos del evento
+        'completed': completedActive, // Solo los activos completados
+        'pending': pendingActive, // Solo los activos pendientes  
+        'active': totalActive, // Preparativos que deberían estar activos
+        'future': futurePreparations.length, // Preparativos futuros
       };
     } catch (e) {
       print('❌ Error obteniendo estadísticas de preparativos: $e');
-      return {'total': 0, 'completed': 0, 'pending': 0};
+      return {'total': 0, 'completed': 0, 'pending': 0, 'active': 0, 'future': 0};
     }
   }
 }

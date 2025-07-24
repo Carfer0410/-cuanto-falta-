@@ -100,15 +100,15 @@ class _CountersPageState extends State<CountersPage> {
     bool needsSave = false;
     for (int i = 0; i < _counters.length; i++) {
       if (_counters[i].challengeStartedAt == null) {
-        // Para retos existentes, usar medianoche del startDate como challengeStartedAt
-        final startDate = _counters[i].startDate;
-        final midnightStart = DateTime(startDate.year, startDate.month, startDate.day); // 🔧 CORREGIDO: Medianoche del día
+        // Para retos existentes sin challengeStartedAt, usar la hora actual como punto de inicio
+        // Esto permite que los retos existentes empiecen a contar desde "ahora"
+        final now = DateTime.now();
         _counters[i] = Counter(
           title: _counters[i].title,
           startDate: _counters[i].startDate,
           lastConfirmedDate: _counters[i].lastConfirmedDate,
           isNegativeHabit: _counters[i].isNegativeHabit,
-          challengeStartedAt: midnightStart, // 🔧 CORREGIDO: Empezar desde medianoche
+          challengeStartedAt: now, // 🔧 CORREGIDO: Empezar desde el momento actual para retos existentes
           color: _counters[i].color,
           icon: _counters[i].icon,
         );
@@ -464,7 +464,8 @@ class _CountersPageState extends State<CountersPage> {
             ),
             child: Consumer<IndividualStreakService>(
               builder: (context, streakService, child) {
-                final globalStats = streakService.getGlobalStats();
+                // 🔧 CORREGIDO: Calcular estadísticas correctamente basándose en counters y streaks
+                final globalStats = _calculateGlobalStats(streakService);
                 final activeCount = globalStats['activeChallenges'] ?? 0;
                 final totalPoints = globalStats['totalPoints'] ?? 0;
                 final avgStreak = (globalStats['averageStreak'] ?? 0.0) as double;
@@ -883,12 +884,9 @@ class _CountersPageState extends State<CountersPage> {
                                         ),
                                         onPressed: () {
                                           setState(() {
+                                            // 🔧 CORREGIDO: Iniciar cronómetro desde el momento exacto que se presiona el botón
                                             counter.challengeStartedAt = DateTime.now();
-                                            counter.lastConfirmedDate = DateTime(
-                                              now.year,
-                                              now.month,
-                                              now.day,
-                                            );
+                                            // ❌ NO establecer lastConfirmedDate al iniciar - el usuario debe confirmar manualmente
                                           });
                                           _saveCounters();
                                         },
@@ -1230,6 +1228,63 @@ class _CountersPageState extends State<CountersPage> {
     );
       },
     );
+  }
+
+  /// 🔧 NUEVO: Calcula estadísticas globales correctamente basándose en counters y streaks
+  Map<String, dynamic> _calculateGlobalStats(IndividualStreakService streakService) {
+    if (_counters.isEmpty) {
+      return {
+        'totalChallenges': 0,
+        'activeChallenges': 0,
+        'totalPoints': 0,
+        'averageStreak': 0.0,
+        'longestOverallStreak': 0,
+      };
+    }
+
+    int activeChallenges = 0;
+    int totalPoints = 0;
+    double totalCurrentStreak = 0.0;
+    int longestOverallStreak = 0;
+
+    for (int i = 0; i < _counters.length; i++) {
+      final counter = _counters[i];
+      final challengeId = _getChallengeId(i);
+      final streak = streakService.getStreak(challengeId);
+
+      // 🎯 CORREGIDO: Un reto es activo si está iniciado (no importa la racha actual)
+      if (counter.challengeStartedAt != null) {
+        activeChallenges++;
+      }
+
+      // Acumular puntos y rachas
+      if (streak != null) {
+        totalPoints += streak.totalPoints;
+        totalCurrentStreak += streak.currentStreak.toDouble();
+        if (streak.longestStreak > longestOverallStreak) {
+          longestOverallStreak = streak.longestStreak;
+        }
+      }
+    }
+
+    final averageStreak = activeChallenges > 0 ? totalCurrentStreak / activeChallenges : 0.0;
+
+    // 🔍 DEBUG: Log estadísticas calculadas
+    print('📊 === ESTADÍSTICAS GLOBALES ===');
+    print('  • Total retos: ${_counters.length}');
+    print('  • Retos activos: $activeChallenges');
+    print('  • Puntos totales: $totalPoints');
+    print('  • Racha promedio: ${averageStreak.toStringAsFixed(1)}');
+    print('  • Racha más larga: $longestOverallStreak');
+    print('===============================');
+
+    return {
+      'totalChallenges': _counters.length,
+      'activeChallenges': activeChallenges,
+      'totalPoints': totalPoints,
+      'averageStreak': averageStreak,
+      'longestOverallStreak': longestOverallStreak,
+    };
   }
 
   /// Calcula el progreso de la semana actual para un reto

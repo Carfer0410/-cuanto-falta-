@@ -680,30 +680,104 @@ class _HomePageState extends State<HomePage> {
           );
         }
         
-        // Calcular progreso basado en el TOTAL de preparativos (no solo activos)
-        final progress = total > 0 ? completed / total : 0.0;
+        // NUEVA LÓGICA INTELIGENTE: Calcular progreso contextual
+        final DateTime now = DateTime.now();
+        final DateTime eventDate = event.targetDate; // Ya es DateTime
+        final int daysUntilEvent = eventDate.difference(now).inDays;
         
-        // Determinar color del progreso según el porcentaje
+        // Calcular progreso inteligente basado en contexto temporal
+        double progress;
         Color progressColor;
         IconData statusIcon;
         String statusText;
         
-        if (progress >= 0.8) {
-          progressColor = Colors.green;
-          statusIcon = Icons.check_circle;
-          statusText = '¡Bien preparado!';
-        } else if (progress >= 0.5) {
-          progressColor = Colors.orange;
+        if (total == 0) {
+          // Sin preparativos: estado neutral
+          progress = 0.0;
+          progressColor = Colors.grey;
           statusIcon = Icons.schedule;
-          statusText = 'En progreso';
-        } else if (progress >= 0.2) {
-          progressColor = Colors.amber;
-          statusIcon = Icons.warning;
-          statusText = 'Necesita atención';
+          statusText = 'Sin preparativos';
+        } else if (active == 0) {
+          // Sin tareas activas: evaluar según tiempo restante
+          if (daysUntilEvent > 30) {
+            // Evento muy lejano: es normal no tener tareas activas
+            progress = 0.7; // Progreso "virtual" para no alarmar
+            progressColor = Colors.green;
+            statusIcon = Icons.schedule;
+            statusText = 'Preparación futura';
+          } else if (daysUntilEvent > 14) {
+            // Evento lejano: aún es aceptable
+            progress = 0.5;
+            progressColor = Colors.orange;
+            statusIcon = Icons.schedule;
+            statusText = 'En cronograma';
+          } else if (daysUntilEvent > 7) {
+            // Evento próximo: necesita atención
+            progress = 0.3;
+            progressColor = Colors.amber;
+            statusIcon = Icons.warning;
+            statusText = 'Preparar pronto';
+          } else {
+            // Evento inminente: urgente
+            progress = 0.1;
+            progressColor = Colors.red;
+            statusIcon = Icons.priority_high;
+            statusText = 'Urgente';
+          }
         } else {
-          progressColor = Colors.red;
-          statusIcon = Icons.priority_high;
-          statusText = 'Urgente';
+          // Con tareas activas: evaluar progreso real con contexto temporal
+          final double baseProgress = completed / total;
+          
+          // Ajustar expectativas según tiempo restante
+          double expectedProgress;
+          if (daysUntilEvent > 30) {
+            expectedProgress = 0.1; // Solo 10% esperado para eventos lejanos
+          } else if (daysUntilEvent > 14) {
+            expectedProgress = 0.3; // 30% esperado para eventos moderados
+          } else if (daysUntilEvent > 7) {
+            expectedProgress = 0.6; // 60% esperado para eventos próximos
+          } else {
+            expectedProgress = 0.8; // 80% esperado para eventos inminentes
+          }
+          
+          // Usar progreso real
+          progress = baseProgress;
+          
+          // Determinar estado basado en si cumple expectativas
+          if (baseProgress >= expectedProgress) {
+            // Cumple o supera expectativas
+            if (baseProgress >= 0.8) {
+              progressColor = Colors.green;
+              statusIcon = Icons.check_circle;
+              statusText = '¡Bien preparado!';
+            } else {
+              progressColor = Colors.green;
+              statusIcon = Icons.check_circle_outline;
+              statusText = 'Buen progreso';
+            }
+          } else if (baseProgress >= expectedProgress * 0.7) {
+            // Progreso aceptable
+            progressColor = Colors.orange;
+            statusIcon = Icons.schedule;
+            statusText = 'En progreso';
+          } else if (baseProgress >= expectedProgress * 0.4) {
+            // Progreso bajo pero no crítico
+            progressColor = Colors.amber;
+            statusIcon = Icons.warning;
+            statusText = 'Necesita atención';
+          } else {
+            // Progreso crítico
+            if (daysUntilEvent <= 7) {
+              progressColor = Colors.red;
+              statusIcon = Icons.priority_high;
+              statusText = 'Urgente';
+            } else {
+              // Evento lejano: no alarmar demasiado
+              progressColor = Colors.amber;
+              statusIcon = Icons.warning;
+              statusText = 'Retrasado';
+            }
+          }
         }
         
         return Container(

@@ -504,6 +504,14 @@ class LocalizationService extends ChangeNotifier {
       'preview_event_title': 'Vista previa del evento',
       'preview_event_subtitle': 'Así se verá tu evento personalizado',
 
+      // NUEVOS ESTADOS INTELIGENTES DE PREPARATIVOS
+      'preparation_future': 'Preparación futura',
+      'in_schedule': 'En cronograma',
+      'prepare_soon': 'Preparar pronto',
+      'good_progress': 'Buen progreso',
+      'delayed': 'Retrasado',
+      'no_preparations': 'Sin preparativos',
+
       // PREPARATIVOS DE EVENTOS
       'preparations': 'Preparativos',
       'event_preparations': 'Preparativos del Evento',
@@ -867,6 +875,14 @@ class LocalizationService extends ChangeNotifier {
       'choose_icon': 'Choose an icon',
       'preview_event_title': 'Event preview',
       'preview_event_subtitle': 'This is how your custom event will look',
+
+      // INTELLIGENT PREPARATION STATES
+      'preparation_future': 'Future preparation',
+      'in_schedule': 'On schedule',
+      'prepare_soon': 'Prepare soon',
+      'good_progress': 'Good progress',
+      'delayed': 'Delayed',
+      'no_preparations': 'No preparations',
 
       // EVENT PREPARATIONS
       'preparations': 'Preparations',

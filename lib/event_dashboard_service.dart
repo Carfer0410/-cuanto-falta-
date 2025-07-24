@@ -38,17 +38,25 @@ class EventDashboardService extends ChangeNotifier {
       // Analizar cada evento
       for (final event in futureEvents) {
         final stats = await PreparationService.instance.getEventPreparationStats(event.id!);
-        final active = stats['active'] ?? 0;
+        final total = stats['total'] ?? 0;
         final completed = stats['completed'] ?? 0;
         
-        if (active > 0) {
-          final progress = completed / active;
-          if (progress >= 0.8) {
+        print('🔍 Evento ${event.title}: total=$total, completed=$completed');
+        
+        // Solo considerar eventos que TIENEN preparativos
+        if (total > 0) {
+          // ✅ NUEVA LÓGICA: Un evento está "listo" solo cuando TODAS las tareas están completadas
+          if (completed == total) {
             wellPrepared++;
+            print('   ✅ Evento LISTO (100% completado: $completed/$total)');
           } else {
             needsAttention++;
+            print('   ⚠️ Evento PENDIENTE (completado: $completed/$total = ${((completed/total)*100).toStringAsFixed(1)}%)');
           }
+        } else {
+          print('   → Sin preparativos, no cuenta');
         }
+        // Si no tiene preparativos, no cuenta para ninguna categoría
       }
 
       // Calcular racha de preparación (simplificado por ahora)

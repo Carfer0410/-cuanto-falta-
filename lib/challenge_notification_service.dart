@@ -7,6 +7,8 @@ import 'milestone_notification_service.dart';
 
 class ChallengeNotificationService {
   static Timer? _timer;
+  static Timer? _motivationTimer;
+  static Timer? _confirmationTimer;
   static bool _isActive = false;
 
   /// Inicia el sistema de verificación de retos cada 6 horas
@@ -28,25 +30,63 @@ class ChallengeNotificationService {
     // Verificar inmediatamente
     _checkChallengesNow();
     
-    // TIMER MEJORADO: Verificaciones más frecuentes para mejor cobertura
-    // Programar verificaciones según la frecuencia configurada
+    // TIMER PRINCIPAL: Verificaciones según la frecuencia configurada
     _timer = Timer.periodic(Duration(hours: frequency), (timer) {
       _checkChallengesNow();
     });
     
     // NUEVO: Timer adicional cada 30 minutos para motivación activa
-    Timer.periodic(Duration(minutes: 30), (timer) {
+    _motivationTimer = Timer.periodic(Duration(minutes: 30), (timer) {
       _checkActiveMotivation();
     });
-    _timer = Timer.periodic(Duration(hours: frequency), (timer) {
-      _checkChallengesNow();
+    
+    // 🆕 NUEVO: Timer específico para ventana de confirmación (21:00-23:59)
+    // Ejecutar cada minuto para capturar exactamente las 21:00
+    _confirmationTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+      ConfirmationWindow._checkConfirmationWindow();
+    });
+    
+    // Verificar inmediatamente la ventana de confirmación al iniciar
+    ConfirmationWindow._checkConfirmationWindow();
+    
+    // 🔥 NUEVO: Timer adicional que se sincroniza específicamente para las 21:00
+    _setupSyncedConfirmationTimer();
+    
+    print('✅ Timers iniciados: Principal (${frequency}h), Motivación (30min), Confirmación (1min + sincronizado)');
+  }
+
+  /// Configura un timer que se sincroniza específicamente para las 21:00 exactas
+  static void _setupSyncedConfirmationTimer() {
+    final now = DateTime.now();
+    
+    // Calcular la próxima vez que sean las 21:00
+    DateTime next21 = DateTime(now.year, now.month, now.day, 21, 0, 0);
+    if (now.isAfter(next21)) {
+      // Si ya pasaron las 21:00 de hoy, programar para mañana
+      next21 = next21.add(Duration(days: 1));
+    }
+    
+    final delay = next21.difference(now);
+    print('🕘 Timer sincronizado: próxima verificación exacta en ${delay.inMinutes} minutos (${next21.toString().substring(11, 16)})');
+    
+    // Timer que se ejecuta exactamente a las 21:00
+    Timer(delay, () {
+      print('🎯 ¡Timer sincronizado ejecutándose a las 21:00 exactas!');
+      ConfirmationWindow._checkConfirmationWindow();
+      
+      // Programar el siguiente día
+      _setupSyncedConfirmationTimer();
     });
   }
 
   /// Detiene el sistema de verificación
   static void stopChecking() {
     _timer?.cancel();
+    _motivationTimer?.cancel();
+    _confirmationTimer?.cancel();
     _timer = null;
+    _motivationTimer = null;
+    _confirmationTimer = null;
     _isActive = false;
     print('🛑 ChallengeNotificationService: Verificación detenida');
   }
@@ -282,6 +322,136 @@ class ChallengeNotificationService {
 
   /// Getter para saber si está activo
   static bool get isActive => _isActive;
+
+  /// 🧪 MÉTODO DE PRUEBA: Simular verificación de ventana de confirmación
+  static Future<void> testConfirmationWindow() async {
+    print('🧪 === PRUEBA MANUAL DE VENTANA DE CONFIRMACIÓN ===');
+    try {
+      await ConfirmationWindow._checkConfirmationWindow();
+      print('✅ Prueba de ventana de confirmación completada');
+    } catch (e) {
+      print('❌ Error en prueba: $e');
+    }
+  }
+
+  /// 🧪 MÉTODO DE PRUEBA: Simular notificación de inicio
+  static Future<void> testStartNotification() async {
+    print('🧪 === PRUEBA MANUAL DE NOTIFICACIÓN DE INICIO ===');
+    try {
+      await ConfirmationWindow._sendConfirmationWindowNotifications('start');
+      print('✅ Prueba de notificación de inicio completada');
+    } catch (e) {
+      print('❌ Error en prueba: $e');
+    }
+  }
+
+  /// 🧪 MÉTODO DE PRUEBA: Forzar notificación sin verificar si ya fue enviada
+  static Future<void> testForceNotification() async {
+    print('🧪 === PRUEBA FORZADA DE NOTIFICACIÓN ===');
+    try {
+      await NotificationService.instance.init();
+      await NotificationService.instance.showImmediateNotification(
+        id: 99999,
+        title: '🧪 Notificación de Prueba',
+        body: 'Esta es una notificación de prueba para verificar que el sistema funciona correctamente.',
+      );
+      print('✅ Notificación de prueba enviada (ID: 99999)');
+    } catch (e) {
+      print('❌ Error en notificación de prueba: $e');
+    }
+  }
+
+  /// 🧪 MÉTODO DE PRUEBA: Limpiar historial de notificaciones enviadas
+  static Future<void> clearNotificationHistory() async {
+    print('🧪 === LIMPIANDO HISTORIAL DE NOTIFICACIONES ===');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Limpiar notificaciones de ventana de confirmación (formato antiguo)
+      final windowKeys = prefs.getKeys().where((key) => key.contains('confirmation_window_')).toList();
+      
+      // Limpiar recordatorios de ReminderTracker (formato: reminder_sent_${hashCode}_${type})
+      final reminderKeys = prefs.getKeys().where((key) => key.startsWith('reminder_sent_') && key.contains('_start')).toList();
+      final reminderKeys2 = prefs.getKeys().where((key) => key.startsWith('reminder_sent_') && key.contains('_reminder')).toList();
+      
+      final allKeys = [...windowKeys, ...reminderKeys, ...reminderKeys2];
+      
+      for (final key in allKeys) {
+        await prefs.remove(key);
+        print('🗑️ Removido: $key');
+      }
+      
+      print('✅ Historial de notificaciones limpiado (${allKeys.length} entradas)');
+      
+      // Debug: Mostrar todas las claves que quedan relacionadas con notificaciones
+      final remainingKeys = prefs.getKeys().where((key) => 
+        key.contains('confirmation') || 
+        key.contains('reminder_sent')).toList();
+      print('🔍 Claves restantes relacionadas con notificaciones: $remainingKeys');
+      
+    } catch (e) {
+      print('❌ Error limpiando historial: $e');
+    }
+  }
+
+  /// 🧪 MÉTODO DE PRUEBA: Forzar notificación de ventana sin verificar historial
+  static Future<void> testForceWindowNotification() async {
+    print('🧪 === PRUEBA FORZADA DE NOTIFICACIÓN DE VENTANA ===');
+    try {
+      // Cargar retos
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString('counters');
+      if (jsonString == null) {
+        print('❌ No hay retos guardados');
+        return;
+      }
+
+      final List<dynamic> countersJson = jsonDecode(jsonString);
+      final now = DateTime.now();
+      
+      // Contar retos pendientes
+      int pendingChallenges = 0;
+      List<String> challengeTitles = [];
+      
+      for (final counterJson in countersJson) {
+        final counter = _ChallengeCounter.fromJson(counterJson);
+        if (counter.challengeStartedAt != null) {
+          final notConfirmedToday = counter.lastConfirmedDate == null || 
+              !ConfirmationWindow._isSameDay(counter.lastConfirmedDate!, now);
+          
+          if (notConfirmedToday) {
+            pendingChallenges++;
+            challengeTitles.add(counter.title);
+          }
+        }
+      }
+      
+      if (pendingChallenges == 0) {
+        print('❌ No hay retos pendientes para notificar');
+        return;
+      }
+      
+      // Forzar notificación sin verificar historial
+      final title = '🧪 PRUEBA: ¡Ventana de confirmación abierta!';
+      final body = pendingChallenges == 1 
+          ? 'PRUEBA: Puedes confirmar tu reto "${challengeTitles.first}" desde las 21:00 hasta las 23:59'
+          : 'PRUEBA: Puedes confirmar tus $pendingChallenges retos desde las 21:00 hasta las 23:59';
+      
+      await NotificationService.instance.init();
+      await NotificationService.instance.showImmediateNotification(
+        id: 88888,
+        title: title,
+        body: body,
+      );
+      
+      print('🔔 Notificación de ventana FORZADA enviada (ID: 88888)');
+      print('  • Retos: $challengeTitles');
+      print('  • Cantidad: $pendingChallenges');
+      
+    } catch (e) {
+      print('❌ Error en notificación forzada: $e');
+    }
+  }
 }
 
 /// Clase auxiliar para manejar los datos del contador/reto
@@ -311,4 +481,121 @@ class _ChallengeCounter {
         ? DateTime.parse(json['challengeStartedAt'])
         : null,
   );
+}
+
+/// 🆕 NUEVO: Extensión de ChallengeNotificationService para ventana de confirmación
+extension ConfirmationWindow on ChallengeNotificationService {
+  /// Verifica si estamos en la ventana de confirmación y envía notificaciones
+  static Future<void> _checkConfirmationWindow() async {
+    try {
+      final now = DateTime.now();
+      final currentHour = now.hour;
+      final currentMinute = now.minute;
+      
+      // Debug log para verificar que el timer está funcionando
+      print('🔍 Verificando ventana de confirmación: ${currentHour}:${currentMinute.toString().padLeft(2, '0')}');
+      
+      // Solo actuar en momentos específicos o ventana de inicio
+      if (currentHour == 21 && currentMinute >= 0 && currentMinute <= 2) {
+        // 21:00-21:02 - Ventana de inicio (más flexible para capturar 21:00)
+        print('📢 Enviando notificación de inicio de ventana (21:0${currentMinute})');
+        await _sendConfirmationWindowNotifications('start');
+      } else if (currentHour == 23 && currentMinute == 30) {
+        // 23:30 exacto - Recordatorio de últimos 29 minutos
+        print('📢 Enviando notificación de recordatorio (23:30 exacto)');
+        await _sendConfirmationWindowNotifications('reminder');
+      }
+    } catch (e) {
+      print('❌ Error en _checkConfirmationWindow: $e');
+    }
+  }
+
+  /// Envía notificaciones de ventana de confirmación
+  static Future<void> _sendConfirmationWindowNotifications(String type) async {
+    try {
+      // Cargar retos
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString('counters');
+      if (jsonString == null) return;
+
+      final List<dynamic> countersJson = jsonDecode(jsonString);
+      final now = DateTime.now();
+      
+      // Contar retos pendientes de confirmación
+      int pendingChallenges = 0;
+      List<String> challengeTitles = [];
+      
+      for (final counterJson in countersJson) {
+        final counter = _ChallengeCounter.fromJson(counterJson);
+        
+        // Verificar si el reto está iniciado y no confirmado hoy
+        if (counter.challengeStartedAt != null) {
+          final notConfirmedToday = counter.lastConfirmedDate == null || 
+              !_isSameDay(counter.lastConfirmedDate!, now);
+          
+          if (notConfirmedToday) {
+            pendingChallenges++;
+            challengeTitles.add(counter.title);
+          }
+        }
+      }
+      
+      if (pendingChallenges == 0) {
+        print('✅ No hay retos pendientes de confirmación');
+        return;
+      }
+      
+      // Generar notificación según el tipo
+      String title;
+      String body;
+      int notificationId;
+      
+      if (type == 'start') {
+        title = '🕘 ¡Ventana de confirmación abierta!';
+        body = pendingChallenges == 1 
+            ? 'Puedes confirmar tu reto "${challengeTitles.first}" desde las 21:00 hasta las 23:59'
+            : 'Puedes confirmar tus $pendingChallenges retos desde las 21:00 hasta las 23:59';
+        notificationId = 50001;
+      } else {
+        title = '⏰ ¡Últimos 29 minutos!';
+        body = pendingChallenges == 1
+            ? 'No olvides confirmar "${challengeTitles.first}" antes de las 23:59'
+            : 'No olvides confirmar tus $pendingChallenges retos antes de las 23:59';
+        notificationId = 50002;
+      }
+      
+      // Verificar si ya se envió esta notificación hoy
+      final reminderKey = 'confirmation_window_${type}_${now.day}_${now.month}_${now.year}';
+      final wasAlreadySent = await ReminderTracker.wasReminderSent(reminderKey.hashCode, type);
+      
+      print('🔍 Debug notificación:');
+      print('  • Tipo: $type');
+      print('  • Retos pendientes: $pendingChallenges');
+      print('  • Títulos: $challengeTitles');
+      print('  • ReminderKey: $reminderKey');
+      print('  • Ya enviada: $wasAlreadySent');
+      
+      if (!wasAlreadySent) {
+        print('📤 Enviando notificación...');
+        await NotificationService.instance.showImmediateNotification(
+          id: notificationId,
+          title: title,
+          body: body,
+        );
+        
+        await ReminderTracker.markReminderSent(reminderKey.hashCode, type);
+        print('🔔 Notificación de ventana de confirmación enviada: $type');
+        print('✅ Notificación marcada como enviada para evitar duplicados');
+      } else {
+        print('⏭️ Notificación ya fue enviada hoy, saltando...');
+      }
+      
+    } catch (e) {
+      print('❌ Error enviando notificaciones de confirmación: $e');
+    }
+  }
+
+  /// Verifica si dos fechas son del mismo día
+  static bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }

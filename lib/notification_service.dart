@@ -14,7 +14,7 @@ class NotificationService {
       tz.initializeTimeZones();
       
       const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@drawable/notification_icon');
       final InitializationSettings initializationSettings = InitializationSettings(
         android: initializationSettingsAndroid,
       );
@@ -76,6 +76,7 @@ class NotificationService {
       priority: Priority.high,
       ticker: 'ticker',
       playSound: true,
+      icon: '@drawable/notification_icon',
     );
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
@@ -154,7 +155,7 @@ class NotificationService {
         ticker: 'ticker',
         playSound: true,
         enableVibration: true,
-        icon: '@mipmap/ic_launcher',
+        icon: '@drawable/notification_icon',
       );
       const NotificationDetails platformChannelSpecifics = NotificationDetails(
         android: androidPlatformChannelSpecifics,
@@ -230,6 +231,7 @@ class NotificationService {
       when: scheduledDate.millisecondsSinceEpoch,
       fullScreenIntent: true, // Pantalla completa si es posible
       category: AndroidNotificationCategory.alarm, // Categoría de alarma
+      icon: '@drawable/notification_icon',
     );
     
     final NotificationDetails platformChannelSpecifics = NotificationDetails(

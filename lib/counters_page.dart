@@ -9,11 +9,11 @@ import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'individual_streak_service.dart';
 import 'individual_streaks_page.dart';
-import 'milestone_notification_service.dart';
 import 'data_migration_service.dart';
 import 'event.dart'; // Para usar EventColor y EventIcon
 import 'challenge_strategies_page.dart';
 import 'theme_service.dart';
+import 'challenge_notification_service.dart';
 
 class Counter {
   final String title;
@@ -76,11 +76,48 @@ class CountersPage extends StatefulWidget {
 
 class _CountersPageState extends State<CountersPage> {
   List<Counter> _counters = [];
+  Timer? _uiUpdateTimer;
 
   @override
   void initState() {
     super.initState();
     _loadCounters();
+    _startUIUpdateTimer();
+  }
+
+  @override
+  void dispose() {
+    _uiUpdateTimer?.cancel();
+    super.dispose();
+  }
+
+  /// 🔄 NUEVO: Timer para actualizar la UI automáticamente cada minuto
+  void _startUIUpdateTimer() {
+    // Actualizar cada 30 segundos durante horas críticas (20:45-23:59) y cada 60 segundos el resto del tiempo
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        final now = DateTime.now();
+        final currentHour = now.hour;
+        final currentMinute = now.minute;
+        
+        // Determinar si estamos cerca o dentro de la ventana de confirmación
+        final isNearConfirmationWindow = (currentHour >= 20 && currentMinute >= 45) || 
+                                        (currentHour >= 21 && currentHour <= 23);
+        
+        // Actualizar más frecuentemente durante las horas críticas
+        if (isNearConfirmationWindow || timer.tick % 2 == 0) {
+          setState(() {
+            // Forzar rebuild para actualizar los botones dinámicamente
+          });
+          
+          if (isNearConfirmationWindow) {
+            print('🔄 UI actualizada (ventana crítica) a las ${currentHour}:${currentMinute.toString().padLeft(2, '0')}');
+          } else {
+            print('🔄 UI actualizada automáticamente a las ${currentHour}:${currentMinute.toString().padLeft(2, '0')}');
+          }
+        }
+      }
+    });
   }
 
   /// Generar ID único para un desafío basado en el índice
@@ -248,24 +285,43 @@ class _CountersPageState extends State<CountersPage> {
       a.year == b.year && a.month == b.month && a.day == b.day;
 
   /// 🆕 MEJORADO: Determina si debe mostrar el botón de confirmación
-  /// Combina lógica del Counter y del sistema de rachas individuales
+  /// Nueva lógica: Solo se puede confirmar entre las 21:00 y 23:59 del mismo día
   bool _shouldShowConfirmationButton(Counter counter, DateTime now) {
-    // 1. Verificar que el reto esté iniciado
-    if (counter.challengeStartedAt == null) return false;
+    final currentTime = '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
     
-    // 2. Verificar que no esté confirmado hoy según Counter
+    // 1. Verificar que el reto esté iniciado
+    if (counter.challengeStartedAt == null) {
+      print('⚠️ "${counter.title}" - No iniciado');
+      return false;
+    }
+    
+    // 2. Verificar que hayan pasado al menos unas horas desde el inicio
+    final startTime = counter.challengeStartedAt!;
+    final hoursSinceStart = now.difference(startTime).inHours;
+    if (hoursSinceStart < 1) {
+      print('⚠️ "${counter.title}" - Solo ${hoursSinceStart}h desde inicio (mínimo 1h)');
+      return false; // Mínimo 1 hora desde inicio
+    }
+    
+    // 3. Verificar que estemos en la ventana de confirmación (21:00-23:59)
+    final currentHour = now.hour;
+    final isInConfirmationWindow = currentHour >= 21 && currentHour <= 23;
+    print('🕐 "${counter.title}" - Hora actual: $currentTime, En ventana: $isInConfirmationWindow');
+    if (!isInConfirmationWindow) return false;
+    
+    // 4. Verificar que no esté confirmado hoy según Counter
     final notConfirmedTodayByCounter = counter.lastConfirmedDate == null || 
                                       !_isSameDay(counter.lastConfirmedDate!, now);
     
-    // 3. Verificar que no esté confirmado hoy según sistema de rachas individuales
+    // 5. Verificar que no esté confirmado hoy según sistema de rachas individuales
     final challengeId = _getChallengeId(_counters.indexOf(counter));
     final streak = IndividualStreakService.instance.getStreak(challengeId);
     final notConfirmedTodayByStreak = streak?.isCompletedToday != true;
     
-    // 4. Debe cumplir AMBAS condiciones para mostrar el botón
+    // 6. Debe cumplir AMBAS condiciones para mostrar el botón
     final shouldShow = notConfirmedTodayByCounter && notConfirmedTodayByStreak;
     
-    // 5. CORREGIR INCONSISTENCIAS: Si hay desincronización, corregir
+    // 7. CORREGIR INCONSISTENCIAS: Si hay desincronización, corregir
     if (notConfirmedTodayByCounter != notConfirmedTodayByStreak) {
       print('⚠️ INCONSISTENCIA detectada en "${counter.title}":');
       print('  • Counter dice no confirmado: $notConfirmedTodayByCounter');
@@ -279,13 +335,17 @@ class _CountersPageState extends State<CountersPage> {
       }
     }
     
-    // 6. Debug logging para identificar problemas
-    if (!shouldShow) {
-      print('🔍 Debug - No se muestra botón para "${counter.title}":');
+    // 8. Debug logging para identificar problemas
+    if (!shouldShow && isInConfirmationWindow) {
+      print('❌ Botón NO mostrado para "${counter.title}" (ventana activa 21:00-23:59):');
+      print('  • Horas desde inicio: $hoursSinceStart');
+      print('  • Hora actual: ${now.hour}:${now.minute}');
       print('  • Counter lastConfirmed: ${counter.lastConfirmedDate}');
       print('  • Streak completedToday: ${streak?.isCompletedToday}');
       print('  • Counter dice no confirmado: $notConfirmedTodayByCounter');
       print('  • Streak dice no confirmado: $notConfirmedTodayByStreak');
+    } else if (!isInConfirmationWindow && notConfirmedTodayByCounter && notConfirmedTodayByStreak) {
+      print('⏰ Reto "${counter.title}" esperando ventana de confirmación (21:00-23:59). Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
     }
     
     return shouldShow;
@@ -407,6 +467,24 @@ class _CountersPageState extends State<CountersPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const IndividualStreaksPage(),
+                ),
+              );
+            },
+          ),
+          // 🧪 BOTÓN DE PRUEBA (temporal para debug)
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            tooltip: 'Probar notificaciones',
+            onPressed: () async {
+              await ChallengeNotificationService.clearNotificationHistory();
+              await ChallengeNotificationService.testConfirmationWindow();
+              await ChallengeNotificationService.testStartNotification();
+              await ChallengeNotificationService.testForceNotification();
+              await ChallengeNotificationService.testForceWindowNotification();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Pruebas completas - revisa notificaciones del dispositivo'),
+                  duration: Duration(seconds: 4),
                 ),
               );
             },
@@ -889,6 +967,13 @@ class _CountersPageState extends State<CountersPage> {
                                             // ❌ NO establecer lastConfirmedDate al iniciar - el usuario debe confirmar manualmente
                                           });
                                           _saveCounters();
+                                          
+                                          // 🔄 NUEVO: Actualización inmediata para mostrar el cronómetro
+                                          if (mounted) {
+                                            setState(() {
+                                              // Forzar rebuild para mostrar el cronómetro inmediatamente
+                                            });
+                                          }
                                         },
                                         icon: const Icon(Icons.play_arrow, size: 24),
                                         label: const Text('Iniciar reto'),
@@ -1052,6 +1137,13 @@ class _CountersPageState extends State<CountersPage> {
                                             final currentStreak = streak?.currentStreak ?? 1;
                                             final pointsEarned = 10 + (currentStreak * 2);
                                             
+                                            // 🔄 NUEVO: Actualizar UI inmediatamente después de confirmar
+                                            if (mounted) {
+                                              setState(() {
+                                                // Forzar actualización inmediata para que el botón desaparezca
+                                              });
+                                            }
+                                            
                                             // Actualizar logros basados en estadísticas globales
                                             await AchievementService.instance.checkAndUnlockAchievements(
                                               StatisticsService.instance.statistics
@@ -1082,6 +1174,13 @@ class _CountersPageState extends State<CountersPage> {
                                             // Usuario no cumplió el reto - mostrar opciones de perdón
                                             final challengeId = _getChallengeId(index);
                                             final streak = IndividualStreakService.instance.getStreak(challengeId);
+                                            
+                                            // 🔄 NUEVO: Actualizar UI inmediatamente después de fallar
+                                            if (mounted) {
+                                              setState(() {
+                                                // Forzar actualización inmediata para que el botón desaparezca
+                                              });
+                                            }
                                             
                                             if (streak != null && streak.canUseForgiveness && streak.currentStreak > 0) {
                                               // Mostrar diálogo de ficha de perdón
@@ -1326,27 +1425,6 @@ class _CountersPageState extends State<CountersPage> {
       'total': totalDays,
       'progress': progress,
     };
-  }
-  
-  /// 🔮 FUTURO: Obtener información del próximo hito (para versiones futuras)
-  Future<String> _getNextMilestoneInfo(String challengeId, int currentStreak) async {
-    try {
-      final milestoneStats = await MilestoneNotificationService.getMilestoneStats(challengeId);
-      final nextMilestone = milestoneStats['nextMilestone'] as int;
-      final daysToNext = nextMilestone - currentStreak;
-      
-      if (daysToNext <= 0) return '';
-      
-      String milestoneLabel = '';
-      if (nextMilestone == 7) milestoneLabel = 'una semana';
-      else if (nextMilestone == 30) milestoneLabel = 'un mes';
-      else if (nextMilestone == 365) milestoneLabel = 'un año';
-      else milestoneLabel = '$nextMilestone días';
-      
-      return 'Próximo hito: $milestoneLabel (faltan $daysToNext días)';
-    } catch (e) {
-      return '';
-    }
   }
 
   /// Widget para mostrar estadísticas en cards pequeñas

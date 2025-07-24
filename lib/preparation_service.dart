@@ -240,6 +240,12 @@ class PreparationService extends ChangeNotifier {
       final now = DateTime.now();
       final totalDaysAvailable = eventDate.difference(now).inDays;
       
+      // 🆕 VALIDACIÓN: No crear preparativos para eventos pasados
+      if (totalDaysAvailable < 0) {
+        print('⚠️  Evento ya pasó ($totalDaysAvailable días), no se crean preparativos');
+        return;
+      }
+      
       print('📅 Evento en $totalDaysAvailable días - Adaptando preparativos...');
       
       // Filtrar y adaptar preparativos según días disponibles
@@ -263,6 +269,7 @@ class PreparationService extends ChangeNotifier {
       print('✅ Creados ${adaptedTasks.length} preparativos adaptativos para evento $eventId (categoría: $category)');
       print('🎨 Estilo aplicado: $styleName (${multiplier}x)');
       print('⏰ Adaptación temporal: ${totalDaysAvailable} días disponibles');
+      print('📊 Modo utilizado: ${_getModeDescription(totalDaysAvailable)}');
       notifyListeners();
     } catch (e) {
       print('❌ Error creando preparativos automáticos: $e');
@@ -421,6 +428,14 @@ class PreparationService extends ChangeNotifier {
     return standardTasks;
   }
 
+  /// 🆕 HELPER: Obtener descripción del modo adaptativo usado
+  String _getModeDescription(int daysAvailable) {
+    if (daysAvailable <= 3) return 'Emergencia (1-3 días)';
+    if (daysAvailable <= 7) return 'Comprimido (4-7 días)';
+    if (daysAvailable <= 21) return 'Optimizado (8-21 días)';
+    return 'Normal (>21 días)';
+  }
+
   /// 🆕 NUEVO: Re-calibrar preparativos existentes para adaptarse a tiempo limitado
   Future<void> recalibrateEventPreparations(int eventId) async {
     try {
@@ -444,6 +459,12 @@ class PreparationService extends ChangeNotifier {
       final category = eventData['category'] as String;
       final now = DateTime.now();
       final daysAvailable = eventDate.difference(now).inDays;
+      
+      // 🆕 VALIDACIÓN: No re-calibrar eventos pasados
+      if (daysAvailable < 0) {
+        print('⚠️  No se puede re-calibrar evento pasado ($daysAvailable días)');
+        return;
+      }
       
       // Obtener preparativos existentes no completados
       final existingTasks = await db.query(

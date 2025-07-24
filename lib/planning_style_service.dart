@@ -119,13 +119,23 @@ class PlanningStyleService extends ChangeNotifier {
     return styleInfo[style]!['example'] as String;
   }
 
-  /// Calcular días ajustados según el estilo actual
-  int getAdjustedDays(int originalDays) {
+  /// Calcular días ajustados según el estilo actual y tiempo disponible
+  int getAdjustedDays(int originalDays, {int? maxDaysAvailable}) {
     final multiplier = getMultiplier(_currentStyle);
-    final adjustedDays = (originalDays * multiplier).round();
+    var adjustedDays = (originalDays * multiplier).round();
     
-    // Mínimo 1 día, máximo 90 días
+    // Si se proporciona tiempo máximo disponible, no excederlo
+    if (maxDaysAvailable != null && maxDaysAvailable > 0) {
+      adjustedDays = adjustedDays.clamp(1, maxDaysAvailable - 1);
+    }
+    
+    // Rango sensato: mínimo 1 día, máximo 90 días
     return adjustedDays.clamp(1, 90);
+  }
+
+  /// Versión legacy para compatibilidad
+  int getAdjustedDaysLegacy(int originalDays) {
+    return getAdjustedDays(originalDays);
   }
 
   /// Verificar si el usuario ya configuró su estilo

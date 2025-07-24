@@ -700,9 +700,9 @@ class _HomePageState extends State<HomePage> {
         } else if (active == 0) {
           // Sin tareas activas: evaluar según tiempo restante
           if (daysUntilEvent > 30) {
-            // Evento muy lejano: es normal no tener tareas activas
-            progress = 0.7; // Progreso "virtual" para no alarmar
-            progressColor = Colors.green;
+            // Evento muy lejano: progreso neutral pero no alarmante
+            progress = 0.0; // Progreso real: 0% (sin tareas activas)
+            progressColor = Colors.grey; // Color neutral
             statusIcon = Icons.schedule;
             statusText = 'Preparación futura';
           } else if (daysUntilEvent > 14) {
@@ -726,7 +726,7 @@ class _HomePageState extends State<HomePage> {
           }
         } else {
           // Con tareas activas: evaluar progreso real con contexto temporal
-          final double baseProgress = completed / total;
+          final double baseProgress = active > 0 ? completed / active : 0.0;
           
           // Ajustar expectativas según tiempo restante
           double expectedProgress;

@@ -14,7 +14,7 @@ class NotificationService {
       tz.initializeTimeZones();
       
       const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@drawable/notification_icon');
+          AndroidInitializationSettings('@mipmap/ic_notification');
       final InitializationSettings initializationSettings = InitializationSettings(
         android: initializationSettingsAndroid,
       );
@@ -76,7 +76,8 @@ class NotificationService {
       priority: Priority.high,
       ticker: 'ticker',
       playSound: true,
-      icon: '@drawable/notification_icon',
+      icon: '@mipmap/ic_notification',                              // Tu logo como icono pequeño
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_notification'), // Tu logo como icono grande
     );
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
@@ -155,7 +156,8 @@ class NotificationService {
         ticker: 'ticker',
         playSound: true,
         enableVibration: true,
-        icon: '@drawable/notification_icon',
+        icon: '@mipmap/ic_notification',                              // Tu logo como icono pequeño
+        largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_notification'), // Tu logo como icono grande
       );
       const NotificationDetails platformChannelSpecifics = NotificationDetails(
         android: androidPlatformChannelSpecifics,
@@ -231,7 +233,8 @@ class NotificationService {
       when: scheduledDate.millisecondsSinceEpoch,
       fullScreenIntent: true, // Pantalla completa si es posible
       category: AndroidNotificationCategory.alarm, // Categoría de alarma
-      icon: '@drawable/notification_icon',
+      icon: '@mipmap/ic_notification',                              // Tu logo como icono pequeño
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_notification'), // Tu logo como icono grande
     );
     
     final NotificationDetails platformChannelSpecifics = NotificationDetails(

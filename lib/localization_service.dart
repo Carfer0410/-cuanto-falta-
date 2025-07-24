@@ -534,6 +534,17 @@ class LocalizationService extends ChangeNotifier {
       'the_day_of_event': 'El día del evento',
       'days_ago': 'días',
 
+      // 📝 NOTAS PERSONALES EN PREPARATIVOS
+      'add_personal_note': 'Agregar nota personal',
+      'edit_personal_note': 'Editar nota personal',
+      'personal_note': 'Nota personal',
+      'personal_note_hint': 'Ej: Comprar en el centro comercial...',
+      'personal_note_placeholder': 'Agrega detalles específicos o recordatorios para este preparativo',
+      'save_note': 'Guardar Nota',
+      'remove_note': 'Quitar Nota',
+      'note_saved': 'Nota guardada',
+      'note_removed': 'Nota eliminada',
+
       // PERSONALIZACIÓN DE RETOS
       'customize_challenge_appearance': 'Personalizar Apariencia del Reto',
       'preview_challenge_title': 'Vista previa del reto',
@@ -905,6 +916,17 @@ class LocalizationService extends ChangeNotifier {
       'event_passed': 'Event passed',
       'the_day_of_event': 'The day of the event',
       'days_ago': 'days',
+
+      // 📝 PERSONAL NOTES IN PREPARATIONS
+      'add_personal_note': 'Add personal note',
+      'edit_personal_note': 'Edit personal note',
+      'personal_note': 'Personal note',
+      'personal_note_hint': 'E.g: Buy at the mall...',
+      'personal_note_placeholder': 'Add specific details or reminders for this preparation',
+      'save_note': 'Save Note',
+      'remove_note': 'Remove Note',
+      'note_saved': 'Note saved',
+      'note_removed': 'Note removed',
 
       // CHALLENGE CUSTOMIZATION
       'customize_challenge_appearance': 'Customize Challenge Appearance',

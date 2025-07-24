@@ -7,6 +7,7 @@ class PreparationTask {
   bool isCompleted;
   int daysBeforeEvent; // Cuántos días antes del evento debe completarse
   DateTime? completedAt;
+  String? personalNote; // 📝 Nueva: Nota personal opcional del usuario
   
   PreparationTask({
     this.id,
@@ -16,6 +17,7 @@ class PreparationTask {
     this.isCompleted = false,
     required this.daysBeforeEvent,
     this.completedAt,
+    this.personalNote, // 📝 Nueva: Nota personal opcional
   });
 
   Map<String, dynamic> toMap() {
@@ -27,6 +29,7 @@ class PreparationTask {
       'isCompleted': isCompleted ? 1 : 0,
       'daysBeforeEvent': daysBeforeEvent,
       'completedAt': completedAt?.toIso8601String(),
+      'personalNote': personalNote, // 📝 Nueva: Nota personal
     };
   }
 
@@ -41,6 +44,7 @@ class PreparationTask {
       completedAt: map['completedAt'] != null 
           ? DateTime.parse(map['completedAt']) 
           : null,
+      personalNote: map['personalNote'], // 📝 Nueva: Nota personal
     );
   }
 
@@ -91,4 +95,15 @@ class PreparationTask {
     // Para eventos normales, usar lógica estándar pero más flexible
     return daysUntilEvent < daysBeforeEvent - 2; // 2 días de tolerancia (antes era 2)
   }
+
+  /// 📝 Obtiene la descripción completa incluyendo nota personal si existe
+  String getFullDescription() {
+    if (personalNote != null && personalNote!.trim().isNotEmpty) {
+      return '$description\n📝 $personalNote';
+    }
+    return description;
+  }
+
+  /// 📝 Verifica si tiene nota personal
+  bool get hasPersonalNote => personalNote != null && personalNote!.trim().isNotEmpty;
 }

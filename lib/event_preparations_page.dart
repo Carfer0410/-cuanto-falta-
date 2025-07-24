@@ -181,6 +181,106 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
     );
   }
 
+  /// 📝 NUEVO: Diálogo para agregar/editar nota personal
+  void _showNoteDialog(PreparationTask task) {
+    final noteController = TextEditingController(text: task.personalNote ?? '');
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.note_add, color: widget.event.color.color),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                task.hasPersonalNote ? 'Editar nota personal' : 'Agregar nota personal',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '📋 ${task.title}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: widget.event.color.color,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                task.description,
+                style: TextStyle(
+                  color: context.secondaryTextColor,
+                  fontSize: 14,
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: noteController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Nota personal',
+                  hintText: 'Ej: Comprar en el centro comercial, recordar tarjeta...',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.edit_note),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Agrega detalles específicos o recordatorios para este preparativo',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: context.hintColor,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          if (task.hasPersonalNote)
+            TextButton(
+              onPressed: () async {
+                await PreparationService.instance.updatePersonalNote(task.id!, null);
+                Navigator.pop(context);
+                _loadPreparations();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('📝 Nota eliminada')),
+                );
+              },
+              child: Text('Quitar nota', style: TextStyle(color: Colors.red)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final note = noteController.text.trim();
+              await PreparationService.instance.updatePersonalNote(
+                task.id!, 
+                note.isEmpty ? null : note,
+              );
+              Navigator.pop(context);
+              _loadPreparations();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('📝 Nota guardada')),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: widget.event.color.color),
+            child: Text('Guardar nota', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 🆕 NUEVO: Diálogo para re-calibrar preparativos automáticamente
   void _showRecalibrationDialog() {
     final now = DateTime.now();
@@ -528,6 +628,43 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+            // 📝 Mostrar nota personal si existe
+            if (task.hasPersonalNote) ...[
+              SizedBox(height: 4),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: widget.event.color.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: widget.event.color.color.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.note,
+                      size: 14,
+                      color: widget.event.color.color,
+                    ),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        task.personalNote!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: widget.event.color.color,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             SizedBox(height: 4),
             Row(
               children: [
@@ -577,9 +714,24 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                 onSelected: (value) {
                   if (value == 'delete') {
                     _showDeleteConfirmation(task);
+                  } else if (value == 'note') {
+                    _showNoteDialog(task);
                   }
                 },
                 itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'note',
+                    child: Row(
+                      children: [
+                        Icon(
+                          task.hasPersonalNote ? Icons.edit_note : Icons.note_add,
+                          color: widget.event.color.color,
+                        ),
+                        SizedBox(width: 8),
+                        Text(task.hasPersonalNote ? 'Editar nota' : 'Agregar nota'),
+                      ],
+                    ),
+                  ),
                   PopupMenuItem(
                     value: 'delete',
                     child: Row(

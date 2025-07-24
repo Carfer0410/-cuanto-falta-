@@ -596,6 +596,24 @@ class PreparationService extends ChangeNotifier {
     }
   }
 
+  /// 📝 Actualiza la nota personal de una tarea
+  Future<void> updatePersonalNote(int taskId, String? personalNote) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.update(
+        'preparation_tasks',
+        {'personalNote': personalNote?.trim().isEmpty == true ? null : personalNote?.trim()},
+        where: 'id = ?',
+        whereArgs: [taskId],
+      );
+      
+      print('📝 Nota personal actualizada para tarea $taskId');
+      notifyListeners();
+    } catch (e) {
+      print('❌ Error actualizando nota personal de tarea $taskId: $e');
+    }
+  }
+
   /// Elimina todos los preparativos de un evento (cuando se borra el evento)
   Future<void> deleteEventPreparations(int eventId) async {
     try {

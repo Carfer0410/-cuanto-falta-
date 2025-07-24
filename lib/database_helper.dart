@@ -17,7 +17,7 @@ import 'event.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _databaseVersion = 6;
+  static const int _databaseVersion = 7;
 
   DatabaseHelper._init();
 
@@ -61,6 +61,7 @@ class DatabaseHelper {
         isCompleted INTEGER NOT NULL DEFAULT 0,
         daysBeforeEvent INTEGER NOT NULL,
         completedAt TEXT,
+        personalNote TEXT,
         FOREIGN KEY (eventId) REFERENCES events (id) ON DELETE CASCADE
       )
     ''');
@@ -115,6 +116,7 @@ class DatabaseHelper {
           isCompleted INTEGER NOT NULL DEFAULT 0,
           daysBeforeEvent INTEGER NOT NULL,
           completedAt TEXT,
+          personalNote TEXT,
           FOREIGN KEY (eventId) REFERENCES events (id) ON DELETE CASCADE
         )
       ''');
@@ -135,6 +137,11 @@ class DatabaseHelper {
           createdAt INTEGER NOT NULL
         )
       ''');
+    }
+
+    // 📝 Migración para notas personales en preparativos (versión 7)
+    if (oldVersion < 7) {
+      await db.execute('ALTER TABLE preparation_tasks ADD COLUMN personalNote TEXT');
     }
   }
 

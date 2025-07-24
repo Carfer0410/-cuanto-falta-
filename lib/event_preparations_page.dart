@@ -51,12 +51,32 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
   }
 
   Future<void> _toggleTask(PreparationTask task) async {
+    // 🆕 OPTIMIZACIÓN: Actualizar estado local inmediatamente para evitar parpadeo
+    setState(() {
+      final index = _preparations.indexWhere((p) => p.id == task.id);
+      if (index != -1) {
+        _preparations[index].isCompleted = !_preparations[index].isCompleted;
+        _preparations[index].completedAt = _preparations[index].isCompleted 
+            ? DateTime.now() 
+            : null;
+        
+        // Actualizar estadísticas localmente
+        if (_preparations[index].isCompleted) {
+          _stats['completed'] = (_stats['completed'] ?? 0) + 1;
+        } else {
+          _stats['completed'] = (_stats['completed'] ?? 1) - 1;
+        }
+      }
+    });
+    
+    // Luego actualizar en la base de datos en segundo plano sin notificar
     if (task.isCompleted) {
-      await PreparationService.instance.uncompleteTask(task.id!);
+      await PreparationService.instance.uncompleteTask(task.id!, notify: false);
     } else {
-      await PreparationService.instance.completeTask(task.id!);
+      await PreparationService.instance.completeTask(task.id!, notify: false);
     }
-    _loadPreparations();
+    
+    // No llamamos _loadPreparations() para evitar parpadeo
   }
 
   void _showAddTaskDialog() {

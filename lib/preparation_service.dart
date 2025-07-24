@@ -518,7 +518,7 @@ class PreparationService extends ChangeNotifier {
   }
 
   /// Marca una tarea como completada
-  Future<void> completeTask(int taskId) async {
+  Future<void> completeTask(int taskId, {bool notify = true}) async {
     try {
       final db = await DatabaseHelper.instance.database;
       await db.update(
@@ -532,14 +532,14 @@ class PreparationService extends ChangeNotifier {
       );
       
       print('✅ Tarea $taskId marcada como completada');
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       print('❌ Error completando tarea $taskId: $e');
     }
   }
 
   /// Desmarca una tarea como no completada
-  Future<void> uncompleteTask(int taskId) async {
+  Future<void> uncompleteTask(int taskId, {bool notify = true}) async {
     try {
       final db = await DatabaseHelper.instance.database;
       await db.update(
@@ -553,7 +553,7 @@ class PreparationService extends ChangeNotifier {
       );
       
       print('↩️ Tarea $taskId desmarcada como no completada');
-      notifyListeners();
+      if (notify) notifyListeners();
     } catch (e) {
       print('❌ Error desmarcando tarea $taskId: $e');
     }

@@ -100,13 +100,15 @@ class _CountersPageState extends State<CountersPage> {
     bool needsSave = false;
     for (int i = 0; i < _counters.length; i++) {
       if (_counters[i].challengeStartedAt == null) {
-        // Para retos existentes, usar su startDate como challengeStartedAt
+        // Para retos existentes, usar medianoche del startDate como challengeStartedAt
+        final startDate = _counters[i].startDate;
+        final midnightStart = DateTime(startDate.year, startDate.month, startDate.day); // 🔧 CORREGIDO: Medianoche del día
         _counters[i] = Counter(
           title: _counters[i].title,
           startDate: _counters[i].startDate,
           lastConfirmedDate: _counters[i].lastConfirmedDate,
           isNegativeHabit: _counters[i].isNegativeHabit,
-          challengeStartedAt: _counters[i].startDate, // Usar startDate como inicio del cronómetro
+          challengeStartedAt: midnightStart, // 🔧 CORREGIDO: Empezar desde medianoche
           color: _counters[i].color,
           icon: _counters[i].icon,
         );

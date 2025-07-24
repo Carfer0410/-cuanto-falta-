@@ -726,7 +726,7 @@ class _HomePageState extends State<HomePage> {
           }
         } else {
           // Con tareas activas: evaluar progreso real con contexto temporal
-          final double baseProgress = active > 0 ? completed / active : 0.0;
+          final double baseProgress = total > 0 ? completed / total : 0.0;
           
           // Ajustar expectativas según tiempo restante
           double expectedProgress;

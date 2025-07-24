@@ -207,6 +207,9 @@ class LocalizationService extends ChangeNotifier {
       'deleteEventConfirm': '¿Seguro que deseas eliminar este evento? Esta acción no se puede deshacer.',
       'requiredFields': 'Campos requeridos',
       'completeFieldsMessage': 'Para guardar el evento, completa los siguientes campos:',
+      'timeWillAppearHere': 'El tiempo restante aparecerá aquí',
+      'viewPreparations': 'Ver Preparativos',
+      'eventPassed': 'Evento pasado',
 
       // CATEGORÍAS DE EVENTOS
       'categoryBirthday': 'Cumpleaños',
@@ -568,6 +571,9 @@ class LocalizationService extends ChangeNotifier {
       'deleteEventConfirm': 'Are you sure you want to delete this event? This action cannot be undone.',
       'requiredFields': 'Required fields',
       'completeFieldsMessage': 'To save the event, complete the following fields:',
+      'timeWillAppearHere': 'Time remaining will appear here',
+      'viewPreparations': 'View Preparations',
+      'eventPassed': 'Event passed',
 
       // CATEGORÍAS DE EVENTOS
       'categoryBirthday': 'Birthday',
@@ -967,6 +973,9 @@ class LocalizationService extends ChangeNotifier {
       'deleteEventConfirm': 'Tem certeza de que deseja excluir este evento? Esta ação não pode ser desfeita.',
       'requiredFields': 'Campos obrigatórios',
       'completeFieldsMessage': 'Para salvar o evento, complete os seguintes campos:',
+      'timeWillAppearHere': 'O tempo restante aparecerá aqui',
+      'viewPreparations': 'Ver Preparativos',
+      'eventPassed': 'Evento passou',
       'addEventSaved': 'Evento salvo',
       'addEventTitleError': 'Digite o título do evento',
       'addEventDateError': 'Selecione a data do evento',
@@ -1171,6 +1180,9 @@ class LocalizationService extends ChangeNotifier {
       'deleteEventConfirm': 'Êtes-vous sûr de vouloir supprimer cet événement? Cette action ne peut pas être annulée.',
       'requiredFields': 'Champs requis',
       'completeFieldsMessage': 'Pour sauvegarder l\'événement, complétez les champs suivants:',
+      'timeWillAppearHere': 'Le temps restant apparaîtra ici',
+      'viewPreparations': 'Voir les Préparatifs',
+      'eventPassed': 'Événement passé',
       'addEventSaved': 'Événement sauvegardé',
       'addEventTitleError': 'Entrez le titre de l\'événement',
       'addEventDateError': 'Sélectionnez la date de l\'événement',
@@ -1375,6 +1387,9 @@ class LocalizationService extends ChangeNotifier {
       'deleteEventConfirm': 'Sind Sie sicher, dass Sie dieses Ereignis löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
       'requiredFields': 'Pflichtfelder',
       'completeFieldsMessage': 'Um das Ereignis zu speichern, füllen Sie die folgenden Felder aus:',
+      'timeWillAppearHere': 'Die verbleibende Zeit erscheint hier',
+      'viewPreparations': 'Vorbereitungen anzeigen',
+      'eventPassed': 'Ereignis vorbei',
       'addEventSaved': 'Ereignis gespeichert',
       'addEventTitleError': 'Geben Sie den Ereignistitel ein',
       'addEventDateError': 'Wählen Sie das Ereignisdatum',
@@ -1579,6 +1594,9 @@ class LocalizationService extends ChangeNotifier {
       'deleteEventConfirm': 'Sei sicuro di voler eliminare questo evento? Questa azione non può essere annullata.',
       'requiredFields': 'Campi obbligatori',
       'completeFieldsMessage': 'Per salvare l\'evento, completa i seguenti campi:',
+      'timeWillAppearHere': 'Il tempo rimanente apparirà qui',
+      'viewPreparations': 'Vedi Preparativi',
+      'eventPassed': 'Evento passato',
       'addEventSaved': 'Evento salvato',
       'addEventTitleError': 'Inserisci il titolo dell\'evento',
       'addEventDateError': 'Seleziona la data dell\'evento',
@@ -1746,6 +1764,11 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'イベントのタイトルを入力してください',
       'addEventDateError': 'イベントの日付を選択してください',
       'addEventCategoryError': 'カテゴリを選択してください',
+      'requiredFields': '必須フィールド',
+      'completeFieldsMessage': 'イベントを保存するには、以下のフィールドを完成させてください：',
+      'timeWillAppearHere': '残り時間がここに表示されます',
+      'viewPreparations': '準備を見る',
+      'eventPassed': 'イベント終了',
 
       // チャレンジのキーワード
       'without': 'なしで',
@@ -1851,6 +1874,11 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': '이벤트 제목을 입력하세요',
       'addEventDateError': '이벤트 날짜를 선택하세요',
       'addEventCategoryError': '카테고리를 선택하세요',
+      'requiredFields': '필수 필드',
+      'completeFieldsMessage': '이벤트를 저장하려면 다음 필드를 완성하세요:',
+      'timeWillAppearHere': '남은 시간이 여기에 표시됩니다',
+      'viewPreparations': '준비사항 보기',
+      'eventPassed': '이벤트 완료',
 
       // 챌린지 키워드
       'without': '없이',
@@ -1956,6 +1984,11 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': '请输入事件标题',
       'addEventDateError': '请选择事件日期',
       'addEventCategoryError': '请选择类别',
+      'requiredFields': '必填字段',
+      'completeFieldsMessage': '要保存事件，请完成以下字段：',
+      'timeWillAppearHere': '剩余时间将显示在这里',
+      'viewPreparations': '查看准备工作',
+      'eventPassed': '事件已过',
 
       // 挑战关键词
       'without': '没有',
@@ -2061,6 +2094,11 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'أدخل عنوان الحدث',
       'addEventDateError': 'اختر تاريخ الحدث',
       'addEventCategoryError': 'اختر فئة',
+      'requiredFields': 'الحقول المطلوبة',
+      'completeFieldsMessage': 'لحفظ الحدث، أكمل الحقول التالية:',
+      'timeWillAppearHere': 'سيظهر الوقت المتبقي هنا',
+      'viewPreparations': 'عرض التحضيرات',
+      'eventPassed': 'انتهى الحدث',
 
       // كلمات التحدي الرئيسية
       'without': 'بدون',
@@ -2166,6 +2204,11 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'Введите название события',
       'addEventDateError': 'Выберите дату события',
       'addEventCategoryError': 'Выберите категорию',
+      'requiredFields': 'Обязательные поля',
+      'completeFieldsMessage': 'Для сохранения события заполните следующие поля:',
+      'timeWillAppearHere': 'Оставшееся время появится здесь',
+      'viewPreparations': 'Посмотреть подготовку',
+      'eventPassed': 'Событие прошло',
 
       // КЛЮЧЕВЫЕ СЛОВА ВЫЗОВОВ
       'without': 'без',
@@ -2271,6 +2314,11 @@ class LocalizationService extends ChangeNotifier {
       'addEventTitleError': 'इवेंट का शीर्षक दर्ज करें',
       'addEventDateError': 'इवेंट की तारीख चुनें',
       'addEventCategoryError': 'एक श्रेणी चुनें',
+      'requiredFields': 'आवश्यक फील्ड',
+      'completeFieldsMessage': 'इवेंट सेव करने के लिए, निम्नलिखित फील्ड पूरे करें:',
+      'timeWillAppearHere': 'बचा हुआ समय यहाँ दिखाई देगा',
+      'viewPreparations': 'तैयारियाँ देखें',
+      'eventPassed': 'इवेंट बीत गया',
 
       // चुनौती मुख्य शब्द
       'without': 'बिना',

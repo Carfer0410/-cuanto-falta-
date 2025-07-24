@@ -230,6 +230,105 @@ class _AddEventPageState extends State<AddEventPage> {
     }
   }
 
+  Widget _buildColorSelector() {
+    return SizedBox(
+      height: 60,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: EventColor.values.length,
+        itemBuilder: (context, index) {
+          final color = EventColor.values[index];
+          final isSelected = color == _selectedColor;
+          
+          return GestureDetector(
+            onTap: () => setState(() => _selectedColor = color),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? Colors.black : Colors.transparent,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.color.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: isSelected
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    color.displayName,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected ? Colors.black : Colors.grey.shade600,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildIconSelector() {
+    return SizedBox(
+      height: 80,
+      child: GridView.builder(
+        scrollDirection: Axis.horizontal,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 1,
+        ),
+        itemCount: EventIcon.values.length,
+        itemBuilder: (context, index) {
+          final icon = EventIcon.values[index];
+          final isSelected = icon == _selectedIcon;
+          
+          return GestureDetector(
+            onTap: () => setState(() => _selectedIcon = icon),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isSelected ? _selectedColor.color.withOpacity(0.2) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected ? _selectedColor.color : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                icon.icon,
+                color: isSelected ? _selectedColor.color : Colors.grey.shade600,
+                size: 24,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LocalizationService>(
@@ -375,21 +474,7 @@ class _AddEventPageState extends State<AddEventPage> {
                                       ? localizationService.t('addEventCategoryError')
                                       : null,
                         ),
-                        const SizedBox(height: 16),
-                        if (_selectedCategory != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Text(
-                              _selectedCategory != null
-                                ? localizationService.getCategoryMessage(_selectedCategory!)
-                                : '',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: context.successColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
+                        const SizedBox(height: 24),
                         Row(
                           children: [
                             Expanded(
@@ -429,20 +514,241 @@ class _AddEventPageState extends State<AddEventPage> {
                         ),
                         const SizedBox(height: 24),
                         
-                        // Widget de personalización visual
-                        EventCustomizationWidget(
-                          selectedColor: _selectedColor,
-                          selectedIcon: _selectedIcon,
-                          onColorChanged: (color) {
-                            setState(() {
-                              _selectedColor = color;
-                            });
-                          },
-                          onIconChanged: (icon) {
-                            setState(() {
-                              _selectedIcon = icon;
-                            });
-                          },
+                        // Vista previa real del evento (siempre fija y dinámica)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 24),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: context.isDark 
+                              ? Colors.grey[800]!.withOpacity(0.8)
+                              : Colors.grey[50],
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: context.isDark 
+                                ? Colors.grey[600]!
+                                : Colors.grey[300]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Encabezado
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.visibility,
+                                    color: context.orangeVariant,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Vista previa del evento',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: context.orangeVariant,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Simulación exacta del evento real
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: context.cardColor,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: context.isDark
+                                    ? Border.all(
+                                        color: context.orangeVariant,
+                                        width: 2,
+                                      )
+                                    : null,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Fila de ícono y título (exactamente como en home_page.dart)
+                                    Row(
+                                      children: [
+                                        EventStyleIndicator(
+                                          color: _selectedColor,
+                                          icon: _selectedIcon,
+                                          size: 32,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            _titleController.text.isEmpty 
+                                              ? localizationService.t('eventTitle')
+                                              : _titleController.text,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: _titleController.text.isEmpty 
+                                                ? context.secondaryTextColor.withOpacity(0.6)
+                                                : context.primaryTextColor,
+                                              fontStyle: _titleController.text.isEmpty 
+                                                ? FontStyle.italic 
+                                                : FontStyle.normal,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    
+                                    // Mensaje de categoría (dinámico)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 44),
+                                      child: Text(
+                                        _selectedCategory != null
+                                          ? localizationService.getCategoryMessage(_selectedCategory!)
+                                          : localizationService.t('selectCategory'),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: _selectedCategory != null
+                                            ? context.primaryTextColor
+                                            : context.secondaryTextColor.withOpacity(0.6),
+                                          fontStyle: _selectedCategory == null 
+                                            ? FontStyle.italic 
+                                            : FontStyle.normal,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    
+                                    // Countdown dinámico
+                                    Center(
+                                      child: _selectedDate != null
+                                        ? Builder(
+                                            builder: (context) {
+                                              final now = DateTime.now();
+                                              final duration = _selectedDate!.difference(now);
+                                              final days = duration.inDays;
+                                              final hours = duration.inHours.remainder(24);
+                                              final minutes = duration.inMinutes.remainder(60);
+                                              final seconds = duration.inSeconds.remainder(60);
+                                              
+                                              return Text(
+                                                duration.isNegative 
+                                                  ? localizationService.t('eventPassed')
+                                                  : localizationService.timeRemaining(days, hours, minutes, seconds),
+                                                style: TextStyle(
+                                                  fontSize: 24,
+                                                  color: _selectedColor.color,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              );
+                                            },
+                                          )
+                                        : Text(
+                                            localizationService.t('timeWillAppearHere'),
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              color: context.secondaryTextColor.withOpacity(0.6),
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    
+                                    // Botón de preparativos (simulado)
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton.icon(
+                                        onPressed: null, // Deshabilitado en vista previa
+                                        icon: Icon(Icons.checklist, size: 18),
+                                        label: Text(localizationService.t('viewPreparations')),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: _selectedColor.color.withOpacity(0.3),
+                                          foregroundColor: _selectedColor.color,
+                                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Widget de personalización visual con vista previa nueva integrada
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: _selectedColor.lightColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _selectedColor.color.withOpacity(0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Título de la sección
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.palette,
+                                    color: _selectedColor.color,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    localizationService.t('customize_appearance'),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: _selectedColor.color,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Selector de color (sin vista previa)
+                              Text(
+                                localizationService.t('choose_color'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2D3748),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildColorSelector(),
+                              const SizedBox(height: 24),
+                              
+                              // Selector de icono
+                              Text(
+                                localizationService.t('choose_icon'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2D3748),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildIconSelector(),
+                            ],
+                          ),
                         ),
                         
                         const SizedBox(height: 36),

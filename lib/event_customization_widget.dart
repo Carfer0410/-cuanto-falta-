@@ -89,80 +89,11 @@ class EventCustomizationWidget extends StatelessWidget {
   }
 
   Widget _buildEventPreview(BuildContext context, LocalizationService localization) {
+    // Esta función será sobreescrita por la nueva vista previa dinámica
+    // El widget padre (AddEventPage) proporcionará la vista previa real
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: selectedColor.color.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Icono del evento
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: selectedColor.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Icon(
-              selectedIcon.icon,
-              color: selectedColor.color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          
-          // Información del evento
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  localization.t('preview_event_title'),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3748),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  localization.t('preview_event_subtitle'),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Indicador de días
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: selectedColor.color,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '15 días',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+      height: 0, // Ocultar completamente esta vista previa vieja
+      width: 0,
     );
   }
 

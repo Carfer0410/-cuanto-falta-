@@ -196,7 +196,7 @@ class LocalizationService extends ChangeNotifier {
       'addEvent': 'Nuevo evento',
       'eventTitle': 'Nombre del evento',
       'eventTitleHint': 'Ej: Mi cumpleaños',
-      'selectDate': 'Seleccionar fecha',
+      'selectDate': 'Selecciona fecha',
       'chooseDate': 'Elegir fecha',
       'targetDate': 'Fecha objetivo',
       'selectCategory': 'Seleccionar categoría',

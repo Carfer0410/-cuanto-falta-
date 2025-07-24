@@ -475,42 +475,73 @@ class _AddEventPageState extends State<AddEventPage> {
                                       : null,
                         ),
                         const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _selectedDate == null
-                                    ? localizationService.t('selectDate')
-                                    : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: context.orangeVariant,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                        
+                        // Campo de fecha con recuadro pequeño y borde naranja
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: context.isDark 
+                                ? context.orangeVariant.withOpacity(0.5)
+                                : context.orangeVariant.withOpacity(0.3),
+                              width: 2,
                             ),
-                            TextButton.icon(
-                              onPressed: _pickDate,
-                              icon: Icon(
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
                                 Icons.calendar_today,
                                 color: context.orangeVariant,
-                                size: 18,
+                                size: 20,
                               ),
-                              label: Text(
-                                localizationService.t('selectDate'),
-                                style: TextStyle(
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _selectedDate == null
+                                      ? localizationService.t('selectDate')
+                                      : '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _selectedDate != null 
+                                      ? context.primaryTextColor
+                                      : context.secondaryTextColor.withOpacity(0.6),
+                                    fontWeight: _selectedDate != null 
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                    fontStyle: _selectedDate == null 
+                                      ? FontStyle.italic 
+                                      : FontStyle.normal,
+                                  ),
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: _pickDate,
+                                icon: Icon(
+                                  Icons.edit_calendar,
                                   color: context.orangeVariant,
-                                  fontWeight: FontWeight.bold,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  _selectedDate == null 
+                                    ? localizationService.t('selectDate')
+                                    : 'Cambiar',
+                                  style: TextStyle(
+                                    color: context.orangeVariant,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: context.orangeVariant,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                               ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: context.orangeVariant,
-                                textStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 24),
                         

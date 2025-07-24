@@ -521,9 +521,10 @@ extension ConfirmationWindow on ChallengeNotificationService {
       final List<dynamic> countersJson = jsonDecode(jsonString);
       final now = DateTime.now();
       
-      // Contar retos pendientes de confirmación
+      // Contar retos pendientes de confirmación y obtener información detallada
       int pendingChallenges = 0;
       List<String> challengeTitles = [];
+      final List<Map<String, dynamic>> challengeDetails = [];
       
       for (final counterJson in countersJson) {
         final counter = _ChallengeCounter.fromJson(counterJson);
@@ -531,12 +532,54 @@ extension ConfirmationWindow on ChallengeNotificationService {
         // Verificar si el reto está iniciado y no confirmado hoy
         if (counter.challengeStartedAt != null) {
           final notConfirmedToday = counter.lastConfirmedDate == null || 
-              !_isSameDay(counter.lastConfirmedDate!, now);
+              !ConfirmationWindow._isSameDay(counter.lastConfirmedDate!, now);
           
           if (notConfirmedToday) {
-            pendingChallenges++;
-            challengeTitles.add(counter.title);
+            // Verificar si el reto cumple el tiempo mínimo para confirmación
+            final minutesSinceStart = now.difference(counter.challengeStartedAt!).inMinutes;
+            final currentHour = now.hour;
+            
+            // Determinar tiempo mínimo según horario (sistema híbrido)
+            int minimumTimeRequired;
+            if (currentHour >= 21 || currentHour <= 23) {
+              minimumTimeRequired = 10; // Ventana nocturna
+            } else if (currentHour >= 0 && currentHour <= 5) {
+              minimumTimeRequired = 30; // Madrugada
+            } else {
+              minimumTimeRequired = 60; // Día normal
+            }
+            
+            final canConfirmNow = minutesSinceStart >= minimumTimeRequired;
+            final timeRemaining = canConfirmNow ? 0 : (minimumTimeRequired - minutesSinceStart);
+            
+            challengeDetails.add({
+              'title': counter.title,
+              'canConfirm': canConfirmNow,
+              'timeRemaining': timeRemaining,
+              'minimumRequired': minimumTimeRequired
+            });
+            
+            if (canConfirmNow) {
+              pendingChallenges++;
+              challengeTitles.add(counter.title);
+            }
           }
+        }
+      }
+      
+      // Si no hay retos listos AHORA, no enviar notificación de "listos"
+      if (type == 'start' && pendingChallenges == 0) {
+        final retosConTiempo = challengeDetails.where((c) => !c['canConfirm']).toList();
+        if (retosConTiempo.isNotEmpty) {
+          // Hay retos pero ninguno está listo aún
+          final proximoReto = retosConTiempo.reduce((a, b) => 
+            a['timeRemaining'] < b['timeRemaining'] ? a : b);
+          
+          print('⏰ Hay retos pero ninguno está listo. Próximo: "${proximoReto['title']}" en ${proximoReto['timeRemaining']}min');
+          return; // No enviar notificación prematura
+        } else {
+          print('✅ No hay retos pendientes de confirmación');
+          return;
         }
       }
       
@@ -545,16 +588,28 @@ extension ConfirmationWindow on ChallengeNotificationService {
         return;
       }
       
-      // Generar notificación según el tipo
+      // Generar notificación inteligente según el tipo
       String title;
       String body;
       int notificationId;
       
       if (type == 'start') {
-        title = '🕘 ¡Ventana de confirmación abierta!';
-        body = pendingChallenges == 1 
-            ? 'Puedes confirmar tu reto "${challengeTitles.first}" desde las 21:00 hasta las 23:59'
-            : 'Puedes confirmar tus $pendingChallenges retos desde las 21:00 hasta las 23:59';
+        if (pendingChallenges == 1) {
+          title = '🎯 ¡Reto "${challengeTitles.first}" listo!';
+          body = 'Tu reto ya cumplió el tiempo mínimo y puedes confirmarlo hasta las 23:59';
+        } else {
+          title = '🎯 ¡$pendingChallenges retos listos!';
+          body = 'Los siguientes retos están disponibles para confirmar: ${challengeTitles.join(", ")}';
+        }
+        
+        // Agregar información sobre retos que AÚN no están listos
+        final retosNoListos = challengeDetails.where((c) => !c['canConfirm']).toList();
+        if (retosNoListos.isNotEmpty) {
+          final proximoReto = retosNoListos.reduce((a, b) => 
+            a['timeRemaining'] < b['timeRemaining'] ? a : b);
+          body += '\n\n⏳ "${proximoReto['title']}" estará listo en ${proximoReto['timeRemaining']} min';
+        }
+        
         notificationId = 50001;
       } else {
         title = '⏰ ¡Últimos 29 minutos!';

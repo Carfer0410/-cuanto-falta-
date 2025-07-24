@@ -83,6 +83,7 @@ class _CountersPageState extends State<CountersPage> {
     super.initState();
     _loadCounters();
     _startUIUpdateTimer();
+    _setupPrecise21Timer(); // 🆕 Timer específico para las 21:00 exactas
   }
 
   @override
@@ -91,31 +92,65 @@ class _CountersPageState extends State<CountersPage> {
     super.dispose();
   }
 
-  /// 🔄 NUEVO: Timer para actualizar la UI automáticamente cada minuto
+  /// 🔄 MEJORADO: Timer ultra-preciso para actualizar la UI especialmente a las 21:00
   void _startUIUpdateTimer() {
-    // Actualizar cada 30 segundos durante horas críticas (20:45-23:59) y cada 60 segundos el resto del tiempo
-    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    // Timer cada 15 segundos para máxima responsividad durante ventana crítica
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (mounted) {
         final now = DateTime.now();
         final currentHour = now.hour;
         final currentMinute = now.minute;
+        final currentSecond = now.second;
         
         // Determinar si estamos cerca o dentro de la ventana de confirmación
         final isNearConfirmationWindow = (currentHour >= 20 && currentMinute >= 45) || 
                                         (currentHour >= 21 && currentHour <= 23);
         
-        // Actualizar más frecuentemente durante las horas críticas
-        if (isNearConfirmationWindow || timer.tick % 2 == 0) {
+        // ESPECIAL: Actualización inmediata si es exactamente las 21:00:xx
+        final isExactly21 = currentHour == 21 && currentMinute == 0;
+        
+        // Actualizar siempre durante ventana crítica o exactamente a las 21:00
+        if (isNearConfirmationWindow || isExactly21 || timer.tick % 4 == 0) {
           setState(() {
-            // Forzar rebuild para actualizar los botones dinámicamente
+            // Forzar rebuild completo para actualizar los botones dinámicamente
           });
           
-          if (isNearConfirmationWindow) {
+          if (isExactly21) {
+            print('🎯 UI actualizada EXACTAMENTE a las 21:00:${currentSecond.toString().padLeft(2, '0')} - ¡BOTONES DEBERÍAN APARECER!');
+          } else if (isNearConfirmationWindow) {
             print('🔄 UI actualizada (ventana crítica) a las ${currentHour}:${currentMinute.toString().padLeft(2, '0')}');
           } else {
             print('🔄 UI actualizada automáticamente a las ${currentHour}:${currentMinute.toString().padLeft(2, '0')}');
           }
         }
+      }
+    });
+  }
+
+  /// 🆕 Timer ultra-preciso que se sincroniza exactamente con las 21:00 
+  void _setupPrecise21Timer() {
+    final now = DateTime.now();
+    
+    // Calcular cuándo son las próximas 21:00:00
+    DateTime next21 = DateTime(now.year, now.month, now.day, 21, 0, 0);
+    if (now.isAfter(next21)) {
+      // Si ya pasaron las 21:00 de hoy, programar para mañana
+      next21 = next21.add(const Duration(days: 1));
+    }
+    
+    final delay = next21.difference(now);
+    print('🕘 Timer ultra-preciso programado: actualización exacta en ${delay.inMinutes} minutos y ${delay.inSeconds % 60} segundos (${next21.toString().substring(11, 19)})');
+    
+    // Timer que se ejecuta exactamente a las 21:00:00
+    Timer(delay, () {
+      if (mounted) {
+        print('🎯🎯🎯 ¡TIMER EXACTO 21:00! Actualizando UI para mostrar botones...');
+        setState(() {
+          // Forzar rebuild completo para activar botones
+        });
+        
+        // Programar el siguiente día
+        _setupPrecise21Timer();
       }
     });
   }
@@ -174,6 +209,19 @@ class _CountersPageState extends State<CountersPage> {
     
     // 🆕 NUEVO: Debug de estado de botones
     _debugButtonStates();
+    
+    // 🆕 NUEVO: Si estamos en ventana de confirmación, forzar actualización inmediata
+    final now = DateTime.now();
+    if (now.hour >= 21 && now.hour <= 23) {
+      print('🎯 Detectada ventana de confirmación activa - Forzando actualización UI');
+      Future.microtask(() {
+        if (mounted) {
+          setState(() {
+            // Forzar rebuild para mostrar botones disponibles
+          });
+        }
+      });
+    }
     
     setState(() {});
   }
@@ -295,19 +343,39 @@ class _CountersPageState extends State<CountersPage> {
       return false;
     }
     
-    // 2. Verificar que hayan pasado al menos unas horas desde el inicio
+    // 2. SISTEMA HÍBRIDO INTELIGENTE: Tiempo mínimo según horario
     final startTime = counter.challengeStartedAt!;
-    final hoursSinceStart = now.difference(startTime).inHours;
-    if (hoursSinceStart < 1) {
-      print('⚠️ "${counter.title}" - Solo ${hoursSinceStart}h desde inicio (mínimo 1h)');
-      return false; // Mínimo 1 hora desde inicio
+    final minutesSinceStart = now.difference(startTime).inMinutes;
+    
+    // Determinar tiempo mínimo requerido según horario actual
+    final currentHour = now.hour;
+    int minimumTimeRequired;
+    String timeContext;
+    
+    if (currentHour >= 21 || currentHour <= 23) {
+      // Ventana nocturna crítica: solo 10 minutos
+      minimumTimeRequired = 10;
+      timeContext = 'ventana nocturna';
+    } else if (currentHour >= 0 && currentHour <= 5) {
+      // Madrugada: 30 minutos
+      minimumTimeRequired = 30;
+      timeContext = 'madrugada';
+    } else {
+      // Día normal: 60 minutos para mayor seriedad
+      minimumTimeRequired = 60;
+      timeContext = 'horario diurno';
+    }
+    
+    if (minutesSinceStart < minimumTimeRequired) {
+      final timeUnit = minimumTimeRequired >= 60 ? '${(minimumTimeRequired / 60).round()}h' : '${minimumTimeRequired}min';
+      print('⚠️ "${counter.title}" - Solo ${minutesSinceStart}min desde inicio (mínimo $timeUnit - $timeContext)');
+      return false;
     }
     
     // 3. Verificar que estemos en la ventana de confirmación (21:00-23:59)
-    final currentHour = now.hour;
-    final isInConfirmationWindow = currentHour >= 21 && currentHour <= 23;
-    print('🕐 "${counter.title}" - Hora actual: $currentTime, En ventana: $isInConfirmationWindow');
-    if (!isInConfirmationWindow) return false;
+    final isInWindow = currentHour >= 21 && currentHour <= 23;
+    print('🕐 "${counter.title}" - Hora actual: $currentTime, En ventana: $isInWindow ($timeContext)');
+    if (!isInWindow) return false;
     
     // 4. Verificar que no esté confirmado hoy según Counter
     final notConfirmedTodayByCounter = counter.lastConfirmedDate == null || 
@@ -336,19 +404,68 @@ class _CountersPageState extends State<CountersPage> {
     }
     
     // 8. Debug logging para identificar problemas
-    if (!shouldShow && isInConfirmationWindow) {
+    if (!shouldShow && isInWindow) {
       print('❌ Botón NO mostrado para "${counter.title}" (ventana activa 21:00-23:59):');
-      print('  • Horas desde inicio: $hoursSinceStart');
+      print('  • Minutos desde inicio: $minutesSinceStart');
       print('  • Hora actual: ${now.hour}:${now.minute}');
       print('  • Counter lastConfirmed: ${counter.lastConfirmedDate}');
       print('  • Streak completedToday: ${streak?.isCompletedToday}');
       print('  • Counter dice no confirmado: $notConfirmedTodayByCounter');
       print('  • Streak dice no confirmado: $notConfirmedTodayByStreak');
-    } else if (!isInConfirmationWindow && notConfirmedTodayByCounter && notConfirmedTodayByStreak) {
+    } else if (!isInWindow && notConfirmedTodayByCounter && notConfirmedTodayByStreak) {
       print('⏰ Reto "${counter.title}" esperando ventana de confirmación (21:00-23:59). Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
     }
     
     return shouldShow;
+  }
+
+  /// Calcula el tiempo restante para que un reto esté disponible
+  String? _getTimeRemainingMessage(Counter counter, DateTime now) {
+    // Si el reto no está iniciado, no mostrar mensaje
+    if (counter.challengeStartedAt == null) return null;
+    
+    final startTime = counter.challengeStartedAt!;
+    final minutesSinceStart = now.difference(startTime).inMinutes;
+    final currentHour = now.hour;
+    
+    // Determinar tiempo mínimo requerido según horario actual (misma lógica híbrida)
+    int minimumTimeRequired;
+    if (currentHour >= 21 || currentHour <= 23) {
+      minimumTimeRequired = 10; // Ventana nocturna crítica
+    } else if (currentHour >= 0 && currentHour <= 5) {
+      minimumTimeRequired = 30; // Madrugada
+    } else {
+      minimumTimeRequired = 60; // Día normal
+    }
+    
+    // Si el tiempo mínimo ya se cumplió, verificar ventana de confirmación
+    if (minutesSinceStart >= minimumTimeRequired) {
+      // Si estamos fuera de la ventana de confirmación (antes de las 21:00)
+      if (currentHour < 21) {
+        final nextConfirmationWindow = DateTime(now.year, now.month, now.day, 21, 0);
+        final hoursUntilWindow = nextConfirmationWindow.difference(now).inHours;
+        final minutesUntilWindow = nextConfirmationWindow.difference(now).inMinutes % 60;
+        
+        if (hoursUntilWindow > 0) {
+          return '⏰ Estará disponible a las 21:00 (en ${hoursUntilWindow}h ${minutesUntilWindow}min)';
+        } else {
+          return '⏰ Estará disponible a las 21:00 (en ${minutesUntilWindow} minutos)';
+        }
+      }
+      // Si estamos en la ventana pero el reto ya está completado, no mostrar mensaje
+      return null;
+    }
+    
+    // Si el tiempo mínimo NO se ha cumplido, mostrar tiempo restante
+    final remainingMinutes = minimumTimeRequired - minutesSinceStart;
+    
+    if (remainingMinutes > 60) {
+      final hours = (remainingMinutes / 60).floor();
+      final minutes = remainingMinutes % 60;
+      return '⏳ Estará listo en ${hours}h ${minutes}min';
+    } else {
+      return '⏳ Estará listo en $remainingMinutes minutos';
+    }
   }
 
   /// Formatea la fecha de inicio del reto de manera amigable
@@ -1306,6 +1423,57 @@ class _CountersPageState extends State<CountersPage> {
                                     ),
                                   ),
                               ),
+                              
+                              // Widget de tiempo restante cuando el botón no está disponible
+                              if (counter.challengeStartedAt != null && !_shouldShowConfirmationButton(counter, now))
+                                Builder(
+                                  builder: (context) {
+                                    final timeMessage = _getTimeRemainingMessage(counter, now);
+                                    if (timeMessage == null) return const SizedBox.shrink();
+                                    
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 20,
+                                        right: 20,
+                                        bottom: 10,
+                                      ),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: Colors.orange.withOpacity(0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              timeMessage.contains('⏰') ? Icons.access_time : Icons.hourglass_bottom,
+                                              color: Colors.orange[700],
+                                              size: 20,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                timeMessage,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.orange[700],
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                             ],
                           ),
                         ),

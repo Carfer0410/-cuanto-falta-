@@ -393,7 +393,7 @@ class LocalizationService extends ChangeNotifier {
       'remaining': 'Falta',
       'elapsed': 'Llevas',
       'everySecondCounts': 'Cada segundo cuenta.',
-      'youHave': '¡Llevas',
+      'youHave': '¡Llevas!',
       'keepGoing': '¡Sigue así!',
 
       // PALABRAS CLAVE DE RETOS

@@ -337,6 +337,55 @@ class _CountersPageState extends State<CountersPage> {
     }
   }
 
+  /// 🎨 NUEVO: Construye texto con estilo especial para la palabra objetivo
+  TextSpan _buildChallengeText(Counter counter, LocalizationService localizationService, BuildContext context) {
+    final fullText = _challengePhrase(counter, localizationService);
+    
+    // Dividir el texto para identificar la palabra objetivo
+    List<String> words = fullText.split(' ');
+    if (words.length < 2) {
+      // Si solo hay una palabra, mostrarla grande
+      return TextSpan(
+        text: fullText,
+        style: TextStyle(
+          fontSize: 22,
+          color: context.primaryTextColor,
+          fontWeight: FontWeight.bold,
+          height: 1.2,
+        ),
+      );
+    }
+    
+    // Texto base (como "sin" o "haciendo")
+    String baseText = words.first;
+    
+    // Palabra objetivo (como "ansiedad", "ejercicio", etc.)
+    String targetWord = words.skip(1).join(' ');
+    
+    return TextSpan(
+      children: [
+        TextSpan(
+          text: '$baseText ',
+          style: TextStyle(
+            fontSize: 24, // 🎯 Mismo tamaño que la palabra objetivo
+            color: Colors.black, // 🎨 Color negro igual que la palabra objetivo
+            fontWeight: FontWeight.bold,
+            height: 1.2,
+          ),
+        ),
+        TextSpan(
+          text: targetWord,
+          style: TextStyle(
+            fontSize: 24, // 🎯 Palabra objetivo MÁS GRANDE
+            color: Colors.black, // 🎨 Color negro para la palabra objetivo
+            fontWeight: FontWeight.bold,
+            height: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LocalizationService>(
@@ -566,14 +615,8 @@ class _CountersPageState extends State<CountersPage> {
                                             ),
                                           ),
                                           const SizedBox(height: 4),
-                                          Text(
-                                            _challengePhrase(counter, localizationService),
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              color: context.primaryTextColor,
-                                              fontWeight: FontWeight.bold,
-                                              height: 1.2,
-                                            ),
+                                          RichText(
+                                            text: _buildChallengeText(counter, localizationService, context),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),

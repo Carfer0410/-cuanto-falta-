@@ -740,4 +740,128 @@ class PreparationService extends ChangeNotifier {
       return null;
     }
   }
+
+  /// 🚀 NUEVO: Detecta si un evento necesita re-calibración automática
+  Future<Map<String, dynamic>?> shouldSuggestRecalibration(int eventId) async {
+    try {
+      // Obtener información del evento
+      final db = await DatabaseHelper.instance.database;
+      final eventResult = await db.query(
+        'events',
+        columns: ['targetDate', 'title'],
+        where: 'id = ?',
+        whereArgs: [eventId],
+      );
+      
+      if (eventResult.isEmpty) return null;
+      
+      final eventDate = DateTime.parse(eventResult.first['targetDate'] as String);
+      final eventTitle = eventResult.first['title'] as String;
+      final now = DateTime.now();
+      final daysUntilEvent = eventDate.difference(now).inDays;
+      
+      // Solo sugerir para eventos próximos (≤ 14 días)
+      if (daysUntilEvent > 14 || daysUntilEvent < 0) return null;
+      
+      final stats = await getEventPreparationStats(eventId);
+      final total = stats['total'] ?? 0;
+      final active = stats['active'] ?? 0;
+      final future = stats['future'] ?? 0;
+      final completed = stats['completed'] ?? 0;
+      final pending = stats['pending'] ?? 0;
+      
+      // No sugerir si no hay preparativos
+      if (total == 0) return null;
+      
+      // Condiciones para sugerir re-calibración:
+      bool shouldSuggest = false;
+      String reason = '';
+      String urgency = 'normal';
+      
+      // 1. Muchas tareas futuras vs pocas activas (evento próximo pero tareas lejanas)
+      if (future > active && daysUntilEvent <= 7) {
+        shouldSuggest = true;
+        reason = 'Tu evento es en $daysUntilEvent días pero tienes $future tareas programadas para más adelante';
+        urgency = 'high';
+      }
+      // 2. Todas las tareas activas están completadas pero faltan tareas futuras
+      else if (active > 0 && pending == 0 && future > 0 && daysUntilEvent <= 10) {
+        shouldSuggest = true;
+        reason = 'Has completado todas las tareas activas, pero puedes activar las $future tareas restantes';
+        urgency = 'medium';
+      }
+      // 3. Muy pocas tareas activas para un evento próximo
+      else if (active < 3 && total > 5 && daysUntilEvent <= 5) {
+        shouldSuggest = true;
+        reason = 'Tu evento es muy pronto pero solo tienes $active tareas activas de $total totales';
+        urgency = 'high';
+      }
+      // 4. Evento en menos de 3 días con tareas pendientes y futuras disponibles
+      else if (daysUntilEvent <= 3 && pending > 0 && future > 0) {
+        shouldSuggest = true;
+        reason = 'Evento en $daysUntilEvent días con tareas pendientes. ¿Activar las $future restantes?';
+        urgency = 'critical';
+      }
+      
+      if (!shouldSuggest) return null;
+      
+      return {
+        'eventId': eventId,
+        'eventTitle': eventTitle,
+        'daysUntilEvent': daysUntilEvent,
+        'reason': reason,
+        'urgency': urgency,
+        'stats': {
+          'total': total,
+          'active': active,
+          'future': future,
+          'completed': completed,
+          'pending': pending,
+        }
+      };
+      
+    } catch (e) {
+      print('❌ Error verificando necesidad de re-calibración: $e');
+      return null;
+    }
+  }
+
+  /// 🚀 NUEVO: Verifica todos los eventos y devuelve sugerencias de re-calibración
+  Future<List<Map<String, dynamic>>> getAllRecalibrationSuggestions() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      
+      // Obtener eventos futuros
+      final now = DateTime.now();
+      final events = await db.query(
+        'events',
+        where: 'targetDate > ?',
+        whereArgs: [now.toIso8601String()],
+        orderBy: 'targetDate ASC',
+      );
+      
+      List<Map<String, dynamic>> suggestions = [];
+      
+      for (final event in events) {
+        final eventId = event['id'] as int;
+        final suggestion = await shouldSuggestRecalibration(eventId);
+        if (suggestion != null) {
+          suggestions.add(suggestion);
+        }
+      }
+      
+      // Ordenar por urgencia: critical > high > medium > normal
+      suggestions.sort((a, b) {
+        final urgencyOrder = {'critical': 0, 'high': 1, 'medium': 2, 'normal': 3};
+        final aOrder = urgencyOrder[a['urgency']] ?? 3;
+        final bOrder = urgencyOrder[b['urgency']] ?? 3;
+        return aOrder.compareTo(bOrder);
+      });
+      
+      return suggestions;
+    } catch (e) {
+      print('❌ Error obteniendo sugerencias de re-calibración: $e');
+      return [];
+    }
+  }
 }

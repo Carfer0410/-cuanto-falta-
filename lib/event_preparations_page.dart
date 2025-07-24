@@ -21,6 +21,7 @@ class EventPreparationsPage extends StatefulWidget {
 class _EventPreparationsPageState extends State<EventPreparationsPage> {
   List<PreparationTask> _preparations = [];
   Map<String, int> _stats = {'total': 0, 'completed': 0, 'pending': 0};
+  Map<String, dynamic>? _recalibrationSuggestion; // 🆕 NUEVO
   bool _isLoading = true;
   bool _isRecalibrating = false; // Para evitar múltiples recalibraciones
 
@@ -42,10 +43,12 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
     
     final preparations = await PreparationService.instance.getEventPreparations(widget.event.id!);
     final stats = await PreparationService.instance.getEventPreparationStats(widget.event.id!);
+    final suggestion = await PreparationService.instance.shouldSuggestRecalibration(widget.event.id!); // 🆕 NUEVO
     
     setState(() {
       _preparations = preparations;
       _stats = stats;
+      _recalibrationSuggestion = suggestion; // 🆕 NUEVO
       _isLoading = false;
     });
   }
@@ -573,6 +576,103 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
                       ),
                     ),
                     
+                    // Sugerencia inteligente de recalibración
+                    if (_recalibrationSuggestion != null)
+                      Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _getSuggestionColor().withOpacity(0.1),
+                          border: Border.all(
+                            color: _getSuggestionColor().withOpacity(0.3),
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.lightbulb_outline,
+                                  color: _getSuggestionColor(),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Sugerencia Inteligente',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getSuggestionColor(),
+                                  ),
+                                ),
+                                Spacer(),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: _getSuggestionColor().withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    _recalibrationSuggestion!['urgency'].toString().toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: _getSuggestionColor(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              _recalibrationSuggestion!['reason'],
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: context.isDark ? Colors.white70 : Colors.black87,
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: _handleRecalibrationSuggestion,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _getSuggestionColor(),
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(vertical: 8),
+                                    ),
+                                    child: Text(
+                                      'Recalibrar Automáticamente',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _recalibrationSuggestion = null;
+                                    });
+                                  },
+                                  child: Text(
+                                    'Descartar',
+                                    style: TextStyle(
+                                      color: _getSuggestionColor(),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    
                     // Lista de preparativos
                     Expanded(
                       child: _preparations.isEmpty
@@ -831,6 +931,81 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
       }
       
       return 'En $daysUntilTask días';
+    }
+  }
+
+  // Métodos para el sistema de sugerencias inteligentes
+  Color _getSuggestionColor() {
+    if (_recalibrationSuggestion == null) return Colors.blue;
+    
+    switch (_recalibrationSuggestion!['urgency']) {
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.orange;
+      case 'medium':
+        return Colors.amber;
+      case 'normal':
+      default:
+        return Colors.blue;
+    }
+  }
+
+  void _handleRecalibrationSuggestion() async {
+    if (_recalibrationSuggestion == null) return;
+
+    // Mostrar diálogo de confirmación
+    bool? shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Recalibración Automática'),
+        content: Text(
+          '¿Deseas que el sistema recalibre automáticamente los preparativos de este evento según la nueva proximidad detectada?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _getSuggestionColor(),
+            ),
+            child: Text('Recalibrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldProceed == true) {
+      try {
+        // Ejecutar la recalibración automática
+        await PreparationService.instance.recalibrateEventPreparations(widget.event.id!);
+        
+        // Mostrar mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Recalibración completada exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Recargar los datos
+        setState(() {
+          _recalibrationSuggestion = null;
+        });
+        await _loadPreparations();
+
+      } catch (e) {
+        // Mostrar mensaje de error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error en la recalibración: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

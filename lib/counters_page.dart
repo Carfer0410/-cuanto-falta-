@@ -447,9 +447,9 @@ class _CountersPageState extends State<CountersPage> {
         final minutesUntilWindow = nextConfirmationWindow.difference(now).inMinutes % 60;
         
         if (hoursUntilWindow > 0) {
-          return '⏰ Estará disponible a las 21:00 (en ${hoursUntilWindow}h ${minutesUntilWindow}min)';
+          return '⏰ Podrás confirmar el reto a las 21:00 (en ${hoursUntilWindow}h ${minutesUntilWindow}min)';
         } else {
-          return '⏰ Estará disponible a las 21:00 (en ${minutesUntilWindow} minutos)';
+          return '⏰ Podrás confirmar el reto a las 21:00 (en ${minutesUntilWindow} minutos)';
         }
       }
       // Si estamos en la ventana pero el reto ya está completado, no mostrar mensaje

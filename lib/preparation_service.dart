@@ -521,7 +521,7 @@ class PreparationService extends ChangeNotifier {
   Future<void> completeTask(int taskId, {bool notify = true}) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.update(
+      final result = await db.update(
         'preparation_tasks',
         {
           'isCompleted': 1,
@@ -531,10 +531,15 @@ class PreparationService extends ChangeNotifier {
         whereArgs: [taskId],
       );
       
+      if (result == 0) {
+        throw Exception('No se encontró la tarea con ID $taskId');
+      }
+      
       print('✅ Tarea $taskId marcada como completada');
       if (notify) notifyListeners();
     } catch (e) {
       print('❌ Error completando tarea $taskId: $e');
+      rethrow; // Propagar el error para que lo maneje la UI
     }
   }
 
@@ -542,7 +547,7 @@ class PreparationService extends ChangeNotifier {
   Future<void> uncompleteTask(int taskId, {bool notify = true}) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.update(
+      final result = await db.update(
         'preparation_tasks',
         {
           'isCompleted': 0,
@@ -552,10 +557,15 @@ class PreparationService extends ChangeNotifier {
         whereArgs: [taskId],
       );
       
+      if (result == 0) {
+        throw Exception('No se encontró la tarea con ID $taskId');
+      }
+      
       print('↩️ Tarea $taskId desmarcada como no completada');
       if (notify) notifyListeners();
     } catch (e) {
       print('❌ Error desmarcando tarea $taskId: $e');
+      rethrow; // Propagar el error para que lo maneje la UI
     }
   }
 

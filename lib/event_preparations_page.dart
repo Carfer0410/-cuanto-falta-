@@ -51,17 +51,20 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
   }
 
   Future<void> _toggleTask(PreparationTask task) async {
+    // Determinar la nueva acción ANTES de cambiar el estado local
+    final willBeCompleted = !task.isCompleted;
+    
     // 🆕 OPTIMIZACIÓN: Actualizar estado local inmediatamente para evitar parpadeo
     setState(() {
       final index = _preparations.indexWhere((p) => p.id == task.id);
       if (index != -1) {
-        _preparations[index].isCompleted = !_preparations[index].isCompleted;
-        _preparations[index].completedAt = _preparations[index].isCompleted 
+        _preparations[index].isCompleted = willBeCompleted;
+        _preparations[index].completedAt = willBeCompleted 
             ? DateTime.now() 
             : null;
         
         // Actualizar estadísticas localmente
-        if (_preparations[index].isCompleted) {
+        if (willBeCompleted) {
           _stats['completed'] = (_stats['completed'] ?? 0) + 1;
         } else {
           _stats['completed'] = (_stats['completed'] ?? 1) - 1;
@@ -69,14 +72,40 @@ class _EventPreparationsPageState extends State<EventPreparationsPage> {
       }
     });
     
-    // Luego actualizar en la base de datos en segundo plano sin notificar
-    if (task.isCompleted) {
-      await PreparationService.instance.uncompleteTask(task.id!, notify: false);
-    } else {
-      await PreparationService.instance.completeTask(task.id!, notify: false);
+    try {
+      // Luego actualizar en la base de datos usando la acción determinada anteriormente
+      if (willBeCompleted) {
+        await PreparationService.instance.completeTask(task.id!, notify: false);
+      } else {
+        await PreparationService.instance.uncompleteTask(task.id!, notify: false);
+      }
+    } catch (e) {
+      // Si falla la operación de base de datos, revertir el estado local
+      print('❌ Error al actualizar preparativo: $e');
+      setState(() {
+        final index = _preparations.indexWhere((p) => p.id == task.id);
+        if (index != -1) {
+          _preparations[index].isCompleted = !willBeCompleted;
+          _preparations[index].completedAt = !willBeCompleted 
+              ? DateTime.now() 
+              : null;
+          
+          // Revertir estadísticas
+          if (!willBeCompleted) {
+            _stats['completed'] = (_stats['completed'] ?? 0) + 1;
+          } else {
+            _stats['completed'] = (_stats['completed'] ?? 1) - 1;
+          }
+        }
+      });
+      
+      // Mostrar mensaje de error al usuario
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Error al actualizar preparativo')),
+        );
+      }
     }
-    
-    // No llamamos _loadPreparations() para evitar parpadeo
   }
 
   void _showAddTaskDialog() {

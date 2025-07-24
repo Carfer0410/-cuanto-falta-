@@ -620,9 +620,12 @@ class PreparationService extends ChangeNotifier {
       final completedActive = activePreparations.where((p) => p.isCompleted).length;
       final pendingActive = totalActive - completedActive;
       
+      // Calcular completados totales (activos + futuros completados)
+      final totalCompleted = preparations.where((p) => p.isCompleted).length;
+      
       return {
         'total': preparations.length, // Total de preparativos del evento
-        'completed': completedActive, // Solo los activos completados
+        'completed': totalCompleted, // TODOS los preparativos completados (activos y futuros)
         'pending': pendingActive, // Solo los activos pendientes  
         'active': totalActive, // Preparativos que deberían estar activos
         'future': futurePreparations.length, // Preparativos futuros

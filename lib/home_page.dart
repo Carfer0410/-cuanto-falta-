@@ -680,8 +680,8 @@ class _HomePageState extends State<HomePage> {
           );
         }
         
-        // Calcular progreso solo basado en preparativos activos
-        final progress = active > 0 ? completed / active : 0.0;
+        // Calcular progreso basado en el TOTAL de preparativos (no solo activos)
+        final progress = total > 0 ? completed / total : 0.0;
         
         // Determinar color del progreso según el porcentaje
         Color progressColor;
@@ -738,7 +738,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   Text(
-                    '$completed/$active completados',
+                    '$completed/$total completados',
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).textTheme.bodySmall?.color,

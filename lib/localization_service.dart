@@ -205,6 +205,8 @@ class LocalizationService extends ChangeNotifier {
       'noEvents': 'Aún no hay eventos. ¡Agrega uno!',
       'deleteEvent': 'Eliminar evento',
       'deleteEventConfirm': '¿Seguro que deseas eliminar este evento? Esta acción no se puede deshacer.',
+      'requiredFields': 'Campos requeridos',
+      'completeFieldsMessage': 'Para guardar el evento, completa los siguientes campos:',
 
       // CATEGORÍAS DE EVENTOS
       'categoryBirthday': 'Cumpleaños',
@@ -564,6 +566,8 @@ class LocalizationService extends ChangeNotifier {
       'noEvents': 'No events yet. Add one!',
       'deleteEvent': 'Delete event',
       'deleteEventConfirm': 'Are you sure you want to delete this event? This action cannot be undone.',
+      'requiredFields': 'Required fields',
+      'completeFieldsMessage': 'To save the event, complete the following fields:',
 
       // CATEGORÍAS DE EVENTOS
       'categoryBirthday': 'Birthday',
@@ -961,6 +965,8 @@ class LocalizationService extends ChangeNotifier {
       'noEvents': 'Ainda não há eventos. Adicione um!',
       'deleteEvent': 'Excluir evento',
       'deleteEventConfirm': 'Tem certeza de que deseja excluir este evento? Esta ação não pode ser desfeita.',
+      'requiredFields': 'Campos obrigatórios',
+      'completeFieldsMessage': 'Para salvar o evento, complete os seguintes campos:',
       'addEventSaved': 'Evento salvo',
       'addEventTitleError': 'Digite o título do evento',
       'addEventDateError': 'Selecione a data do evento',
@@ -1163,6 +1169,8 @@ class LocalizationService extends ChangeNotifier {
       'noEvents': 'Aucun événement pour le moment. Ajoutez-en un!',
       'deleteEvent': 'Supprimer l\'événement',
       'deleteEventConfirm': 'Êtes-vous sûr de vouloir supprimer cet événement? Cette action ne peut pas être annulée.',
+      'requiredFields': 'Champs requis',
+      'completeFieldsMessage': 'Pour sauvegarder l\'événement, complétez les champs suivants:',
       'addEventSaved': 'Événement sauvegardé',
       'addEventTitleError': 'Entrez le titre de l\'événement',
       'addEventDateError': 'Sélectionnez la date de l\'événement',
@@ -1365,6 +1373,8 @@ class LocalizationService extends ChangeNotifier {
       'noEvents': 'Noch keine Ereignisse. Fügen Sie eines hinzu!',
       'deleteEvent': 'Ereignis löschen',
       'deleteEventConfirm': 'Sind Sie sicher, dass Sie dieses Ereignis löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+      'requiredFields': 'Pflichtfelder',
+      'completeFieldsMessage': 'Um das Ereignis zu speichern, füllen Sie die folgenden Felder aus:',
       'addEventSaved': 'Ereignis gespeichert',
       'addEventTitleError': 'Geben Sie den Ereignistitel ein',
       'addEventDateError': 'Wählen Sie das Ereignisdatum',
@@ -1567,6 +1577,8 @@ class LocalizationService extends ChangeNotifier {
       'noEvents': 'Nessun evento ancora. Aggiungine uno!',
       'deleteEvent': 'Elimina evento',
       'deleteEventConfirm': 'Sei sicuro di voler eliminare questo evento? Questa azione non può essere annullata.',
+      'requiredFields': 'Campi obbligatori',
+      'completeFieldsMessage': 'Per salvare l\'evento, completa i seguenti campi:',
       'addEventSaved': 'Evento salvato',
       'addEventTitleError': 'Inserisci il titolo dell\'evento',
       'addEventDateError': 'Seleziona la data dell\'evento',

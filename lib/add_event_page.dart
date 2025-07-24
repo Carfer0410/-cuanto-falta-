@@ -46,7 +46,136 @@ class _AddEventPageState extends State<AddEventPage> {
     }
   }
 
+  List<String> _validateFields() {
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
+    List<String> missingFields = [];
+
+    // Validar título
+    if (_titleController.text.trim().isEmpty) {
+      missingFields.add('• ${localizationService.t('eventTitle')}');
+    }
+
+    // Validar fecha
+    if (_selectedDate == null) {
+      missingFields.add('• ${localizationService.t('targetDate')}');
+    }
+
+    // Validar categoría
+    if (_selectedCategory == null) {
+      missingFields.add('• ${localizationService.t('eventCategory')}');
+    }
+
+    return missingFields;
+  }
+
+  void _showValidationDialog(List<String> missingFields) {
+    final localizationService = Provider.of<LocalizationService>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: context.cardColor,
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  localizationService.t('requiredFields'),
+                  style: TextStyle(
+                    color: context.primaryTextColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                localizationService.t('completeFieldsMessage'),
+                style: TextStyle(
+                  color: context.secondaryTextColor,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.isDark 
+                    ? Colors.orange.withOpacity(0.1)
+                    : Colors.orange.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.orange.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: missingFields.map((field) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                      field,
+                      style: TextStyle(
+                        color: context.primaryTextColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )).toList(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: context.orangeVariant,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                localizationService.t('understood'),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _saveEvent() async {
+    // Primero validar campos requeridos
+    final missingFields = _validateFields();
+    
+    if (missingFields.isNotEmpty) {
+      _showValidationDialog(missingFields);
+      return;
+    }
+
+    // Validar formulario (validaciones adicionales como longitud de texto, etc.)
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     if (_formKey.currentState!.validate() &&
         _selectedDate != null &&
         _selectedCategory != null) {

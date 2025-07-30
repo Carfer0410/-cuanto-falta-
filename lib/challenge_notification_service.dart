@@ -68,15 +68,42 @@ class ChallengeNotificationService {
     }
     
     final delay = next21.difference(now);
-    print('🕘 Timer sincronizado: próxima verificación exacta en ${delay.inMinutes} minutos (${next21.toString().substring(11, 16)})');
+    print('🕘 Timer sincronizado para 21:00: próxima ejecución en ${delay.inMinutes} minutos (${next21.toString().substring(11, 16)})');
     
     // Timer que se ejecuta exactamente a las 21:00
     Timer(delay, () {
-      print('🎯 ¡Timer sincronizado ejecutándose a las 21:00 exactas!');
-      ConfirmationWindow._checkConfirmationWindow();
+      print('🎯 ¡Timer sincronizado ejecutándose EXACTAMENTE a las 21:00!');
+      ConfirmationWindow._sendConfirmationWindowNotifications('start');
       
       // Programar el siguiente día
       _setupSyncedConfirmationTimer();
+    });
+    
+    // NUEVO: Timer adicional específico para las 23:30
+    _setupSyncedReminderTimer();
+  }
+
+  /// Configura un timer que se sincroniza específicamente para las 23:30 exactas
+  static void _setupSyncedReminderTimer() {
+    final now = DateTime.now();
+    
+    // Calcular la próxima vez que sean las 23:30
+    DateTime next2330 = DateTime(now.year, now.month, now.day, 23, 30, 0);
+    if (now.isAfter(next2330)) {
+      // Si ya pasaron las 23:30 de hoy, programar para mañana
+      next2330 = next2330.add(Duration(days: 1));
+    }
+    
+    final delay = next2330.difference(now);
+    print('🕘 Timer sincronizado para 23:30: próxima ejecución en ${delay.inMinutes} minutos (${next2330.toString().substring(11, 16)})');
+    
+    // Timer que se ejecuta exactamente a las 23:30
+    Timer(delay, () {
+      print('⏰ ¡Timer sincronizado ejecutándose EXACTAMENTE a las 23:30!');
+      ConfirmationWindow._sendConfirmationWindowNotifications('reminder');
+      
+      // Programar el siguiente día
+      _setupSyncedReminderTimer();
     });
   }
 
@@ -535,6 +562,41 @@ class ChallengeNotificationService {
     }
   }
 
+  /// 🧪 FUNCIÓN DE PRUEBA: Simular notificaciones de 21:00 y 23:30
+  static Future<void> testConfirmationNotifications() async {
+    print('🧪 === PRUEBA DE NOTIFICACIONES 21:00 Y 23:30 ===');
+    try {
+      await NotificationService.instance.init();
+      
+      // Simular notificación de 21:00
+      print('📢 Probando notificación de apertura (21:00)...');
+      await NotificationService.instance.showImmediateNotification(
+        id: 77777,
+        title: '🎯 ¡Ventana de confirmación abierta!',
+        body: '[PRUEBA 21:00] ¡Es hora de confirmar tus retos! Tienes hasta las 23:59. ¡A por todas! 🚀',
+      );
+      
+      // Esperar 3 segundos
+      await Future.delayed(Duration(seconds: 3));
+      
+      // Simular notificación de 23:30
+      print('📢 Probando notificación de recordatorio (23:30)...');
+      await NotificationService.instance.showImmediateNotification(
+        id: 66666,
+        title: '⏰ ¡Últimos 29 minutos!',
+        body: '[PRUEBA 23:30] Recuerda confirmar tus retos antes de las 23:59. ¡Solo quedan 29 minutos!',
+      );
+      
+      print('✅ Ambas notificaciones de prueba enviadas correctamente');
+      print('   📱 ID 77777: Notificación de apertura (21:00)');
+      print('   📱 ID 66666: Notificación de recordatorio (23:30 - 29 min restantes)');
+      print('   ⏰ Nota: La ventana se cierra exactamente a las 23:59');
+      
+    } catch (e) {
+      print('❌ Error en prueba de notificaciones: $e');
+    }
+  }
+
   /// 🧪 MÉTODO DE PRUEBA ESPECÍFICO: Validar notificaciones para retos retroactivos
   static Future<void> testRetroactiveChallengeNotification() async {
     print('🧪 === PRUEBA DE RETOS RETROACTIVOS ===');
@@ -675,28 +737,27 @@ class _ChallengeCounter {
 
 /// 🆕 NUEVO: Extensión de ChallengeNotificationService para ventana de confirmación
 extension ConfirmationWindow on ChallengeNotificationService {
-  /// Verifica si estamos en la ventana de confirmación y envía notificaciones
+  /// Verifica si estamos en la ventana de confirmación (función de respaldo)
+  /// Los timers específicos de 21:00 y 23:30 son más precisos
   static Future<void> _checkConfirmationWindow() async {
     try {
       final now = DateTime.now();
       final currentHour = now.hour;
       final currentMinute = now.minute;
       
-      // Debug log para verificar que el timer está funcionando
-      print('🔍 Verificando ventana de confirmación: ${currentHour}:${currentMinute.toString().padLeft(2, '0')}');
+      // Debug log reducido ya que los timers específicos son más precisos
+      print('🔍 Verificación de respaldo: ${currentHour}:${currentMinute.toString().padLeft(2, '0')}');
       
-      // Solo actuar en momentos específicos o ventana de inicio
-      if (currentHour == 21 && currentMinute >= 0 && currentMinute <= 2) {
-        // 21:00-21:02 - Ventana de inicio (más flexible para capturar 21:00)
-        print('📢 Enviando notificación de inicio de ventana (21:0${currentMinute})');
+      // Solo actuar como respaldo si los timers específicos fallan
+      if (currentHour == 21 && currentMinute == 0) {
+        print('📢 [RESPALDO] Verificando notificación de 21:00');
         await _sendConfirmationWindowNotifications('start');
       } else if (currentHour == 23 && currentMinute == 30) {
-        // 23:30 exacto - Recordatorio de últimos 29 minutos
-        print('📢 Enviando notificación de recordatorio (23:30 exacto)');
+        print('📢 [RESPALDO] Verificando notificación de 23:30');
         await _sendConfirmationWindowNotifications('reminder');
       }
     } catch (e) {
-      print('❌ Error en _checkConfirmationWindow: $e');
+      print('❌ Error en verificación de respaldo: $e');
     }
   }
 
@@ -785,11 +846,11 @@ extension ConfirmationWindow on ChallengeNotificationService {
       
       if (type == 'start') {
         if (pendingChallenges == 1) {
-          title = '🎯 ¡Reto "${challengeTitles.first}" listo!';
-          body = 'Tu reto ya cumplió el tiempo mínimo y puedes confirmarlo hasta las 23:59';
+          title = '🎯 ¡Ventana de confirmación abierta!';
+          body = '¡Es hora de confirmar tu reto "${challengeTitles.first}"! Tienes hasta las 23:59 para confirmarlo. 💪';
         } else {
-          title = '🎯 ¡$pendingChallenges retos listos!';
-          body = 'Los siguientes retos están disponibles para confirmar: ${challengeTitles.join(", ")}';
+          title = '🎯 ¡Ventana de confirmación abierta!';
+          body = '¡Es hora de confirmar tus $pendingChallenges retos! Tienes hasta las 23:59. ¡A por todas! 🚀';
         }
         
         // Agregar información sobre retos que AÚN no están listos
@@ -804,8 +865,8 @@ extension ConfirmationWindow on ChallengeNotificationService {
       } else {
         title = '⏰ ¡Últimos 29 minutos!';
         body = pendingChallenges == 1
-            ? 'No olvides confirmar "${challengeTitles.first}" antes de las 23:59'
-            : 'No olvides confirmar tus $pendingChallenges retos antes de las 23:59';
+            ? 'Recuerda confirmar "${challengeTitles.first}" antes de las 23:59. ¡Solo quedan 29 minutos!'
+            : 'Recuerda confirmar tus $pendingChallenges retos antes de las 23:59. ¡Solo quedan 29 minutos!';
         notificationId = 50002;
       }
       

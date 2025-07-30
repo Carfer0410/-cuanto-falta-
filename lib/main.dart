@@ -77,34 +77,124 @@ class _MyAppState extends State<MyApp> {
     // NUEVO: Sistema de recuperación automática
     _setupTimerRecovery();
     
-    // NUEVO: Verificar si necesita configurar estilo de planificación
+    // NUEVO: Verificar si necesita configurar estilo de planificación (sistema inteligente)
     _checkPlanningStyleSetup();
     
     print('🔄 Sistema Timer mejorado iniciado:');
     print('  ✅ Verificaciones frecuentes mientras app está activa');
     print('  ✅ Verificaciones críticas cada minuto para eventos urgentes');
     print('  ✅ Motivación activa cada 30 minutos para retos');
+    print('  🔔 Notificaciones automáticas de ventana de confirmación:');
+    print('     📱 21:00 - "¡Ventana de confirmación abierta!"');
+    print('     📱 23:30 - "¡Últimos 29 minutos!" (cierre a las 23:59)');
     print('  ✅ Sistema de recuperación automática');
+    print('  ✅ Recordatorios de personalización inteligentes y no invasivos');
     print('  ⚠️  Funciona solo con app abierta (solución más confiable)');
   }
 
   /// Verificar si necesita mostrar configuración de estilo de planificación
+  /// Sistema inteligente que evita ser insistente
   Future<void> _checkPlanningStyleSetup() async {
     final planningService = PlanningStyleService.instance;
     final hasConfigured = await planningService.hasConfiguredStyle();
     
     if (!hasConfigured) {
-      // Esperar 5 segundos para que la app se cargue completamente
-      Timer(Duration(seconds: 5), () async {
-        await NotificationService.instance.showImmediateNotification(
-          id: 99998,
-          title: '🎨 ¡Personaliza tu experiencia!',
-          body: 'Configura tu estilo de planificación para que los preparativos se adapten a ti. Ve a Configuración → Personalización',
-        );
+      // Verificar si está en modo snooze
+      if (await _isPersonalizationSnoozed()) {
+        return;
+      }
+      
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Controlar frecuencia y momentos apropiados
+      final lastShown = prefs.getInt('last_planning_reminder') ?? 0;
+      final reminderCount = prefs.getInt('planning_reminder_count') ?? 0;
+      final currentTime = DateTime.now().millisecondsSinceEpoch;
+      final currentHour = DateTime.now().hour;
+      
+      // Solo mostrar en horarios apropiados (9 AM - 9 PM)
+      if (currentHour < 9 || currentHour > 21) {
+        print('🎨 Horario no apropiado para recordatorio de personalización');
+        return;
+      }
+      
+      // Escalamiento inteligente de frecuencia
+      int minHoursBetweenReminders;
+      if (reminderCount == 0) {
+        minHoursBetweenReminders = 0; // Primera vez: inmediato
+      } else if (reminderCount <= 2) {
+        minHoursBetweenReminders = 24; // Primeras veces: cada día
+      } else if (reminderCount <= 5) {
+        minHoursBetweenReminders = 72; // Después: cada 3 días
+      } else {
+        minHoursBetweenReminders = 168; // Después de 5 veces: cada semana
+      }
+      
+      final hoursSinceLastShown = (currentTime - lastShown) / (1000 * 60 * 60);
+      
+      if (hoursSinceLastShown >= minHoursBetweenReminders) {
+        // Mensajes progresivamente más amigables
+        String title, body;
+        if (reminderCount == 0) {
+          title = '🎨 ¡Bienvenido!';
+          body = 'Personaliza tu experiencia configurando tu estilo de planificación. Configuración → Personalización';
+        } else if (reminderCount <= 2) {
+          title = '✨ Personalización disponible';
+          body = 'Tu experiencia será mejor si configuras tu estilo de planificación. Es rápido y fácil 😊';
+        } else if (reminderCount <= 5) {
+          title = '🎯 Mejora tu experiencia';
+          body = 'Los preparativos se adaptan mejor si configuras tu estilo personal. ¿Te animas?';
+        } else {
+          title = '💝 Recordatorio amigable';
+          body = 'Cuando gustes, puedes personalizar tu estilo de planificación en Configuración';
+        }
         
-        print('🎨 Recordatorio para configurar estilo de planificación enviado');
-      });
+        // Esperar un momento apropiado para mostrar
+        final delay = reminderCount == 0 ? 10 : 30; // Primera vez más rápido
+        Timer(Duration(seconds: delay), () async {
+          await NotificationService.instance.showImmediateNotification(
+            id: 99998,
+            title: title,
+            body: body,
+          );
+          
+          // Actualizar contadores
+          await prefs.setInt('last_planning_reminder', currentTime);
+          await prefs.setInt('planning_reminder_count', reminderCount + 1);
+          
+          print('🎨 Recordatorio de personalización enviado (vez ${reminderCount + 1})');
+          print('   ⏰ Próximo recordatorio en ${minHoursBetweenReminders == 168 ? '1 semana' : '$minHoursBetweenReminders horas'}');
+        });
+      } else {
+        final hoursUntilNext = minHoursBetweenReminders - hoursSinceLastShown;
+        print('🎨 Recordatorio de personalización programado para ${hoursUntilNext.toStringAsFixed(1)} horas');
+      }
     }
+  }
+
+  /// Función para que el usuario pueda posponer recordatorios de personalización
+  /// Útil si el usuario accede a configuración pero no completa la personalización
+  /// Uso desde cualquier parte de la app: _MyAppState.snoozePersonalizationReminders()
+  /// ignore: unused_element
+  static Future<void> snoozePersonalizationReminders({int hours = 48}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final snoozeUntil = DateTime.now().add(Duration(hours: hours)).millisecondsSinceEpoch;
+    await prefs.setInt('personalization_snooze_until', snoozeUntil);
+    print('🎨 Recordatorios de personalización pospuestos por $hours horas');
+  }
+
+  /// Verificar si los recordatorios están en modo snooze
+  Future<bool> _isPersonalizationSnoozed() async {
+    final prefs = await SharedPreferences.getInstance();
+    final snoozeUntil = prefs.getInt('personalization_snooze_until') ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    
+    if (snoozeUntil > now) {
+      final hoursLeft = (snoozeUntil - now) / (1000 * 60 * 60);
+      print('🎨 Recordatorios en snooze por ${hoursLeft.toStringAsFixed(1)} horas más');
+      return true;
+    }
+    return false;
   }
 
   /// Sistema de recuperación automática del Timer

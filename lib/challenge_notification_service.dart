@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'notification_service.dart';
 import 'reminder_tracker.dart';
 import 'milestone_notification_service.dart';
+import 'individual_streak_service.dart';
 
 class ChallengeNotificationService {
   static Timer? _timer;
@@ -119,21 +120,43 @@ class ChallengeNotificationService {
       for (final counterJson in countersJson) {
         final counter = _ChallengeCounter.fromJson(counterJson);
         
-        // Solo procesar retos que han sido iniciados
-        if (counter.challengeStartedAt != null) {
+        // Solo procesar retos que han sido iniciados y confirmados
+        if (counter.challengeStartedAt != null && counter.lastConfirmedDate != null) {
           final notificationInfo = _shouldSendMotivationalNotification(
             counter, 
             now
           );
           
           if (notificationInfo != null) {
-            // Verificar si ya se envió esta notificación específica
-            final wasAlreadySent = await ReminderTracker.wasReminderSent(
-              counter.title.hashCode, 
+            // 🛡️ PROTECCIÓN ANTI-DUPLICADOS ULTRA-ROBUSTA
+            final today = DateTime.now();
+            final todayKey = '${today.year}-${today.month}-${today.day}';
+            final baseReminderId = counter.title.hashCode;
+            
+            // Verificar si ya se envió CUALQUIER notificación de hito para este reto HOY
+            final allMilestoneTypes = ['day_1', 'day_3', 'week_1', 'day_15', 'month_1', 'month_2', 'month_3', 'month_6', 'year_1'];
+            bool alreadySentAnyMilestoneToday = false;
+            
+            for (final milestoneType in allMilestoneTypes) {
+              final wasAlreadySent = await ReminderTracker.wasReminderSent(
+                baseReminderId, 
+                '${milestoneType}_$todayKey'
+              );
+              if (wasAlreadySent) {
+                print('🛡️ BLOQUEO ANTI-DUPLICADO: Ya se envió "$milestoneType" para "${counter.title}" hoy');
+                alreadySentAnyMilestoneToday = true;
+                break;
+              }
+            }
+            
+            // VERIFICAR TAMBIÉN el tipo específico actual
+            final wasSpecificTypeSent = await ReminderTracker.wasReminderSent(
+              baseReminderId, 
               notificationInfo['reminderType']
             );
             
-            if (!wasAlreadySent) {
+            // SOLO ENVIAR si NO se ha enviado NINGÚN hito hoy
+            if (!alreadySentAnyMilestoneToday && !wasSpecificTypeSent) {
               // Enviar notificación motivacional
               await NotificationService.instance.showImmediateNotification(
                 id: notificationInfo['notificationId'],
@@ -141,15 +164,31 @@ class ChallengeNotificationService {
                 body: notificationInfo['body'],
               );
 
-              // Marcar como enviado para evitar duplicados
+              // Marcar como enviado con MÚLTIPLES claves para prevenir duplicados
               await ReminderTracker.markReminderSent(
-                counter.title.hashCode, 
+                baseReminderId, 
                 notificationInfo['reminderType']
+              );
+              
+              await ReminderTracker.markReminderSent(
+                baseReminderId, 
+                '${notificationInfo['reminderType']}_$todayKey'
+              );
+              
+              // NUEVA PROTECCIÓN: Marcar también con un identificador único del día
+              await ReminderTracker.markReminderSent(
+                baseReminderId, 
+                'milestone_sent_$todayKey'
               );
 
               print('✅ Notificación motivacional enviada: ${notificationInfo['title']} para ${counter.title}');
+              print('🔒 TRIPLE PROTECCIÓN activada: tipo, fecha y milestone diario');
             } else {
-              print('⏭️ Notificación ya enviada: ${notificationInfo['reminderType']} para ${counter.title}');
+              if (alreadySentAnyMilestoneToday) {
+                print('🛡️ BLOQUEADO: Ya se envió un hito HOY para "${counter.title}" - evitando duplicado');
+              } else {
+                print('🛡️ BLOQUEADO: Notificación específica "${notificationInfo['reminderType']}" ya enviada para "${counter.title}"');
+              }
             }
           }
         }
@@ -163,15 +202,40 @@ class ChallengeNotificationService {
   static Map<String, dynamic>? _shouldSendMotivationalNotification(
       _ChallengeCounter counter, DateTime now) {
     
-    if (counter.challengeStartedAt == null) return null;
+    if (counter.challengeStartedAt == null || counter.lastConfirmedDate == null) {
+      return null;
+    }
 
+    // CORRECCIÓN PARA RETOS RETROACTIVOS
+    final lastConfirmed = counter.lastConfirmedDate!;
     final startDate = counter.challengeStartedAt!;
-    final daysPassed = now.difference(startDate).inDays;
-    final baseId = counter.title.hashCode;
+    
+    // 🔥 NUEVA LÓGICA MEJORADA: Calcular días de racha considerando retos retroactivos
+    // Para retos retroactivos, necesitamos obtener la información correcta de IndividualStreakService
+    final challengeId = counter.title.hashCode.toString();
+    final streak = IndividualStreakService.instance.getStreak(challengeId);
+    
+    // 🔧 CORRECCIÓN CRÍTICA: Calcular días correctamente para retos retroactivos
+    // Si el reto comenzó el 23 julio y se confirmó el 29 julio = 7 días (23,24,25,26,27,28,29)
+    final directCalculation = lastConfirmed.difference(startDate).inDays + 1;
+    final serviceCalculation = streak?.currentStreak;
+    
+    // USAR SIEMPRE el cálculo directo que es más confiable para retos retroactivos
+    final streakDays = directCalculation;
+    
+    // Debug: Mostrar información detallada del cálculo
+    print('🧮 Calculando notificación para ${counter.title}:');
+    print('  📅 Inicio del reto: ${startDate.toString().substring(0, 10)}');
+    print('  ✅ Última confirmación: ${lastConfirmed.toString().substring(0, 10)}');
+    print('  🔢 IndividualStreakService respuesta: $serviceCalculation');
+    print('  🔢 Cálculo directo (USANDO): $directCalculation');
+    print('  📊 Diferencia en días: ${lastConfirmed.difference(startDate).inDays}');
+    print('  ➕ Más 1 día = $streakDays días totales');
+    print('  🕐 Hora actual: ${now.toString().substring(0, 16)}');
     
     // Verificar si el reto sigue activo (última confirmación no muy antigua)
-    final isActive = counter.lastConfirmedDate != null && 
-                    now.difference(counter.lastConfirmedDate!).inDays <= 2;
+    final daysSinceLastConfirmation = now.difference(lastConfirmed).inDays;
+    final isActive = daysSinceLastConfirmation <= 2;
     
     if (!isActive) return null; // No enviar si el reto parece abandonado
 
@@ -179,94 +243,90 @@ class ChallengeNotificationService {
     final challengeType = counter.isNegativeHabit ? 'dejar' : 'hacer';
     final activity = _getCleanActivity(counter.title, counter.isNegativeHabit);
     
-    // DÍA 1: Primer día
-    if (daysPassed == 1) {
-      return {
-        'notificationId': baseId + 1001,
-        'reminderType': 'day_1',
-        'title': '🎉 ¡Primer día completado!',
-        'body': '¡Felicidades! Has completado tu primer día ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n💪 ¡Excelente comienzo! Sigue así.'
-      };
+    final baseId = counter.title.hashCode;
+    
+    // 🎯 NUEVA LÓGICA MEJORADA: Hitos exactos sin tolerancia para retos retroactivos
+    final exactMilestones = {
+      1: {'type': 'day_1', 'idOffset': 1001},
+      3: {'type': 'day_3', 'idOffset': 1003},
+      7: {'type': 'week_1', 'idOffset': 1007},
+      15: {'type': 'day_15', 'idOffset': 1015},
+      30: {'type': 'month_1', 'idOffset': 1030},
+      60: {'type': 'month_2', 'idOffset': 1060},
+      90: {'type': 'month_3', 'idOffset': 1090},
+      180: {'type': 'month_6', 'idOffset': 1180},
+      365: {'type': 'year_1', 'idOffset': 2001},
+    };
+    
+    // 🔥 CORRECCIÓN CRÍTICA: Encontrar SOLO EL HITO MÁS ESPECÍFICO (sin tolerancia)
+    // Para evitar duplicados, buscar EXACTAMENTE el día y devolver SOLO UNO
+    Map<String, dynamic>? matchingMilestone;
+    
+    // Buscar hito EXACTO primero (sin tolerancia) - PRIORIDAD ABSOLUTA
+    if (exactMilestones.containsKey(streakDays)) {
+      matchingMilestone = exactMilestones[streakDays]!;
+      print('🎯 Hito EXACTO encontrado para día $streakDays: ${matchingMilestone['type']} - ENVIANDO SOLO ESTE');
     }
-
-    // DÍA 3: Tercer día
-    if (daysPassed == 3) {
-      return {
-        'notificationId': baseId + 1003,
-        'reminderType': 'day_3',
-        'title': '🔥 ¡3 días de éxito!',
-        'body': '¡Increíble! Ya llevas 3 días ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🚀 El hábito se está formando. ¡Continúa!'
-      };
+    
+    // Si no hay hito exacto, NO enviar nada para evitar confusión
+    // Esto previene que se envíen hitos de "día 1" cuando debería ser "día 15", etc.
+    if (matchingMilestone == null) {
+      print('⚠️ No hay hito exacto para día $streakDays, no enviando notificación para evitar duplicados');
+      return null; // No enviar notificación si no es un hito exacto
     }
-
-    // SEMANA 1: Una semana
-    if (daysPassed == 7) {
-      return {
-        'notificationId': baseId + 1007,
-        'reminderType': 'week_1',
-        'title': '🌟 ¡Una semana completa!',
-        'body': '¡Fantástico! Has completado una semana entera ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n💎 ¡Esto es dedicación real!'
-      };
+    
+    // PROCEDER SOLO SI HAY UN HITO EXACTO
+    // 🎯 NUEVA LÓGICA: Generar mensaje basado en los días REALES de racha
+    String title;
+    String body;
+    
+    if (streakDays == 1) {
+      title = '🎉 ¡Primer día completado!';
+      body = '¡Felicidades! Has completado tu primer día ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n💪 ¡Excelente comienzo! Sigue así.';
+    } else if (streakDays == 3) {
+      title = '🔥 ¡3 días de éxito!';
+      body = '¡Increíble! Ya llevas 3 días ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🚀 El hábito se está formando. ¡Continúa!';
+    } else if (streakDays == 7) {
+      title = '🌟 ¡Una semana completa!';
+      body = '¡Fantástico! Has completado una semana entera ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n💎 ¡Esto es dedicación real!';
+    } else if (streakDays == 15) {
+      title = '⭐ ¡15 días de constancia!';
+      body = '¡Impresionante! Ya son 15 días ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🏆 Tu determinación es admirable.';
+    } else if (streakDays == 30) {
+      title = '🎊 ¡UN MES COMPLETO!';
+      body = '¡FELICIDADES! Has alcanzado tu primer mes ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n👑 ¡Eres una inspiración!';
+    } else if (streakDays >= 60 && streakDays <= 180) {
+      final months = streakDays ~/ 30;
+      title = '🏅 ¡$months meses de éxito!';
+      body = '¡Extraordinario! Ya llevas $months meses ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🌈 ¡Tu perseverancia es inspiradora!';
+    } else if (streakDays == 365) {
+      title = '🎉 ¡UN AÑO COMPLETO!';
+      body = '🏆 ¡FELICIDADES! Has completado UN AÑO ENTERO ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n👑 ¡Eres un verdadero campeón! Este es un logro extraordinario.';
+    } else if (streakDays > 365) {
+      final years = streakDays ~/ 365;
+      title = '🎆 ¡$years AÑOS DE ÉXITO!';
+      body = '🌟 ¡INCREÍBLE! Has completado $years años ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🏆 ¡Eres una leyenda viviente!';
+    } else {
+      // Para días que no tienen hito específico, crear mensaje genérico
+      title = '💪 ¡$streakDays días de constancia!';
+      body = '¡Excelente trabajo! Ya llevas $streakDays días ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🚀 ¡Sigue adelante!';
     }
-
-    // 15 DÍAS: Dos semanas
-    if (daysPassed == 15) {
-      return {
-        'notificationId': baseId + 1015,
-        'reminderType': 'day_15',
-        'title': '⭐ ¡15 días de constancia!',
-        'body': '¡Impresionante! Ya son 15 días ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🏆 Tu determinación es admirable.'
-      };
-    }
-
-    // MES 1: Un mes
-    if (daysPassed == 30) {
-      return {
-        'notificationId': baseId + 1030,
-        'reminderType': 'month_1',
-        'title': '🎊 ¡UN MES COMPLETO!',
-        'body': '¡FELICIDADES! Has alcanzado tu primer mes ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n👑 ¡Eres una inspiración!'
-      };
-    }
-
-    // MESES SIGUIENTES: Cada mes hasta el año
-    for (int month = 2; month <= 12; month++) {
-      final targetDays = month * 30; // Aproximación
-      if (daysPassed >= targetDays - 2 && daysPassed <= targetDays + 2) {
-        return {
-          'notificationId': baseId + 1000 + month * 100,
-          'reminderType': 'month_$month',
-          'title': '🏅 ¡$month meses de éxito!',
-          'body': '¡Extraordinario! Ya llevas $month meses ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🌈 ¡Tu perseverancia es inspiradora!'
-        };
-      }
-    }
-
-    // AÑO 1: Un año completo
-    if (daysPassed >= 363 && daysPassed <= 367) { // Rango de tolerancia
-      return {
-        'notificationId': baseId + 2001,
-        'reminderType': 'year_1',
-        'title': '🎉 ¡UN AÑO COMPLETO!',
-        'body': '🏆 ¡FELICIDADES! Has completado UN AÑO ENTERO ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n👑 ¡Eres un verdadero campeón! Este es un logro extraordinario.'
-      };
-    }
-
-    // AÑOS SIGUIENTES: Cada año
-    final years = (daysPassed / 365).floor();
-    if (years >= 2) {
-      final yearTargetDays = years * 365;
-      if (daysPassed >= yearTargetDays - 3 && daysPassed <= yearTargetDays + 3) {
-        return {
-          'notificationId': baseId + 2000 + years,
-          'reminderType': 'year_$years',
-          'title': '🎆 ¡$years AÑOS DE ÉXITO!',
-          'body': '🌟 ¡INCREÍBLE! Has completado $years años ${challengeType == 'dejar' ? 'sin' : 'haciendo'} $activity.\n\n🏆 ¡Eres una leyenda viviente!'
-        };
-      }
-    }
-
-    return null; // No enviar notificación en este momento
+    
+    final idOffsetRaw = matchingMilestone['idOffset'];
+    final idOffset = idOffsetRaw is int ? idOffsetRaw : int.tryParse(idOffsetRaw.toString()) ?? 0;
+    
+    print('🔔 Generando notificación:');
+    print('  📝 Título: $title');
+    print('  💬 Cuerpo: ${body.substring(0, body.length > 50 ? 50 : body.length)}...');
+    print('  🆔 ID: ${baseId + idOffset}');
+    print('  🏷️ Tipo: ${matchingMilestone['type']}');
+    
+    return {
+      'notificationId': baseId + idOffset,
+      'reminderType': matchingMilestone['type'],
+      'title': title,
+      'body': body,
+    };
   }
 
   /// Extrae la actividad limpia del título del reto
@@ -371,22 +431,44 @@ class ChallengeNotificationService {
       final windowKeys = prefs.getKeys().where((key) => key.contains('confirmation_window_')).toList();
       
       // Limpiar recordatorios de ReminderTracker (formato: reminder_sent_${hashCode}_${type})
-      final reminderKeys = prefs.getKeys().where((key) => key.startsWith('reminder_sent_') && key.contains('_start')).toList();
-      final reminderKeys2 = prefs.getKeys().where((key) => key.startsWith('reminder_sent_') && key.contains('_reminder')).toList();
+      final reminderKeys = prefs.getKeys().where((key) => key.startsWith('reminder_sent_')).toList();
       
-      final allKeys = [...windowKeys, ...reminderKeys, ...reminderKeys2];
+      // 🆕 NUEVO: Limpiar también las claves con fecha para evitar duplicados
+      final today = DateTime.now();
+      final todayKey = '${today.year}-${today.month}-${today.day}';
+      final dateKeys = prefs.getKeys().where((key) => key.contains(todayKey)).toList();
+      
+      // 🆕 ULTRA-ROBUSTAS: Limpiar protecciones adicionales
+      final milestoneKeys = prefs.getKeys().where((key) => key.contains('milestone_sent_')).toList();
+      final allHitoKeys = prefs.getKeys().where((key) => 
+        key.contains('day_') || 
+        key.contains('week_') || 
+        key.contains('month_') || 
+        key.contains('year_')).toList();
+      
+      // 🔥 NUEVO: Limpiar también las notificaciones del MilestoneNotificationService
+      final lastMilestoneKeys = prefs.getKeys().where((key) => key.startsWith('last_milestone_')).toList();
+      
+      final allKeys = [...windowKeys, ...reminderKeys, ...dateKeys, ...milestoneKeys, ...allHitoKeys, ...lastMilestoneKeys];
       
       for (final key in allKeys) {
         await prefs.remove(key);
         print('🗑️ Removido: $key');
       }
       
-      print('✅ Historial de notificaciones limpiado (${allKeys.length} entradas)');
+      print('✅ Historial de notificaciones COMPLETAMENTE limpiado (${allKeys.length} entradas)');
+      print('🛡️ Sistema anti-duplicados REINICIADO - todas las protecciones removidas');
+      print('🔥 MilestoneNotificationService también limpiado');
       
       // Debug: Mostrar todas las claves que quedan relacionadas con notificaciones
       final remainingKeys = prefs.getKeys().where((key) => 
         key.contains('confirmation') || 
-        key.contains('reminder_sent')).toList();
+        key.contains('reminder_sent') ||
+        key.contains('milestone_sent') ||
+        key.contains('last_milestone_') ||
+        key.contains('day_') ||
+        key.contains('week_') ||
+        key.contains('month_')).toList();
       print('🔍 Claves restantes relacionadas con notificaciones: $remainingKeys');
       
     } catch (e) {
@@ -450,6 +532,114 @@ class ChallengeNotificationService {
       
     } catch (e) {
       print('❌ Error en notificación forzada: $e');
+    }
+  }
+
+  /// 🧪 MÉTODO DE PRUEBA ESPECÍFICO: Validar notificaciones para retos retroactivos
+  static Future<void> testRetroactiveChallengeNotification() async {
+    print('🧪 === PRUEBA DE RETOS RETROACTIVOS ===');
+    try {
+      // 🧹 LIMPIAR HISTORIAL DE PRUEBAS ANTERIORES
+      print('🧹 Limpiando historial de notificaciones para prueba limpia...');
+      await clearNotificationHistory();
+      
+      // 🎯 CASO ESPECÍFICO DEL USUARIO: 23 julio - 29 julio = 7 días
+      print('📅 === CASO REAL DEL USUARIO ===');
+      print('📅 Reto iniciado: 23 julio 2025');
+      print('✅ Confirmado: 29 julio 2025');
+      print('🔢 Total días esperados: 7 días (23,24,25,26,27,28,29)');
+      print('🎯 DEBE mostrar: "¡Una semana completa!" NO "primer día"');
+      
+      final userStartDate = DateTime(2025, 7, 23); // 23 julio 2025
+      final userConfirmDate = DateTime(2025, 7, 29); // 29 julio 2025
+      
+      final userTestCounter = _ChallengeCounter(
+        title: 'Test Usuario REAL - 7 días retroactivo',
+        startDate: userStartDate,
+        lastConfirmedDate: userConfirmDate,
+        isNegativeHabit: true,
+        challengeStartedAt: userStartDate,
+      );
+      
+      print('\n🧮 === CÁLCULO DETALLADO ===');
+      final diffDays = userConfirmDate.difference(userStartDate).inDays;
+      final totalDays = diffDays + 1;
+      print('📊 Diferencia (difference): $diffDays días');
+      print('➕ Más 1 día de inclusión: $totalDays días totales');
+      print('✅ CORRECTO: Debe ser 7 días');
+      
+      final userNotification = _shouldSendMotivationalNotification(userTestCounter, DateTime.now());
+      
+      if (userNotification != null) {
+        print('\n🔔 === NOTIFICACIÓN GENERADA ===');
+        print('📝 Título: ${userNotification['title']}');
+        print('💬 Cuerpo: ${userNotification['body']}');
+        print('🏷️ Tipo: ${userNotification['reminderType']}');
+        
+        // Verificar que es el tipo correcto
+        if (userNotification['reminderType'] == 'week_1' && userNotification['title'].contains('semana')) {
+          print('✅ ¡CORRECTO! Detectó una semana completa (7 días)');
+        } else if (userNotification['reminderType'] == 'day_1') {
+          print('❌ ERROR: Detectó día 1 cuando debería ser semana 1');
+          print('🔧 El cálculo de días está fallando');
+        } else {
+          print('⚠️ Detectó tipo: ${userNotification['reminderType']} - verificar si es correcto');
+        }
+        
+        print('\n📱 Enviando notificación de prueba...');
+        await NotificationService.instance.init();
+        await NotificationService.instance.showImmediateNotification(
+          id: userNotification['notificationId'],
+          title: '[PRUEBA 7 DÍAS] ${userNotification['title']}',
+          body: '[23-29 JULIO] ${userNotification['body']}',
+        );
+        
+        print('✅ Notificación de prueba enviada');
+      } else {
+        print('❌ No se generó notificación para el caso del usuario');
+      }
+      
+      // Lista adicional de casos de prueba
+      final testCases = [
+        {'startDay': 23, 'endDay': 24, 'expectedDays': 2, 'expectedType': 'none'},
+        {'startDay': 23, 'endDay': 25, 'expectedDays': 3, 'expectedType': 'day_3'},
+        {'startDay': 23, 'endDay': 29, 'expectedDays': 7, 'expectedType': 'week_1'},
+        {'startDay': 15, 'endDay': 29, 'expectedDays': 15, 'expectedType': 'day_15'},
+      ];
+      
+      print('\n🧪 === CASOS DE PRUEBA ADICIONALES ===');
+      for (final testCase in testCases) {
+        final start = DateTime(2025, 7, testCase['startDay'] as int);
+        final end = DateTime(2025, 7, testCase['endDay'] as int);
+        final expectedDays = testCase['expectedDays'] as int;
+        final expectedType = testCase['expectedType'] as String;
+        
+        final testCounter = _ChallengeCounter(
+          title: 'Prueba ${expectedDays} días',
+          startDate: start,
+          lastConfirmedDate: end,
+          isNegativeHabit: true,
+          challengeStartedAt: start,
+        );
+        
+        print('\n📅 Inicio: ${start.day} julio → Final: ${end.day} julio');
+        final notification = _shouldSendMotivationalNotification(testCounter, DateTime.now());
+        
+        if (notification != null) {
+          final actualType = notification['reminderType'];
+          print('  🔢 Días calculados: OK');
+          print('  🏷️ Tipo detectado: $actualType');
+          print('  🎯 Tipo esperado: $expectedType');
+          print('  ${actualType == expectedType ? '✅ CORRECTO' : '❌ ERROR'}');
+        } else if (expectedType == 'none') {
+          print('  ✅ CORRECTO: No hay hito para $expectedDays días');
+        } else {
+          print('  ❌ ERROR: No se generó notificación');
+        }
+      }
+      
+    } catch (e) {
+      print('❌ Error en prueba retroactiva: $e');
     }
   }
 }

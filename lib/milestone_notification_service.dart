@@ -102,22 +102,11 @@ class MilestoneNotificationService {
   }) async {
     if (currentStreak <= 0) return;
     
-    final prefs = await SharedPreferences.getInstance();
-    final lastMilestones = prefs.getStringList('${_lastMilestoneKey}_$challengeId') ?? [];
-    
-    // Verificar si alcanzó un nuevo hito
-    for (final milestone in _milestones) {
-      if (currentStreak >= milestone && !lastMilestones.contains('$milestone')) {
-        await _sendMilestoneNotification(challengeTitle, milestone, isNegativeHabit);
-        
-        // Guardar que ya se envió esta notificación
-        lastMilestones.add('$milestone');
-        await prefs.setStringList('${_lastMilestoneKey}_$challengeId', lastMilestones);
-        
-        print('🎉 Notificación de hito enviada: $challengeTitle - $milestone días');
-        break; // Solo enviar una notificación de hito por vez
-      }
-    }
+    // 🔒 DESHABILITADO TEMPORALMENTE: Para evitar duplicados con ChallengeNotificationService
+    // El ChallengeNotificationService ya maneja las notificaciones de hitos correctamente
+    print('⚠️ MilestoneNotificationService deshabilitado para evitar duplicados');
+    print('   ChallengeNotificationService maneja los hitos correctamente');
+    return;
   }
 
   /// Enviar notificación de hito específico

@@ -181,6 +181,34 @@ class _SettingsPageState extends State<SettingsPage> {
             },
             child: Text(localizationService.t('test')),
           ),
+          // 🆕 NUEVO: Botón de prueba para retos retroactivos
+          TextButton(
+            onPressed: () async {
+              try {
+                await ChallengeNotificationService.testRetroactiveChallengeNotification();
+                if (!mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('🧪 Prueba de reto retroactivo enviada'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('❌ Error en prueba: $e'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            child: Text('🧪 Retroactivo'),
+          ),
         ],
       ),
     );

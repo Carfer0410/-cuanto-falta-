@@ -598,10 +598,12 @@ class _CountersPageState extends State<CountersPage> {
               await ChallengeNotificationService.testStartNotification();
               await ChallengeNotificationService.testForceNotification();
               await ChallengeNotificationService.testForceWindowNotification();
+              // 🆕 NUEVA PRUEBA ESPECÍFICA PARA RETOS RETROACTIVOS
+              await ChallengeNotificationService.testRetroactiveChallengeNotification();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Pruebas completas - revisa notificaciones del dispositivo'),
-                  duration: Duration(seconds: 4),
+                  content: Text('Pruebas completas - revisa notificaciones del dispositivo y la consola'),
+                  duration: Duration(seconds: 5),
                 ),
               );
             },
@@ -1265,6 +1267,9 @@ class _CountersPageState extends State<CountersPage> {
                                             await AchievementService.instance.checkAndUnlockAchievements(
                                               StatisticsService.instance.statistics
                                             );
+
+                                            // 🔥 NUEVO: Verificar notificaciones específicas para retos retroactivos
+                                            await ChallengeNotificationService.checkChallengesNow();
 
                                             // Mostrar mensaje de éxito con información de racha individual
                                             if (mounted) {

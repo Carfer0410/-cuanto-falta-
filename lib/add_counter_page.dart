@@ -78,8 +78,21 @@ class _AddCounterPageState extends State<AddCounterPage> {
     // Ejemplo: 18 julio → 21 julio = 3 días (18, 19, 20)
     final daysPassed = today.difference(start).inDays;
     
+    // 🔍 DEBUG: Logs detallados para investigar el bug
+    print('🔍 === _handleBackdatedChallenge DEBUG ===');
+    print('🔍 challengeTitle: $challengeTitle');
+    print('🔍 startDate: $startDate');
+    print('🔍 now: $now');
+    print('🔍 today (normalizado): $today');
+    print('🔍 start (normalizado): $start');
+    print('🔍 daysPassed calculado: $daysPassed');
+    print('🔍 ¿Activar backdated dialog?: ${daysPassed >= 1}');
+    
     // Solo activar si el reto empezó al menos 1 día antes
-    if (daysPassed < 1) return;
+    if (daysPassed < 1) {
+      print('🔍 RESULTADO: NO activar diálogo (daysPassed < 1)');
+      return;
+    }
     
     if (!mounted) return;
     

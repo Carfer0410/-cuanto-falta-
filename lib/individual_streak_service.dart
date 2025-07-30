@@ -195,13 +195,30 @@ class IndividualStreakService extends ChangeNotifier {
 
   /// Registrar o crear un nuevo desafío
   Future<void> registerChallenge(String challengeId, String challengeTitle) async {
+    debugPrint('🔍 === registerChallenge ===');
+    debugPrint('🔍 challengeId: $challengeId');
+    debugPrint('🔍 challengeTitle: $challengeTitle');
+    debugPrint('🔍 ¿Ya existe?: ${_streaks.containsKey(challengeId)}');
+    
     if (!_streaks.containsKey(challengeId)) {
       _streaks[challengeId] = ChallengeStreak(
         challengeId: challengeId,
         challengeTitle: challengeTitle,
+        currentStreak: 0, // 🔧 CORRECCIÓN: Siempre empezar en 0 para retos nuevos
+        longestStreak: 0,
+        lastConfirmedDate: null,
+        confirmationHistory: const [],
+        totalPoints: 0,
       );
       await _saveStreaks();
       notifyListeners();
+      debugPrint('🆕 Nuevo reto registrado: $challengeTitle (racha inicial: 0)');
+      debugPrint('🔍 Historial inicial vacío: ${_streaks[challengeId]!.confirmationHistory.length} entradas');
+    } else {
+      final existing = _streaks[challengeId]!;
+      debugPrint('🔄 Reto ya existente: $challengeTitle');
+      debugPrint('🔍   Racha actual: ${existing.currentStreak}');
+      debugPrint('🔍   Historial: ${existing.confirmationHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
     }
   }
 
@@ -364,6 +381,8 @@ class IndividualStreakService extends ChangeNotifier {
   /// Calcular racha actual basada en el historial
   int _calculateStreak(ChallengeStreak streak) {
     debugPrint('🧮 === INICIO _calculateStreak ===');
+    debugPrint('🧮 Challenge: ${streak.challengeTitle}');
+    debugPrint('🧮 Historial inicial: ${streak.confirmationHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
     
     if (streak.confirmationHistory.isEmpty) {
       debugPrint('🧮 Historial vacío, retornar 0');
@@ -411,15 +430,16 @@ class IndividualStreakService extends ChangeNotifier {
         expectedDate = expectedDate.subtract(Duration(days: 1));
         debugPrint('🧮   ✅ Racha aumenta a: $currentStreak');
         debugPrint('🧮   Siguiente esperada: ${expectedDate.day}/${expectedDate.month}');
-      } else if (currentStreak == 0) {
-        // Si es la primera confirmación pero no es de hoy, empezar racha desde ahí
+      } else if (currentStreak == 0 && confirmDate.isAtSameMomentAs(today)) {
+        // 🔧 CORRECCIÓN: Solo empezar racha si la confirmación es de HOY
+        // Esto evita que confirmaciones pasadas generen racha automática
         currentStreak = 1;
         expectedDate = confirmDate.subtract(Duration(days: 1));
-        debugPrint('🧮   🔄 Primera confirmación no es hoy, empezar desde aquí: $currentStreak');
+        debugPrint('🧮   🔄 Primera confirmación de HOY, empezar racha: $currentStreak');
         debugPrint('🧮   Siguiente esperada: ${expectedDate.day}/${expectedDate.month}');
       } else {
-        // Hueco en la racha, parar
-        debugPrint('🧮   ❌ Hueco en la racha, parar');
+        // Hueco en la racha o confirmación no es de hoy, parar
+        debugPrint('🧮   ❌ Hueco en la racha o confirmación antigua, parar');
         break;
       }
     }
@@ -506,34 +526,195 @@ class IndividualStreakService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Resetear todas las rachas (para desarrollo)
-  Future<void> resetAllStreaks() async {
-    _streaks.clear();
-    await _saveStreaks();
-    notifyListeners();
+  /// 🔧 DEBUG: Resetear racha específica para testing
+  Future<void> debugResetStreak(String challengeId) async {
+    if (_streaks.containsKey(challengeId)) {
+      final current = _streaks[challengeId]!;
+      _streaks[challengeId] = current.copyWith(
+        currentStreak: 0,
+        longestStreak: 0,
+        lastConfirmedDate: null,
+        confirmationHistory: const [],
+        totalPoints: 0,
+      );
+      await _saveStreaks();
+      notifyListeners();
+      debugPrint('🔧 DEBUG: Racha reseteada para $challengeId');
+    }
+  }
+
+  /// 🔧 DEBUG: Mostrar estado completo de un reto
+  void debugShowStreakState(String challengeId) {
+    if (_streaks.containsKey(challengeId)) {
+      final streak = _streaks[challengeId]!;
+      debugPrint('🔍 === ESTADO COMPLETO DE $challengeId ===');
+      debugPrint('🔍 Título: ${streak.challengeTitle}');
+      debugPrint('🔍 Racha actual: ${streak.currentStreak}');
+      debugPrint('🔍 Racha más larga: ${streak.longestStreak}');
+      debugPrint('🔍 Última confirmación: ${streak.lastConfirmedDate}');
+      debugPrint('🔍 Historial (${streak.confirmationHistory.length} entradas):');
+      for (int i = 0; i < streak.confirmationHistory.length; i++) {
+        final date = streak.confirmationHistory[i];
+        debugPrint('🔍   [$i] ${date.day}/${date.month}/${date.year}');
+      }
+      debugPrint('🔍 Puntos totales: ${streak.totalPoints}');
+      debugPrint('🔍 ===============================');
+    } else {
+      debugPrint('🔍 Reto $challengeId no encontrado');
+    }
   }
 
   /// Migrar desde el sistema global de rachas
   Future<void> migrateFromGlobalStreak(Map<String, String> challengeIdToTitle, int globalStreak) async {
+    debugPrint('🔄 Iniciando migración desde racha global: $globalStreak días');
+    
     for (final entry in challengeIdToTitle.entries) {
       final challengeId = entry.key;
       final challengeTitle = entry.value;
       
       if (!_streaks.containsKey(challengeId)) {
-        // Crear racha inicial basada en la racha global
-        _streaks[challengeId] = ChallengeStreak(
-          challengeId: challengeId,
-          challengeTitle: challengeTitle,
-          currentStreak: globalStreak,
-          longestStreak: globalStreak,
-          lastConfirmedDate: globalStreak > 0 ? DateTime.now() : null,
-          totalPoints: globalStreak * 12, // Puntos estimados
-        );
+        // 🔧 CORRECCIÓN: Solo crear racha migrada si el globalStreak es significativo
+        if (globalStreak > 0) {
+          debugPrint('✅ Migrando reto "$challengeTitle" con $globalStreak días de racha');
+          
+          // Crear racha inicial basada en la racha global
+          _streaks[challengeId] = ChallengeStreak(
+            challengeId: challengeId,
+            challengeTitle: challengeTitle,
+            currentStreak: globalStreak,
+            longestStreak: globalStreak,
+            lastConfirmedDate: globalStreak > 0 ? DateTime.now() : null,
+            confirmationHistory: [], // Sin historial específico en migración
+            totalPoints: globalStreak * 12, // Puntos estimados
+          );
+        } else {
+          debugPrint('⚠️ Omitiendo migración para "$challengeTitle" (globalStreak: $globalStreak)');
+          
+          // Crear reto nuevo sin racha previa
+          _streaks[challengeId] = ChallengeStreak(
+            challengeId: challengeId,
+            challengeTitle: challengeTitle,
+            currentStreak: 0,
+            longestStreak: 0,
+            lastConfirmedDate: null,
+            confirmationHistory: const [],
+            totalPoints: 0,
+          );
+        }
+      } else {
+        debugPrint('🔄 Reto "$challengeTitle" ya existe, mantener datos actuales');
       }
     }
     
     await _saveStreaks();
     notifyListeners();
     debugPrint('🔄 Migración desde racha global completada');
+  }
+
+  // 🚨 MÉTODO DE EMERGENCIA: Reset completo de datos corruptos
+  Future<void> emergencyResetCorruptedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    debugPrint('🚨 EMERGENCIA: Iniciando reset de datos corruptos...');
+    
+    // 1. Resetear todos los datos de rachas individuales
+    await prefs.remove('individual_streaks');
+    debugPrint('✅ Rachas individuales eliminadas');
+    
+    // 2. Resetear flag de migración para permitir nueva migración limpia
+    await prefs.setBool('has_migrated_individual_streaks', false);
+    debugPrint('✅ Flag de migración reseteado');
+    
+    // 3. Verificar si hay rachas globales para preservar
+    final globalStreak = prefs.getInt('global_streak') ?? 0;
+    debugPrint('ℹ️ Racha global encontrada: $globalStreak');
+    
+    // 4. Limpiar caché local
+    _streaks.clear();
+    
+    debugPrint('🚨 EMERGENCIA: Reset completado. Necesita restart de la app.');
+    notifyListeners();
+  }
+
+  // 🔧 MÉTODO QUIRÚRGICO: Solo resetear retos problemáticos específicos
+  Future<void> surgicalResetKnownBugs() async {
+    debugPrint('🔧 QUIRÚRGICO: Iniciando corrección de retos problemáticos...');
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final List<String> suspiciousChallenges = [];
+    
+    // Buscar retos con lastConfirmedDate sospechosos
+    for (final entry in _streaks.entries) {
+      final challengeId = entry.key;
+      final streak = entry.value;
+      
+      if (streak.lastConfirmedDate != null) {
+        final lastConfirmed = streak.lastConfirmedDate!;
+        final confirmedDate = DateTime(lastConfirmed.year, lastConfirmed.month, lastConfirmed.day);
+        
+        // Si la última confirmación es HOY y la racha > 0, es sospechoso
+        if (confirmedDate.isAtSameMomentAs(today) && streak.currentStreak > 0) {
+          suspiciousChallenges.add(challengeId);
+          debugPrint('🚨 Reto sospechoso encontrado: $challengeId - Racha: ${streak.currentStreak} - Fecha: ${streak.lastConfirmedDate}');
+        }
+      }
+    }
+    
+    // Resetear solo los retos sospechosos
+    for (final challengeId in suspiciousChallenges) {
+      final currentStreak = _streaks[challengeId]!;
+      _streaks[challengeId] = currentStreak.copyWith(
+        currentStreak: 0,
+        lastConfirmedDate: null,
+        // Preservar longestStreak y totalPoints
+      );
+      debugPrint('✅ Reset quirúrgico aplicado a: $challengeId');
+    }
+    
+    // Guardar cambios
+    await _saveStreaks();
+    notifyListeners();
+    debugPrint('🔧 QUIRÚRGICO: Corrección completada. ${suspiciousChallenges.length} retos corregidos.');
+  }
+
+  // 🔍 MÉTODO DE DIAGNÓSTICO: Mostrar estado detallado de todos los retos
+  void diagnosticShowAllStreaks() {
+    debugPrint('🔍 === DIAGNÓSTICO: Estado de todos los retos ===');
+    
+    if (_streaks.isEmpty) {
+      debugPrint('📭 No hay retos registrados');
+      return;
+    }
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    for (final entry in _streaks.entries) {
+      final challengeId = entry.key;
+      final streak = entry.value;
+      
+      debugPrint('🎯 Reto: $challengeId (${streak.challengeTitle})');
+      debugPrint('   📊 Racha actual: ${streak.currentStreak}');
+      debugPrint('   🏆 Mejor racha: ${streak.longestStreak}');
+      debugPrint('   📅 Última confirmación: ${streak.lastConfirmedDate}');
+      debugPrint('   💯 Puntos totales: ${streak.totalPoints}');
+      
+      if (streak.lastConfirmedDate != null) {
+        final lastConfirmed = streak.lastConfirmedDate!;
+        final confirmedDate = DateTime(lastConfirmed.year, lastConfirmed.month, lastConfirmed.day);
+        final daysDiff = today.difference(confirmedDate).inDays;
+        
+        if (confirmedDate.isAtSameMomentAs(today)) {
+          debugPrint('   ⚠️ SOSPECHOSO: Última confirmación es HOY con racha > 0');
+        } else if (daysDiff > 0) {
+          debugPrint('   📊 Días desde última confirmación: $daysDiff');
+        }
+      }
+      
+      debugPrint('   ---');
+    }
+    
+    debugPrint('🔍 === FIN DIAGNÓSTICO ===');
   }
 }

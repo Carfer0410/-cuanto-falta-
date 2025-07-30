@@ -162,26 +162,50 @@ class DataMigrationService {
       final globalStats = StatisticsService.instance.statistics;
       final globalStreak = globalStats.currentStreak;
       
+      // 🔧 CORRECCIÓN DEL BUG: Solo migrar si realmente hay racha global significativa
+      if (globalStreak <= 0) {
+        print('📊 No hay racha global significativa, omitir migración automática');
+        await prefs.setBool('has_migrated_individual_streaks', true);
+        return;
+      }
+      
       // Obtener todos los desafíos actuales
       final countersJson = prefs.getString('counters');
       if (countersJson != null) {
         final List decoded = jsonDecode(countersJson);
         final Map<String, String> challengeIdToTitle = {};
         
+        // 🔧 CORRECCIÓN: Solo migrar retos que realmente merecen la racha global
+        // Verificar cuáles tienen challengeStartedAt establecido (retos activos antiguos)
         for (int i = 0; i < decoded.length; i++) {
           final counter = decoded[i];
           final challengeId = 'challenge_$i';
           final challengeTitle = counter['title'] ?? 'Desafío $i';
-          challengeIdToTitle[challengeId] = challengeTitle;
+          
+          // 🎯 NUEVA LÓGICA: Solo migrar retos que tenían actividad previa
+          final challengeStartedAt = counter['challengeStartedAt'];
+          final hasStartDate = challengeStartedAt != null;
+          
+          // Solo incluir retos que ya estaban activos en el sistema anterior
+          if (hasStartDate) {
+            challengeIdToTitle[challengeId] = challengeTitle;
+            print('✅ Reto "$challengeTitle" marcado para migración (tenía actividad previa)');
+          } else {
+            print('⚠️ Reto "$challengeTitle" omitido de migración (sin actividad previa)');
+          }
         }
         
-        // Ejecutar migración en el servicio de rachas individuales
-        await IndividualStreakService.instance.migrateFromGlobalStreak(
-          challengeIdToTitle, 
-          globalStreak
-        );
-        
-        print('✅ Migrado $globalStreak días de racha global a ${challengeIdToTitle.length} desafíos individuales');
+        if (challengeIdToTitle.isNotEmpty) {
+          // Ejecutar migración solo en retos con actividad previa
+          await IndividualStreakService.instance.migrateFromGlobalStreak(
+            challengeIdToTitle, 
+            globalStreak
+          );
+          
+          print('✅ Migrado $globalStreak días de racha global a ${challengeIdToTitle.length} desafíos individuales con actividad previa');
+        } else {
+          print('📊 No hay retos con actividad previa para migrar');
+        }
       }
       
       // Marcar como migrado

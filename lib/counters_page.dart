@@ -342,33 +342,38 @@ class _CountersPageState extends State<CountersPage> {
       print('⚠️ "${counter.title}" - No iniciado');
       return false;
     }
-    
-    // 2. SISTEMA HÍBRIDO INTELIGENTE: Tiempo mínimo según horario
+
+    // 2. 🆕 NUEVA LÓGICA: Determinar tiempo mínimo según CUÁNDO y DÓNDE se creó el reto
     final startTime = counter.challengeStartedAt!;
     final minutesSinceStart = now.difference(startTime).inMinutes;
-    
-    // Determinar tiempo mínimo requerido según horario actual
     final currentHour = now.hour;
+    
+    // Verificar si es un reto del mismo día
+    final isSameDay = _isSameDay(startTime, now);
+    
+    // Verificar si se creó dentro de la ventana de confirmación (21:00-23:59)
+    final createdInConfirmationWindow = startTime.hour >= 21 && startTime.hour <= 23;
+    
     int minimumTimeRequired;
     String timeContext;
     
-    if (currentHour >= 21 || currentHour <= 23) {
-      // Ventana nocturna crítica: solo 10 minutos
+    // 🎯 NUEVA LÓGICA: Solo aplicar espera de 10 minutos si cumple AMBAS condiciones
+    if (isSameDay && createdInConfirmationWindow) {
+      // Caso especial: Reto del mismo día creado en ventana de confirmación
       minimumTimeRequired = 10;
-      timeContext = 'ventana nocturna';
-    } else if (currentHour >= 0 && currentHour <= 5) {
-      // Madrugada: 30 minutos
-      minimumTimeRequired = 30;
-      timeContext = 'madrugada';
+      timeContext = 'creado en ventana de confirmación (tiempo de reflexión)';
     } else {
-      // Día normal: 60 minutos para mayor seriedad
-      minimumTimeRequired = 60;
-      timeContext = 'horario diurno';
+      // Todos los demás casos: sin espera (tiempo mínimo = 0)
+      minimumTimeRequired = 0;
+      if (!isSameDay) {
+        timeContext = 'reto para fecha futura';
+      } else {
+        timeContext = 'creado fuera de ventana de confirmación';
+      }
     }
     
     if (minutesSinceStart < minimumTimeRequired) {
-      final timeUnit = minimumTimeRequired >= 60 ? '${(minimumTimeRequired / 60).round()}h' : '${minimumTimeRequired}min';
-      print('⚠️ "${counter.title}" - Solo ${minutesSinceStart}min desde inicio (mínimo $timeUnit - $timeContext)');
+      print('⚠️ "${counter.title}" - Solo ${minutesSinceStart}min desde inicio (mínimo ${minimumTimeRequired}min - $timeContext)');
       return false;
     }
     
@@ -419,7 +424,7 @@ class _CountersPageState extends State<CountersPage> {
     return shouldShow;
   }
 
-  /// Calcula el tiempo restante para que un reto esté disponible
+  /// 🆕 MEJORADO: Calcula el mensaje de tiempo restante con nueva lógica contextual
   String? _getTimeRemainingMessage(Counter counter, DateTime now) {
     // Si el reto no está iniciado, no mostrar mensaje
     if (counter.challengeStartedAt == null) return null;
@@ -427,45 +432,61 @@ class _CountersPageState extends State<CountersPage> {
     final startTime = counter.challengeStartedAt!;
     final minutesSinceStart = now.difference(startTime).inMinutes;
     final currentHour = now.hour;
+    final currentMinute = now.minute;
     
-    // Determinar tiempo mínimo requerido según horario actual (misma lógica híbrida)
-    int minimumTimeRequired;
-    if (currentHour >= 21 || currentHour <= 23) {
-      minimumTimeRequired = 10; // Ventana nocturna crítica
-    } else if (currentHour >= 0 && currentHour <= 5) {
-      minimumTimeRequired = 30; // Madrugada
-    } else {
-      minimumTimeRequired = 60; // Día normal
-    }
+    // 🆕 NUEVA LÓGICA: Determinar si necesita tiempo de espera
+    final isSameDay = _isSameDay(startTime, now);
+    final createdInConfirmationWindow = startTime.hour >= 21 && startTime.hour <= 23;
     
-    // Si el tiempo mínimo ya se cumplió, verificar ventana de confirmación
-    if (minutesSinceStart >= minimumTimeRequired) {
-      // Si estamos fuera de la ventana de confirmación (antes de las 21:00)
-      if (currentHour < 21) {
-        final nextConfirmationWindow = DateTime(now.year, now.month, now.day, 21, 0);
-        final hoursUntilWindow = nextConfirmationWindow.difference(now).inHours;
-        final minutesUntilWindow = nextConfirmationWindow.difference(now).inMinutes % 60;
-        
-        if (hoursUntilWindow > 0) {
-          return '⏰ Podrás confirmar el reto a las 21:00 (en ${hoursUntilWindow}h ${minutesUntilWindow}min)';
-        } else {
-          return '⏰ Podrás confirmar el reto a las 21:00 (en ${minutesUntilWindow} minutos)';
-        }
-      }
-      // Si estamos en la ventana pero el reto ya está completado, no mostrar mensaje
-      return null;
+    int minimumTimeRequired = 0; // Por defecto sin espera
+    String waitContext = '';
+    
+    // Solo aplicar espera de 10 minutos si cumple AMBAS condiciones
+    if (isSameDay && createdInConfirmationWindow) {
+      minimumTimeRequired = 10;
+      waitContext = 'tiempo de reflexión';
     }
     
     // Si el tiempo mínimo NO se ha cumplido, mostrar tiempo restante
-    final remainingMinutes = minimumTimeRequired - minutesSinceStart;
-    
-    if (remainingMinutes > 60) {
-      final hours = (remainingMinutes / 60).floor();
-      final minutes = remainingMinutes % 60;
-      return '⏳ Estará listo en ${hours}h ${minutes}min';
-    } else {
-      return '⏳ Estará listo en $remainingMinutes minutos';
+    if (minutesSinceStart < minimumTimeRequired) {
+      final remainingMinutes = minimumTimeRequired - minutesSinceStart;
+      return '⏳ $waitContext: $remainingMinutes minuto(s) restante(s)';
     }
+    
+    // Si el tiempo mínimo ya se cumplió, verificar ventana de confirmación
+    // Si estamos fuera de la ventana de confirmación (antes de las 21:00)
+    if (currentHour < 21) {
+      final nextConfirmationWindow = DateTime(now.year, now.month, now.day, 21, 0);
+      final hoursUntilWindow = nextConfirmationWindow.difference(now).inHours;
+      final minutesUntilWindow = nextConfirmationWindow.difference(now).inMinutes % 60;
+      
+      if (hoursUntilWindow > 0) {
+        return '⏰ Podrás confirmar el reto a las 21:00 (en ${hoursUntilWindow}h ${minutesUntilWindow}min)';
+      } else {
+        return '⏰ Podrás confirmar el reto a las 21:00 (en ${minutesUntilWindow} minutos)';
+      }
+    }
+    
+    // Si estamos en la ventana (21:00-23:59), mostrar tiempo hasta el cierre
+    if (currentHour >= 21 && currentHour <= 23) {
+      final minutesUntilClose = (23 * 60 + 59) - (currentHour * 60 + currentMinute);
+      
+      if (minutesUntilClose <= 0) {
+        return '⚠️ Ventana cerrada - Confirma mañana a las 21:00';
+      }
+      
+      final hoursUntilClose = minutesUntilClose ~/ 60;
+      final minsUntilClose = minutesUntilClose % 60;
+      
+      if (hoursUntilClose > 0) {
+        return '⏰ Ventana cierra en ${hoursUntilClose}h ${minsUntilClose}min (23:59)';
+      } else {
+        return '⏰ Ventana cierra en ${minsUntilClose}min (23:59)';
+      }
+    }
+    
+    // Si estamos después de medianoche pero antes de las 21:00 del día siguiente
+    return null;
   }
 
   /// Formatea la fecha de inicio del reto de manera amigable
@@ -584,6 +605,61 @@ class _CountersPageState extends State<CountersPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const IndividualStreaksPage(),
+                ),
+              );
+            },
+          ),
+          // 🚨 BOTÓN DE EMERGENCIA (temporal para corregir bug de rachas)
+          IconButton(
+            icon: const Icon(Icons.healing, color: Colors.red),
+            tooltip: 'EMERGENCIA: Corregir bug de rachas',
+            onPressed: () async {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('🚨 Corrección de Emergencia'),
+                  content: const Text(
+                    '¿Qué tipo de corrección quieres aplicar?\n\n'
+                    '• QUIRÚRGICA: Solo corrige retos con rachas automáticas (recomendado)\n'
+                    '• COMPLETA: Resetea todos los datos de rachas (drástico)\n'
+                    '• DIAGNÓSTICO: Solo muestra el estado actual'
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        IndividualStreakService.instance.diagnosticShowAllStreaks();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('📊 Diagnóstico en consola')),
+                        );
+                      },
+                      child: const Text('Diagnóstico'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await IndividualStreakService.instance.surgicalResetKnownBugs();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('🔧 Corrección quirúrgica aplicada')),
+                        );
+                      },
+                      child: const Text('Quirúrgica'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await IndividualStreakService.instance.emergencyResetCorruptedData();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('🚨 Reset completo - Reinicia la app')),
+                        );
+                      },
+                      child: const Text('RESET', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
                 ),
               );
             },

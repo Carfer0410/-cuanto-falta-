@@ -250,32 +250,66 @@ class IndividualStreakService extends ChangeNotifier {
       return;
     }
 
-    // Agregar confirmación al historial
-    final newHistory = [...current.confirmationHistory, now];
-    
-    debugPrint('🔍 Nuevo historial: ${newHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
-    
-    // Calcular nueva racha
-    int newStreak = _calculateStreak(current.copyWith(
-      confirmationHistory: newHistory,
-      lastConfirmedDate: now,
-    ));
-    
-    debugPrint('🔍 Nueva racha calculada: $newStreak');
-    
-    // Calcular puntos con bonus de racha
-    int pointsToAdd = 10 + (newStreak * 2);
-    
-    debugPrint('🔍 Puntos a agregar: $pointsToAdd');
-    
-    // Actualizar racha
-    _streaks[challengeId] = current.copyWith(
-      currentStreak: newStreak,
-      longestStreak: newStreak > current.longestStreak ? newStreak : current.longestStreak,
-      lastConfirmedDate: now,
-      confirmationHistory: newHistory,
-      totalPoints: current.totalPoints + pointsToAdd,
-    );
+    // 🔧 NUEVA LÓGICA: Detectar si es un reto retroactivo
+    final hasBackdatedConfirmations = current.confirmationHistory.any((confirmation) {
+      final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
+      return confirmDate.isBefore(today);
+    });
+
+    int newStreak; // Declarar variable aquí
+
+    if (hasBackdatedConfirmations) {
+      debugPrint('🔄 Reto retroactivo detectado - manejo especial');
+      
+      // Para retos retroactivos, solo agregar confirmación de HOY sin recalcular racha completa
+      final newHistory = [...current.confirmationHistory, now];
+      
+      // Mantener la racha actual + 1 (simple incremento)
+      newStreak = current.currentStreak + 1;
+      
+      debugPrint('🔄 Racha retroactiva mantenida: ${current.currentStreak} + 1 = $newStreak');
+      
+      // Calcular puntos para confirmación de HOY
+      int pointsToAdd = 10 + (newStreak * 2);
+      
+      // Actualizar con incremento simple
+      _streaks[challengeId] = current.copyWith(
+        currentStreak: newStreak,
+        longestStreak: newStreak > current.longestStreak ? newStreak : current.longestStreak,
+        lastConfirmedDate: now,
+        confirmationHistory: newHistory,
+        totalPoints: current.totalPoints + pointsToAdd,
+      );
+    } else {
+      debugPrint('🔄 Reto normal - cálculo estándar');
+      
+      // Agregar confirmación al historial
+      final newHistory = [...current.confirmationHistory, now];
+      
+      debugPrint('🔍 Nuevo historial: ${newHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
+      
+      // Calcular nueva racha para retos normales
+      newStreak = _calculateStreak(current.copyWith(
+        confirmationHistory: newHistory,
+        lastConfirmedDate: now,
+      ));
+      
+      debugPrint('🔍 Nueva racha calculada: $newStreak');
+      
+      // Calcular puntos con bonus de racha
+      int pointsToAdd = 10 + (newStreak * 2);
+      
+      debugPrint('🔍 Puntos a agregar: $pointsToAdd');
+      
+      // Actualizar racha
+      _streaks[challengeId] = current.copyWith(
+        currentStreak: newStreak,
+        longestStreak: newStreak > current.longestStreak ? newStreak : current.longestStreak,
+        lastConfirmedDate: now,
+        confirmationHistory: newHistory,
+        totalPoints: current.totalPoints + pointsToAdd,
+      );
+    }
 
     await _saveStreaks();
     notifyListeners();
@@ -297,11 +331,12 @@ class IndividualStreakService extends ChangeNotifier {
   }
 
   /// Otorgar racha retroactiva para retos registrados tarde (FUNCIÓN ESPECIAL)
+  /// 🔧 CORREGIDO: Ahora usa _calculateStreak para calcular la racha correctamente
   Future<void> grantBackdatedStreak(String challengeId, String challengeTitle, DateTime startDate, int daysToGrant) async {
-    // Asegurar que el desafío existe
-    await registerChallenge(challengeId, challengeTitle);
-    
-    final current = _streaks[challengeId]!;
+    debugPrint('🔄 === INICIANDO grantBackdatedStreak ===');
+    debugPrint('🔄 Challenge: $challengeTitle');
+    debugPrint('🔄 Start Date: $startDate');
+    debugPrint('🔄 Days to Grant: $daysToGrant');
     
     // Crear historial de confirmaciones retroactivas
     final backdatedHistory = <DateTime>[];
@@ -310,33 +345,39 @@ class IndividualStreakService extends ChangeNotifier {
       backdatedHistory.add(confirmDate);
     }
     
-    // Combinar con historial existente y ordenar
-    final combinedHistory = [...current.confirmationHistory, ...backdatedHistory];
-    combinedHistory.sort();
+    debugPrint('🔄 Historial retroactivo creado: ${backdatedHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
     
-    // Calcular nueva racha basada en el historial completo
-    final tempStreak = current.copyWith(
-      confirmationHistory: combinedHistory,
-      lastConfirmedDate: backdatedHistory.isNotEmpty ? backdatedHistory.last : current.lastConfirmedDate,
+    // 🔧 CORRECCIÓN: Crear objeto temporal para calcular racha correctamente
+    final tempStreak = ChallengeStreak(
+      challengeId: challengeId,
+      challengeTitle: challengeTitle,
+      confirmationHistory: backdatedHistory,
+      lastConfirmedDate: backdatedHistory.isNotEmpty ? backdatedHistory.last : null,
     );
-    final newStreak = _calculateStreak(tempStreak);
+    
+    // 🔧 USAR _calculateStreak para obtener la racha correcta
+    final calculatedStreak = _calculateStreak(tempStreak);
+    debugPrint('🔄 Racha calculada por _calculateStreak: $calculatedStreak');
     
     // Calcular puntos totales
     final pointsToAdd = daysToGrant * (10 + (daysToGrant * 2));
     
-    // Actualizar racha con datos retroactivos
-    _streaks[challengeId] = current.copyWith(
-      currentStreak: newStreak,
-      longestStreak: newStreak > current.longestStreak ? newStreak : current.longestStreak,
-      lastConfirmedDate: backdatedHistory.isNotEmpty ? backdatedHistory.last : current.lastConfirmedDate,
-      confirmationHistory: combinedHistory,
-      totalPoints: current.totalPoints + pointsToAdd,
+    // Crear el reto con la racha calculada correctamente
+    _streaks[challengeId] = ChallengeStreak(
+      challengeId: challengeId,
+      challengeTitle: challengeTitle,
+      currentStreak: calculatedStreak, // 🔧 USAR racha calculada
+      longestStreak: calculatedStreak,
+      lastConfirmedDate: backdatedHistory.isNotEmpty ? backdatedHistory.last : null,
+      confirmationHistory: backdatedHistory,
+      totalPoints: pointsToAdd,
     );
 
     await _saveStreaks();
     notifyListeners();
     
-    debugPrint('🎉 Racha retroactiva otorgada: $daysToGrant días para $challengeId. Nueva racha: $newStreak');
+    debugPrint('🎉 ✅ Reto retroactivo creado con racha calculada: $calculatedStreak días');
+    debugPrint('🔄 === FIN grantBackdatedStreak ===');
   }
 
   /// Fallar en un desafío (puede usar ficha de perdón)
@@ -389,27 +430,29 @@ class IndividualStreakService extends ChangeNotifier {
       return 0;
     }
     
-    // Simplificado: contar todas las confirmaciones únicas consecutivas
-    // empezando desde la fecha más reciente hacia atrás
+    // Obtener todas las confirmaciones únicas (sin duplicados de mismo día)
+    final uniqueConfirmations = <DateTime>{};
+    for (final confirmation in streak.confirmationHistory) {
+      final normalizedDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
+      uniqueConfirmations.add(normalizedDate);
+    }
     
-    final sortedConfirmations = [...streak.confirmationHistory];
+    final sortedConfirmations = uniqueConfirmations.toList();
     sortedConfirmations.sort((a, b) => b.compareTo(a)); // Más reciente primero
     
-    debugPrint('🧮 Confirmaciones ordenadas: ${sortedConfirmations.map((d) => '${d.day}/${d.month}').join(', ')}');
+    debugPrint('🧮 Confirmaciones únicas ordenadas: ${sortedConfirmations.map((d) => '${d.day}/${d.month}').join(', ')}');
     
     if (sortedConfirmations.isEmpty) return 0;
     
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
     int currentStreak = 0;
-    DateTime expectedDate = today;
     
-    debugPrint('🧮 Empezando desde hoy: ${expectedDate.day}/${expectedDate.month}');
+    // 🔧 NUEVA LÓGICA: Empezar desde la confirmación más reciente
+    DateTime expectedDate = sortedConfirmations.first;
     
-    // Revisar confirmaciones desde hoy hacia atrás
-    for (final confirmation in sortedConfirmations) {
-      final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
-      
+    debugPrint('🧮 Empezando desde la confirmación más reciente: ${expectedDate.day}/${expectedDate.month}');
+    
+    // Contar días consecutivos hacia atrás desde la confirmación más reciente
+    for (final confirmDate in sortedConfirmations) {
       debugPrint('🧮 Verificando: ${confirmDate.day}/${confirmDate.month}');
       debugPrint('🧮   Esperada: ${expectedDate.day}/${expectedDate.month}');
       
@@ -430,16 +473,9 @@ class IndividualStreakService extends ChangeNotifier {
         expectedDate = expectedDate.subtract(Duration(days: 1));
         debugPrint('🧮   ✅ Racha aumenta a: $currentStreak');
         debugPrint('🧮   Siguiente esperada: ${expectedDate.day}/${expectedDate.month}');
-      } else if (currentStreak == 0 && confirmDate.isAtSameMomentAs(today)) {
-        // 🔧 CORRECCIÓN: Solo empezar racha si la confirmación es de HOY
-        // Esto evita que confirmaciones pasadas generen racha automática
-        currentStreak = 1;
-        expectedDate = confirmDate.subtract(Duration(days: 1));
-        debugPrint('🧮   🔄 Primera confirmación de HOY, empezar racha: $currentStreak');
-        debugPrint('🧮   Siguiente esperada: ${expectedDate.day}/${expectedDate.month}');
       } else {
-        // Hueco en la racha o confirmación no es de hoy, parar
-        debugPrint('🧮   ❌ Hueco en la racha o confirmación antigua, parar');
+        // Hueco en la racha, parar
+        debugPrint('🧮   ❌ Hueco en la racha, parar');
         break;
       }
     }

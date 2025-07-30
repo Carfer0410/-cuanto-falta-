@@ -100,7 +100,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('counters');
     final list = jsonString != null ? jsonDecode(jsonString) : [];
-    final challengeId = 'challenge_${list.length - 1}'; // Último elemento agregado
+    final challengeId = 'challenge_${list.length}'; // 🔧 CORRECCIÓN: Usar list.length (el próximo índice) en lugar de list.length - 1
     
     // Mostrar diálogo de cortesía para retos atrasados
     final result = await showDialog<String>(
@@ -213,6 +213,11 @@ class _AddCounterPageState extends State<AddCounterPage> {
 
   /// Otorga racha completa para retos cumplidos retroactivamente
   Future<void> _grantBackdatedStreak(String challengeId, String challengeTitle, DateTime startDate, int daysPassed) async {
+    print('🔄 === _grantBackdatedStreak INICIADO ===');
+    print('🔄 challengeId: $challengeId');
+    print('🔄 challengeTitle: $challengeTitle');
+    print('🔄 daysPassed: $daysPassed');
+    
     // Usar el nuevo método especializado para rachas retroactivas
     await IndividualStreakService.instance.grantBackdatedStreak(
       challengeId, 
@@ -220,6 +225,8 @@ class _AddCounterPageState extends State<AddCounterPage> {
       startDate, 
       daysPassed
     );
+    
+    print('🔄 ✅ Reto retroactivo creado con racha calculada correctamente: $daysPassed días');
     
     // NUEVO: Calcular fecha de inicio exacta para sincronizar cronómetro
     final now = DateTime.now();

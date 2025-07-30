@@ -1580,13 +1580,21 @@ class _CountersPageState extends State<CountersPage> {
       if (dayDate.isAfter(today)) break; // No contar días futuros
       totalDays++;
 
-      // Verificar si se completó este día
-      final wasCompleted = streak.confirmationHistory.any((confirmation) {
+      // 🆕 MEJORADO: Verificar si se completó este día Y no falló posteriormente
+      final wasConfirmed = streak.confirmationHistory.any((confirmation) {
         final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
         return confirmDate.isAtSameMomentAs(dayDate);
       });
 
-      if (wasCompleted) {
+      // 🆕 NUEVO: Verificar si este día o días posteriores tienen fallos
+      // Si hay un fallo después de una confirmación, esa confirmación ya no cuenta
+      final hasSubsequentFailure = streak.failedDays.any((failDate) {
+        final failed = DateTime(failDate.year, failDate.month, failDate.day);
+        return failed.isAfter(dayDate) || failed.isAtSameMomentAs(dayDate);
+      });
+
+      // ✅ LÓGICA UX: Solo cuenta si se confirmó Y no hay fallos posteriores
+      if (wasConfirmed && !hasSubsequentFailure) {
         completedDays++;
       }
     }

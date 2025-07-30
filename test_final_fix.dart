@@ -1,6 +1,6 @@
 /// 🧪 Prueba rápida para verificar que las notificaciones están corregidas
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'lib/challenge_notification_service.dart';
 
 void main() async {

@@ -217,6 +217,18 @@ class _MyAppState extends State<MyApp> {
       }
     });
     
+    // 🆕 NUEVO: SISTEMA AUTOMÁTICO DE VERIFICACIÓN NOCTURNA
+    // Timer que verifica cada hora y actúa específicamente a las 00:30
+    Timer.periodic(Duration(hours: 1), (timer) async {
+      final now = DateTime.now();
+      
+      // A las 00:30 (30 minutos después de medianoche) ejecutar verificación automática
+      if (now.hour == 0 && now.minute >= 25 && now.minute <= 35) {
+        print('🌙 === VERIFICACIÓN NOCTURNA AUTOMÁTICA (${now.hour}:${now.minute.toString().padLeft(2, '0')}) ===');
+        await _checkMissedConfirmationsAndApplyConsequences();
+      }
+    });
+    
     // Regenerar fichas de perdón semanalmente
     Timer.periodic(Duration(hours: 24), (timer) async {
       await IndividualStreakService.instance.regenerateForgivenessTokens();
@@ -253,6 +265,167 @@ class _MyAppState extends State<MyApp> {
         await prefs.setBool('has_shown_usage_hint', true);
         print('💡 Hint de uso óptimo mostrado al usuario');
       });
+    }
+  }
+
+  /// 🆕 NUEVO: SISTEMA AUTOMÁTICO DE VERIFICACIÓN NOCTURNA
+  /// Verifica retos no confirmados el día anterior y aplica consecuencias automáticas
+  Future<void> _checkMissedConfirmationsAndApplyConsequences() async {
+    try {
+      print('🔍 Iniciando verificación de confirmaciones perdidas...');
+      
+      // Calcular el día de ayer
+      final now = DateTime.now();
+      final yesterday = DateTime(now.year, now.month, now.day - 1);
+      
+      print('🗓️ Verificando confirmaciones del día: ${yesterday.day}/${yesterday.month}/${yesterday.year}');
+      
+      // Obtener todos los retos individuales
+      final streakService = IndividualStreakService.instance;
+      final allStreaks = streakService.streaks;
+      
+      if (allStreaks.isEmpty) {
+        print('📝 No hay retos registrados, saliendo...');
+        return;
+      }
+      
+      int retosVerificados = 0;
+      int retosConFallo = 0;
+      int fichasUsadas = 0;
+      int rachasPerdidas = 0;
+      
+      // Verificar cada reto individualmente
+      for (final entry in allStreaks.entries) {
+        final challengeId = entry.key;
+        final streak = entry.value;
+        
+        retosVerificados++;
+        
+        // Verificar si fue confirmado ayer
+        final wasConfirmedYesterday = _wasConfirmedOnDate(streak, yesterday);
+        
+        print('🔍 "${streak.challengeTitle}":');
+        print('   ¿Confirmado ayer? ${wasConfirmedYesterday ? "SÍ ✅" : "NO ❌"}');
+        
+        if (!wasConfirmedYesterday) {
+          // No fue confirmado ayer - aplicar consecuencias
+          retosConFallo++;
+          
+          await _applyMissedConfirmationPenalty(
+            challengeId, 
+            streak.challengeTitle,
+            yesterday
+          );
+          
+          // Verificar si se usó ficha o se perdió racha
+          final updatedStreak = streakService.getStreak(challengeId);
+          if (updatedStreak != null) {
+            // Si las fichas disminuyeron, se usó una ficha
+            if (updatedStreak.forgivenessTokens < streak.forgivenessTokens) {
+              fichasUsadas++;
+            }
+            // Si la racha se reseteó, se perdió
+            if (updatedStreak.currentStreak == 0 && streak.currentStreak > 0) {
+              rachasPerdidas++;
+            }
+          }
+        }
+      }
+      
+      // Resumen final
+      print('📊 === RESUMEN VERIFICACIÓN NOCTURNA ===');
+      print('🔍 Retos verificados: $retosVerificados');
+      print('❌ Retos con fallo: $retosConFallo');
+      print('🛡️ Fichas de perdón usadas: $fichasUsadas');
+      print('💔 Rachas perdidas: $rachasPerdidas');
+      print('✅ Verificación nocturna completada');
+      
+      // Guardar estadísticas de la verificación (opcional)
+      final prefs = await SharedPreferences.getInstance();
+      final today = DateTime.now();
+      final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      await prefs.setInt('night_check_verified_$dateKey', retosVerificados);
+      await prefs.setInt('night_check_failed_$dateKey', retosConFallo);
+      await prefs.setInt('night_check_tokens_used_$dateKey', fichasUsadas);
+      await prefs.setInt('night_check_streaks_lost_$dateKey', rachasPerdidas);
+      
+    } catch (e) {
+      print('❌ Error en verificación nocturna: $e');
+    }
+  }
+
+  /// Verificar si un reto fue confirmado en una fecha específica
+  bool _wasConfirmedOnDate(ChallengeStreak streak, DateTime targetDate) {
+    final targetNormalized = DateTime(targetDate.year, targetDate.month, targetDate.day);
+    
+    return streak.confirmationHistory.any((confirmation) {
+      final confirmNormalized = DateTime(confirmation.year, confirmation.month, confirmation.day);
+      return confirmNormalized.isAtSameMomentAs(targetNormalized);
+    });
+  }
+
+  /// Aplicar penalización por confirmación perdida (usar ficha de perdón o resetear racha)
+  Future<void> _applyMissedConfirmationPenalty(String challengeId, String challengeTitle, DateTime missedDate) async {
+    final streakService = IndividualStreakService.instance;
+    final streak = streakService.getStreak(challengeId);
+    
+    if (streak == null) {
+      print('⚠️ No se encontró racha para $challengeId');
+      return;
+    }
+    
+    print('⚡ Aplicando consecuencia a "${challengeTitle}"...');
+    
+    // Verificar si puede usar ficha de perdón
+    if (streak.forgivenessTokens > 0) {
+      // USAR FICHA DE PERDÓN AUTOMÁTICAMENTE
+      print('🛡️ Usando ficha de perdón automáticamente');
+      
+      final success = await streakService.failChallenge(
+        challengeId, 
+        challengeTitle, 
+        useForgiveness: true
+      );
+      
+      if (success) {
+        // Crear payload para navegación al reto específico
+        final payload = NotificationNavigationService.createChallengeConfirmationPayload(
+          challengeName: challengeTitle,
+        );
+        
+        // Notificación informativa con navegación
+        await NotificationService.instance.showImmediateNotification(
+          id: 77700 + challengeId.hashCode.abs() % 1000,
+          title: '🛡️ Ficha de perdón usada',
+          body: 'No confirmaste "$challengeTitle" ayer (${missedDate.day}/${missedDate.month}), pero se usó una ficha de perdón. Tu racha se mantiene.',
+          payload: payload,
+        );
+        
+        print('✅ Ficha de perdón usada exitosamente');
+      } else {
+        print('❌ Error al usar ficha de perdón');
+      }
+      
+    } else {
+      // NO HAY FICHAS - RESETEAR RACHA
+      print('💔 No hay fichas de perdón disponibles, reseteando racha');
+      
+      await streakService.failChallenge(challengeId, challengeTitle, useForgiveness: false);
+      
+      // Crear payload para navegación al reto específico
+      final payload = NotificationNavigationService.createChallengeConfirmationPayload(
+        challengeName: challengeTitle,
+      );
+      
+      // Notificación de racha perdida con navegación
+      await NotificationService.instance.showImmediateNotification(
+        id: 77800 + challengeId.hashCode.abs() % 1000,
+        title: '💔 Racha perdida',
+        body: 'No confirmaste "$challengeTitle" antes de las 23:59 ayer (${missedDate.day}/${missedDate.month}). Tu racha se ha reseteado a 0.',
+        payload: payload,
+      );
+      
+      print('💔 Racha reseteada por falta de confirmación');
     }
   }
 

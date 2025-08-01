@@ -5,6 +5,7 @@ import 'counters_page.dart';
 import 'settings_page_new.dart';
 import 'dashboard_page.dart';
 import 'localization_service.dart';
+import 'notification_navigation_service.dart';
 
 class RootPage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -22,6 +23,24 @@ class RootPage extends StatefulWidget {
 
 class _RootPageState extends State<RootPage> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 🆕 NUEVO: Verificar si hay navegación pendiente desde notificaciones
+    _checkPendingNavigation();
+  }
+
+  /// Verifica si hay navegación pendiente desde notificaciones
+  Future<void> _checkPendingNavigation() async {
+    final pendingTab = await NotificationNavigationService.getAndClearPendingTabNavigation();
+    if (pendingTab != null && mounted) {
+      setState(() {
+        _selectedIndex = pendingTab;
+      });
+      print('📱 Navegación desde notificación: Pestaña $pendingTab activada');
+    }
+  }
 
   void _handleThemeChange(ThemeMode mode) {
     widget.onThemeChanged(mode);

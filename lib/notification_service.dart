@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'notification_navigation_service.dart';
 
 class NotificationService {
   NotificationService._();
@@ -24,6 +25,8 @@ class NotificationService {
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) {
           print('📱 Notificación tocada: ${notificationResponse.payload}');
+          // 🆕 NUEVA FUNCIONALIDAD: Manejar navegación automática
+          NotificationNavigationService.handleNotificationNavigation(notificationResponse.payload);
         },
       ) ?? false;
       
@@ -66,6 +69,7 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime scheduledDate,
+    String? payload,  // 🆕 NUEVO: Payload para navegación
   }) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -106,6 +110,7 @@ class NotificationService {
           scheduledTZDate,
           platformChannelSpecifics,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          payload: payload,  // 🆕 NUEVO: Incluir payload
         );
         print('✅ Notificación programada con alarma exacta');
       } else {
@@ -117,6 +122,7 @@ class NotificationService {
           scheduledTZDate,
           platformChannelSpecifics,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          payload: payload,  // 🆕 NUEVO: Incluir payload
         );
         print('⚠️ Notificación programada con alarma inexacta (sin permisos exactos)');
       }
@@ -131,6 +137,7 @@ class NotificationService {
           scheduledTZDate,
           platformChannelSpecifics,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          payload: payload,  // 🆕 NUEVO: Incluir payload
         );
         print('🔄 Notificación reprogramada en modo inexacto');
       } catch (e2) {
@@ -144,6 +151,7 @@ class NotificationService {
     required int id,
     required String title,
     required String body,
+    String? payload,  // 🆕 NUEVO: Payload para navegación
   }) async {
     try {
       const AndroidNotificationDetails androidPlatformChannelSpecifics =
@@ -168,6 +176,7 @@ class NotificationService {
         title,
         body,
         platformChannelSpecifics,
+        payload: payload,  // 🆕 NUEVO: Incluir payload
       );
       
       print('✅ Notificación inmediata enviada: $title');
@@ -215,6 +224,7 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime scheduledDate,
+    String? payload,  // 🆕 NUEVO: Payload para navegación
   }) async {
     // Crear notificación con configuración muy agresiva
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
@@ -251,6 +261,7 @@ class NotificationService {
       scheduledTZDate,
       platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,  // 🆕 NUEVO: Incluir payload
     );
     
     print('🚨 Notificación SÚPER AGRESIVA programada para: $scheduledTZDate');
@@ -266,11 +277,13 @@ class NotificationService {
   Future<void> forceNotificationWorkaround({
     required String title,
     required String body,
+    String? payload,  // 🆕 NUEVO: Payload para navegación
   }) async {
     await showImmediateNotification(
       id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title: title,
       body: body,
+      payload: payload,  // 🆕 NUEVO: Pasar payload
     );
     print('⚡ Notificación inmediata como workaround enviada');
   }

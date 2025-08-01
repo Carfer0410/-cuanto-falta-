@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'notification_service.dart';
+import 'notification_navigation_service.dart';
 import 'reminder_tracker.dart';
 import 'milestone_notification_service.dart';
 import 'individual_streak_service.dart';
@@ -184,11 +185,18 @@ class ChallengeNotificationService {
             
             // SOLO ENVIAR si NO se ha enviado NINGÚN hito hoy
             if (!alreadySentAnyMilestoneToday && !wasSpecificTypeSent) {
+              // 🆕 NUEVO: Crear payload para navegación a celebración de hito
+              final payload = NotificationNavigationService.createMilestoneCelebrationPayload(
+                milestone: notificationInfo['reminderType'],
+                challengeName: counter.title,
+              );
+              
               // Enviar notificación motivacional
               await NotificationService.instance.showImmediateNotification(
                 id: notificationInfo['notificationId'],
                 title: notificationInfo['title'],
                 body: notificationInfo['body'],
+                payload: payload,  // 🆕 NUEVO: Incluir payload de navegación
               );
 
               // Marcar como enviado con MÚLTIPLES claves para prevenir duplicados
@@ -437,10 +445,15 @@ class ChallengeNotificationService {
     print('🧪 === PRUEBA FORZADA DE NOTIFICACIÓN ===');
     try {
       await NotificationService.instance.init();
+      
+      // 🆕 NUEVO: Crear payload de prueba para navegación
+      final payload = NotificationNavigationService.createChallengesPayload();
+      
       await NotificationService.instance.showImmediateNotification(
         id: 99999,
         title: '🧪 Notificación de Prueba',
         body: 'Esta es una notificación de prueba para verificar que el sistema funciona correctamente.',
+        payload: payload,  // 🆕 NUEVO: Incluir payload de navegación
       );
       print('✅ Notificación de prueba enviada (ID: 99999)');
     } catch (e) {
@@ -546,11 +559,18 @@ class ChallengeNotificationService {
           ? 'PRUEBA: Puedes confirmar tu reto "${challengeTitles.first}" desde las 21:00 hasta las 23:59'
           : 'PRUEBA: Puedes confirmar tus $pendingChallenges retos desde las 21:00 hasta las 23:59';
       
+      // 🆕 NUEVO: Crear payload de prueba para navegación
+      final payload = NotificationNavigationService.createChallengeConfirmationPayload(
+        challengeName: challengeTitles.isNotEmpty ? challengeTitles.first : 'Retos de prueba',
+        message: 'Esta es una notificación de prueba',
+      );
+      
       await NotificationService.instance.init();
       await NotificationService.instance.showImmediateNotification(
         id: 88888,
         title: title,
         body: body,
+        payload: payload,  // 🆕 NUEVO: Incluir payload de navegación
       );
       
       print('🔔 Notificación de ventana FORZADA enviada (ID: 88888)');
@@ -568,12 +588,24 @@ class ChallengeNotificationService {
     try {
       await NotificationService.instance.init();
       
+      // 🆕 NUEVO: Crear payloads de prueba para navegación
+      final startPayload = NotificationNavigationService.createChallengeConfirmationPayload(
+        challengeName: 'Reto de Prueba 21:00',
+        message: 'Prueba de notificación de apertura',
+      );
+      
+      final reminderPayload = NotificationNavigationService.createChallengeConfirmationPayload(
+        challengeName: 'Reto de Prueba 23:30',
+        message: 'Prueba de notificación de recordatorio',
+      );
+      
       // Simular notificación de 21:00
       print('📢 Probando notificación de apertura (21:00)...');
       await NotificationService.instance.showImmediateNotification(
         id: 77777,
         title: '🎯 ¡Ventana de confirmación abierta!',
         body: '[PRUEBA 21:00] ¡Es hora de confirmar tus retos! Tienes hasta las 23:59. ¡A por todas! 🚀',
+        payload: startPayload,  // 🆕 NUEVO: Incluir payload de navegación
       );
       
       // Esperar 3 segundos
@@ -585,6 +617,7 @@ class ChallengeNotificationService {
         id: 66666,
         title: '⏰ ¡Últimos 29 minutos!',
         body: '[PRUEBA 23:30] Recuerda confirmar tus retos antes de las 23:59. ¡Solo quedan 29 minutos!',
+        payload: reminderPayload,  // 🆕 NUEVO: Incluir payload de navegación
       );
       
       print('✅ Ambas notificaciones de prueba enviadas correctamente');
@@ -650,10 +683,18 @@ class ChallengeNotificationService {
         
         print('\n📱 Enviando notificación de prueba...');
         await NotificationService.instance.init();
+        
+        // 🆕 NUEVO: Crear payload de prueba para navegación
+        final payload = NotificationNavigationService.createMilestoneCelebrationPayload(
+          milestone: userNotification['reminderType'],
+          challengeName: 'Test Usuario REAL - 7 días retroactivo',
+        );
+        
         await NotificationService.instance.showImmediateNotification(
           id: userNotification['notificationId'],
           title: '[PRUEBA 7 DÍAS] ${userNotification['title']}',
           body: '[23-29 JULIO] ${userNotification['body']}',
+          payload: payload,  // 🆕 NUEVO: Incluir payload de navegación
         );
         
         print('✅ Notificación de prueba enviada');
@@ -883,10 +924,18 @@ extension ConfirmationWindow on ChallengeNotificationService {
       
       if (!wasAlreadySent) {
         print('📤 Enviando notificación...');
+        
+        // 🆕 NUEVO: Crear payload para navegación a confirmación de reto
+        final payload = NotificationNavigationService.createChallengeConfirmationPayload(
+          challengeName: challengeTitles.isNotEmpty ? challengeTitles.first : 'Retos pendientes',
+          message: pendingChallenges > 1 ? 'Tienes $pendingChallenges retos para confirmar' : null,
+        );
+        
         await NotificationService.instance.showImmediateNotification(
           id: notificationId,
           title: title,
           body: body,
+          payload: payload,  // 🆕 NUEVO: Incluir payload de navegación
         );
         
         await ReminderTracker.markReminderSent(reminderKey.hashCode, type);

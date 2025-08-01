@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'notification_service.dart';
+import 'notification_navigation_service.dart';
 import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
 import 'statistics_service.dart';
@@ -152,10 +153,14 @@ class _MyAppState extends State<MyApp> {
         // Esperar un momento apropiado para mostrar
         final delay = reminderCount == 0 ? 10 : 30; // Primera vez más rápido
         Timer(Duration(seconds: delay), () async {
+          // 🆕 NUEVO: Crear payload para navegación a configuración de estilo
+          final payload = NotificationNavigationService.createPlanningStylePayload();
+          
           await NotificationService.instance.showImmediateNotification(
             id: 99998,
             title: title,
             body: body,
+            payload: payload,  // 🆕 NUEVO: Incluir payload de navegación
           );
           
           // Actualizar contadores
@@ -234,10 +239,14 @@ class _MyAppState extends State<MyApp> {
     if (!hasShownHint) {
       // Esperar 30 segundos para que el usuario explore la app
       Timer(Duration(seconds: 30), () async {
+        // 🆕 NUEVO: Crear payload para navegación a configuración
+        final payload = NotificationNavigationService.createSettingsPayload();
+        
         await NotificationService.instance.showImmediateNotification(
           id: 99999,
           title: '💡 Tip: Para mejores notificaciones',
           body: 'Mantén la app minimizada (no cerrada) para recibir todos los recordatorios. ¡Funciona perfectamente en segundo plano! 🚀',
+          payload: payload,  // 🆕 NUEVO: Incluir payload de navegación
         );
         
         // Marcar como mostrado
@@ -298,6 +307,9 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // 🆕 NUEVO: Configurar contexto global para navegación desde notificaciones
+    NotificationNavigationService.setGlobalContext(context);
+    
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: LocalizationService.instance),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
+import 'notification_navigation_service.dart';
 
 /// Servicio especializado en notificaciones de hitos y motivación para retos
 class MilestoneNotificationService {
@@ -131,6 +132,10 @@ class MilestoneNotificationService {
       id: 50000 + days, // ID único para hitos
       title: title,
       body: body,
+      payload: NotificationNavigationService.createMilestoneCelebrationPayload(
+        milestone: _getMilestoneTitle(days),
+        challengeName: challengeTitle,
+      ),  // 🆕 NUEVO: Incluir payload de navegación
     );
   }
 
@@ -246,6 +251,7 @@ class MilestoneNotificationService {
       id: 60000 + Random().nextInt(1000), // ID único para motivación
       title: '💪 Mensaje de Ánimo',
       body: message,
+      payload: NotificationNavigationService.createChallengesPayload(),  // 🆕 NUEVO: Navegar a retos
     );
     
     // Actualizar última vez que se envió motivación

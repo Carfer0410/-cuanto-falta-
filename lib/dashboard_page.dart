@@ -4,8 +4,8 @@ import 'localization_service.dart';
 import 'statistics_service.dart';
 import 'achievement_service.dart';
 import 'data_migration_service.dart';
+import 'individual_streak_service.dart';
 import 'individual_streaks_page.dart';
-import 'theme_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -25,10 +25,94 @@ class _DashboardPageState extends State<DashboardPage> {
     await StatisticsService.instance.loadStatistics();
     await AchievementService.instance.loadAchievements();
     
+    // 🔧 NUEVO: Sincronizar estadísticas del dashboard con datos reales de retos
+    await _syncRealStatistics();
+    
     // Verificar logros basados en estadísticas actuales
     await AchievementService.instance.checkAndUnlockAchievements(
       StatisticsService.instance.statistics
     );
+  }
+
+  /// 🔧 NUEVO: Sincronizar estadísticas con datos reales de retos individuales
+  Future<void> _syncRealStatistics() async {
+    try {
+      // Obtener estadísticas reales de IndividualStreakService
+      final streakService = IndividualStreakService.instance;
+      final allStreaks = streakService.streaks;
+      
+      if (allStreaks.isEmpty) {
+        print('📊 No hay retos registrados para sincronizar estadísticas');
+        return;
+      }
+      
+      // Calcular estadísticas reales
+      int activeChallenges = 0; // Retos con racha actual > 0
+      int totalChallenges = allStreaks.length; // Total de retos existentes
+      int totalPoints = 0;
+      int currentStreak = 0;
+      int longestStreak = 0;
+      
+      for (final streak in allStreaks.values) {
+        // 🔧 CORREGIDO: Un reto está "activo" si tiene racha actual > 0
+        if (streak.currentStreak > 0) {
+          activeChallenges++;
+        }
+        
+        // Sumar puntos reales (convertir a int)
+        totalPoints += streak.totalPoints.round();
+        
+        // Calcular racha más larga
+        if (streak.longestStreak > longestStreak) {
+          longestStreak = streak.longestStreak;
+        }
+        
+        // Para la racha actual del dashboard, usar la racha más alta
+        if (streak.currentStreak > currentStreak) {
+          currentStreak = streak.currentStreak;
+        }
+      }
+      
+      // Actualizar StatisticsService con datos reales
+      final statsService = StatisticsService.instance;
+      await statsService.updateChallengeStats(activeChallenges, totalChallenges);
+      
+      // Actualizar puntos totales si es diferente
+      final currentStats = statsService.statistics;
+      if (currentStats.totalPoints != totalPoints) {
+        // Crear estadísticas actualizadas
+        final updatedStats = currentStats.copyWith(
+          totalPoints: totalPoints,
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+        );
+        
+        // Actualizar estadísticas usando el método disponible
+        await statsService.setStatisticsFromMigration(updatedStats);
+      }
+      
+      print('✅ Estadísticas sincronizadas:');
+      print('  • Retos activos: $activeChallenges');
+      print('  • Total retos: $totalChallenges');
+      print('  • Puntos totales: $totalPoints');
+      print('  • Racha actual: $currentStreak');
+      print('  • Racha más larga: $longestStreak');
+      
+    } catch (e) {
+      print('❌ Error sincronizando estadísticas: $e');
+    }
+  }
+
+  /// 🔧 NUEVO: Calcular actividad específica de esta semana
+  int _getThisWeekActivity(UserStatistics stats) {
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final startOfThisWeek = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    
+    return stats.recentActivity.where((activity) {
+      return activity.isAfter(startOfThisWeek) || 
+             activity.isAtSameMomentAs(startOfThisWeek);
+    }).length;
   }
 
   // Función específica para pull-to-refresh que incluye sincronización
@@ -38,7 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
       // Primero, sincronizar datos automáticamente (sin resetear)
       await DataMigrationService.forceSyncAllData();
       
-      // Luego, recargar todos los datos
+      // Luego, recargar todos los datos (incluyendo sincronización de estadísticas)
       await _loadData();
       
       print('✅ DashboardPage: Pull-to-refresh completado exitosamente');
@@ -478,7 +562,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 const Icon(Icons.trending_up, color: Colors.green),
                 Text(
-                  '+${stats.recentActivity.length}',
+                  '+${_getThisWeekActivity(stats)}',
                   style: const TextStyle(
                     color: Colors.green,
                     fontWeight: FontWeight.bold,
@@ -841,11 +925,11 @@ class _DashboardPageState extends State<DashboardPage> {
             Center(
               child: Column(
                 children: [
-                  Icon(Icons.emoji_events_outlined, size: 48, color: context.iconColor),
+                  Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey[600]),
                   const SizedBox(height: 8),
                   Text(
                     localization.t('continue_completing_challenges'),
-                    style: TextStyle(color: context.secondaryTextColor),
+                    style: TextStyle(color: Colors.grey[600]),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),

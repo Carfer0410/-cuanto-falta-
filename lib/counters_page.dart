@@ -388,9 +388,8 @@ class _CountersPageState extends State<CountersPage> {
       );
     }
     
-    // NOTA: No actualizar estadísticas aquí para evitar duplicación
-    // Las estadísticas se actualizan solo cuando se crean/modifican retos
-    // o durante la migración/sincronización manual
+    // 🔧 NUEVO: Sincronizar estadísticas del dashboard después de cargar retos
+    await _syncDashboardStatistics();
     
     // 🆕 NUEVO: Debug de estado de botones
     _debugButtonStates();
@@ -409,6 +408,38 @@ class _CountersPageState extends State<CountersPage> {
     }
     
     setState(() {});
+  }
+
+  /// 🔧 CORREGIDO: Sincronizar estadísticas completas del dashboard con datos de retos
+  Future<void> _syncDashboardStatistics() async {
+    try {
+      final streakService = IndividualStreakService.instance;
+      final globalStats = _calculateGlobalStats(streakService);
+      
+      // 🔧 CORREGIDO: Sincronizar TODAS las estadísticas, incluyendo puntos
+      final statsService = StatisticsService.instance;
+      final currentStats = statsService.statistics;
+      
+      // Crear estadísticas actualizadas con datos reales
+      final updatedStats = currentStats.copyWith(
+        activeChallenges: globalStats['activeChallenges'] as int,
+        totalChallenges: globalStats['totalChallenges'] as int,
+        totalPoints: globalStats['totalPoints'] as int, // 🔧 NUEVO: Sincronizar puntos
+        longestStreak: globalStats['longestOverallStreak'] as int, // 🔧 NUEVO: Sincronizar racha más larga
+      );
+      
+      // Actualizar usando el método de migración para forzar cambios
+      await statsService.setStatisticsFromMigration(updatedStats);
+      
+      print('🔄 ✅ Estadísticas COMPLETAS sincronizadas:');
+      print('  • Retos activos: ${globalStats['activeChallenges']}');
+      print('  • Total retos: ${globalStats['totalChallenges']}');
+      print('  • Puntos totales: ${globalStats['totalPoints']}'); // 🔧 NUEVO LOG
+      print('  • Racha más larga: ${globalStats['longestOverallStreak']}'); // 🔧 NUEVO LOG
+      
+    } catch (e) {
+      print('❌ Error sincronizando estadísticas del dashboard: $e');
+    }
   }
 
   /// 🆕 DEBUG: Verifica el estado de los botones para identificar problemas
@@ -506,7 +537,10 @@ class _CountersPageState extends State<CountersPage> {
       MaterialPageRoute(builder: (context) => const AddCounterPage()),
     );
     if (result == true) {
-      _loadCounters();
+      // 🔧 MEJORADO: Recargar y sincronizar después de agregar reto
+      await _loadCounters();
+      // Forzar sincronización adicional para asegurar consistencia
+      await _syncDashboardStatistics();
     }
   }
 
@@ -518,7 +552,10 @@ class _CountersPageState extends State<CountersPage> {
     setState(() {
       _counters.removeAt(index);
     });
-    _saveCounters();
+    await _saveCounters();
+    
+    // 🔧 NUEVO: Sincronizar estadísticas después de eliminar reto
+    await _syncDashboardStatistics();
   }
 
   bool _isSameDay(DateTime a, DateTime b) =>
@@ -960,11 +997,11 @@ class _CountersPageState extends State<CountersPage> {
                         }
                         final counter = _counters[index];
                         final now = DateTime.now();
-                        // ...existing code...
-                        // final streakStart = counter.startDate; // eliminada variable no usada
-                        final confirmedToday =
-                            counter.lastConfirmedDate != null &&
-                            _isSameDay(counter.lastConfirmedDate!, now);
+                        final challengeId = _getChallengeId(index);
+                        
+                        // 🔧 CORREGIDO: Usar IndividualStreakService como fuente única de verdad
+                        final streak = IndividualStreakService.instance.getStreak(challengeId);
+                        final confirmedToday = streak?.isCompletedToday ?? false;
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -1751,14 +1788,15 @@ class _CountersPageState extends State<CountersPage> {
       final challengeId = _getChallengeId(i);
       final streak = streakService.getStreak(challengeId);
 
-      // 🎯 CORREGIDO: Un reto es activo si está iniciado (no importa la racha actual)
+      // 🔧 CORREGIDO: Un reto es activo si está iniciado (challengeStartedAt != null)
+      // Esto es consistente con la lógica del dashboard
       if (counter.challengeStartedAt != null) {
         activeChallenges++;
       }
 
-      // Acumular puntos y rachas
+      // Acumular puntos y rachas solo si existe el streak
       if (streak != null) {
-        totalPoints += streak.totalPoints;
+        totalPoints += streak.totalPoints.round(); // Convertir a int para consistencia
         totalCurrentStreak += streak.currentStreak.toDouble();
         if (streak.longestStreak > longestOverallStreak) {
           longestOverallStreak = streak.longestStreak;
@@ -1766,16 +1804,18 @@ class _CountersPageState extends State<CountersPage> {
       }
     }
 
+    // 🔧 CORREGIDO: Calcular promedio solo de retos activos para mayor precisión
     final averageStreak = activeChallenges > 0 ? totalCurrentStreak / activeChallenges : 0.0;
 
-    // 🔍 DEBUG: Log estadísticas calculadas
-    print('📊 === ESTADÍSTICAS GLOBALES ===');
+    // 🔍 DEBUG: Log estadísticas calculadas con más detalle
+    print('📊 === ESTADÍSTICAS GLOBALES (RETOS) ===');
     print('  • Total retos: ${_counters.length}');
-    print('  • Retos activos: $activeChallenges');
+    print('  • Retos activos (iniciados): $activeChallenges');
+    print('  • Retos sin iniciar: ${_counters.length - activeChallenges}');
     print('  • Puntos totales: $totalPoints');
-    print('  • Racha promedio: ${averageStreak.toStringAsFixed(1)}');
+    print('  • Racha promedio (solo activos): ${averageStreak.toStringAsFixed(1)}');
     print('  • Racha más larga: $longestOverallStreak');
-    print('===============================');
+    print('========================================');
 
     return {
       'totalChallenges': _counters.length,

@@ -128,9 +128,10 @@ class IndividualStreaksPage extends StatelessWidget {
                       children: [
                         _buildStatCard(
                           'Promedio',
-                          '${globalStats['averageStreak'].toStringAsFixed(1)}d',
+                          '${globalStats['averageActiveStreak'].toStringAsFixed(1)}d',
                           Icons.trending_up,
                           Colors.green,
+                          subtitle: 'activos',
                         ),
                         _buildStatCard(
                           'Récord',
@@ -138,7 +139,12 @@ class IndividualStreaksPage extends StatelessWidget {
                           Icons.emoji_events,
                           Colors.amber,
                         ),
-                        const SizedBox(width: 60), // Espaciador
+                        _buildStatCard(
+                          'Éxito',
+                          '${(globalStats['completionRate'] * 100).toStringAsFixed(0)}%',
+                          Icons.check_circle,
+                          Colors.teal,
+                        ),
                       ],
                     ),
                   ],
@@ -163,7 +169,7 @@ class IndividualStreaksPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(String label, String value, IconData icon, Color color, {String? subtitle}) {
     return Column(
       children: [
         Container(
@@ -194,6 +200,15 @@ class IndividualStreaksPage extends StatelessWidget {
             color: Colors.grey[600],
           ),
         ),
+        if (subtitle != null)
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey[500],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
       ],
     );
   }

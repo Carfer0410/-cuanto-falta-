@@ -408,8 +408,13 @@ class IndividualStreakService extends ChangeNotifier {
     final calculatedStreak = _calculateStreak(tempStreak);
     debugPrint('🔄 Racha calculada por _calculateStreak: $calculatedStreak');
     
-    // Calcular puntos totales
-    final pointsToAdd = daysToGrant * (10 + (daysToGrant * 2));
+    // 🔧 CORRECCIÓN: Calcular puntos progresivos correctamente
+    // Cada día debe tener puntos según su posición en la racha
+    int pointsToAdd = 0;
+    for (int i = 1; i <= calculatedStreak; i++) {
+      pointsToAdd += 10 + (i * 2); // 10 base + 2 por día de racha
+    }
+    debugPrint('🔄 Puntos calculados progresivamente: $pointsToAdd');
     
     // Crear el reto con la racha calculada correctamente
     _streaks[challengeId] = ChallengeStreak(
@@ -455,12 +460,14 @@ class IndividualStreakService extends ChangeNotifier {
       return true; // Fallo perdonado
     }
 
-    // Fallo normal: resetear racha
+    // Fallo normal: resetear racha Y PUNTOS
     final newFailedDays = [...current.failedDays, today];
     
     _streaks[challengeId] = current.copyWith(
       currentStreak: 0,
       failedDays: newFailedDays,
+      totalPoints: 0, // 🔧 RESETEAR PUNTOS cuando falla
+      confirmationHistory: const [], // 🔧 LIMPIAR historial cuando falla
     );
 
     await _saveStreaks();
@@ -577,7 +584,9 @@ class IndividualStreakService extends ChangeNotifier {
         'activeChallenges': 0,
         'totalPoints': 0,
         'averageStreak': 0.0,
+        'averageActiveStreak': 0.0, // 🆕 NUEVO: Promedio solo de activos
         'longestOverallStreak': 0,
+        'completionRate': 0.0, // 🆕 NUEVO: Tasa de finalización
       };
     }
 
@@ -589,16 +598,28 @@ class IndividualStreakService extends ChangeNotifier {
         .map((s) => s.currentStreak)
         .fold<double>(0, (a, b) => a + b) / _streaks.length;
     
+    // 🆕 NUEVO: Promedio solo de retos activos (racha > 0)
+    final activeStreaks = _streaks.values.where((s) => s.currentStreak > 0);
+    final averageActiveStreak = activeStreaks.isNotEmpty 
+        ? activeStreaks.map((s) => s.currentStreak).fold<double>(0, (a, b) => a + b) / activeStreaks.length
+        : 0.0;
+    
     final longestOverallStreak = _streaks.values
         .map((s) => s.longestStreak)
         .fold<int>(0, (a, b) => a > b ? a : b);
 
+    // 🆕 NUEVO: Tasa de finalización (retos activos / total)
+    final activeChallenges = _streaks.values.where((s) => s.currentStreak > 0).length;
+    final completionRate = activeChallenges / _streaks.length;
+
     return {
       'totalChallenges': _streaks.length,
-      'activeChallenges': _streaks.values.where((s) => s.currentStreak > 0).length,
+      'activeChallenges': activeChallenges,
       'totalPoints': totalPoints,
       'averageStreak': averageStreak,
+      'averageActiveStreak': averageActiveStreak, // 🆕 NUEVO
       'longestOverallStreak': longestOverallStreak,
+      'completionRate': completionRate, // 🆕 NUEVO
     };
   }
 

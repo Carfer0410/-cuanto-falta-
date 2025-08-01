@@ -14,17 +14,20 @@ import 'event.dart'; // Para usar EventColor y EventIcon
 import 'challenge_strategies_page.dart';
 import 'theme_service.dart';
 import 'challenge_notification_service.dart';
+import 'package:uuid/uuid.dart';
 
 class Counter {
+  final String uuid; // 🆕 NUEVO: UUID permanente
   final String title;
   final DateTime startDate;
-  DateTime? lastConfirmedDate;
+  DateTime? lastConfirmedDate; // 🔄 DEPRECADO: Solo para retrocompatibilidad
   final bool isNegativeHabit;
-  DateTime? challengeStartedAt; // Nuevo campo
+  DateTime? challengeStartedAt;
   final EventColor color;
   final EventIcon icon;
 
   Counter({
+    String? uuid, // Opcional para retrocompatibilidad
     required this.title,
     required this.startDate,
     this.lastConfirmedDate,
@@ -32,9 +35,10 @@ class Counter {
     this.challengeStartedAt,
     this.color = EventColor.orange,
     this.icon = EventIcon.fitness,
-  });
+  }) : uuid = uuid ?? const Uuid().v4(); // Generar UUID si no existe
 
   Map<String, dynamic> toJson() => {
+    'uuid': uuid, // 🆕 NUEVO: Guardar UUID
     'title': title,
     'startDate': startDate.toIso8601String(),
     'lastConfirmedDate': lastConfirmedDate?.toIso8601String(),
@@ -45,6 +49,7 @@ class Counter {
   };
 
   static Counter fromJson(Map<String, dynamic> json) => Counter(
+    uuid: json['uuid'], // 🆕 NUEVO: Cargar UUID (puede ser null en datos antiguos)
     title: json['title'],
     startDate: DateTime.parse(json['startDate']),
     lastConfirmedDate:
@@ -155,9 +160,160 @@ class _CountersPageState extends State<CountersPage> {
     });
   }
 
-  /// Generar ID único para un desafío basado en el índice
+  /// 🔧 CORREGIDO: Usar UUID permanente en lugar de índice
   String _getChallengeId(int index) {
-    return 'challenge_$index';
+    // Usar UUID permanente que nunca cambia aunque se reordene la lista
+    return _counters[index].uuid;
+  }
+
+  /// 🆕 NUEVO: Migrar datos de rachas de IDs legacy a UUIDs
+  Future<void> _migrateLegacyStreakData(Map<String, String> legacyIdMapping) async {
+    print('🔄 Iniciando migración de datos de rachas legacy...');
+    
+    for (final entry in legacyIdMapping.entries) {
+      final legacyId = entry.key;
+      final newUuid = entry.value;
+      
+      // Obtener datos del ID legacy
+      final legacyStreak = IndividualStreakService.instance.getStreak(legacyId);
+      if (legacyStreak != null) {
+        print('🔄 Migrando datos de racha: $legacyId → $newUuid');
+        
+        // Crear nueva entrada con UUID
+        await IndividualStreakService.instance.migrateStreakToNewId(legacyId, newUuid);
+      }
+    }
+    
+    print('✅ Migración de datos de rachas legacy completada');
+  }
+
+  /// 🆕 NUEVO: Solicitar confirmación para retos sin iniciar
+  Future<void> _promptUserForLegacyChallenges() async {
+    final uninitiatedChallenges = _counters.where((c) => c.challengeStartedAt == null).toList();
+    
+    if (uninitiatedChallenges.isEmpty) return;
+    
+    if (!mounted) return;
+    
+    // Mostrar diálogo de confirmación para retos sin iniciar
+    final shouldStart = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber, color: Colors.orange, size: 28),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Retos encontrados',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Se encontraron ${uninitiatedChallenges.length} reto(s) sin iniciar:',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 12),
+              ...uninitiatedChallenges.map((challenge) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    const Icon(Icons.circle, size: 8, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        challenge.title,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              )).toList(),
+              const SizedBox(height: 16),
+              const Text(
+                '¿Quieres iniciar estos retos ahora? Esto comenzará a contar el tiempo desde este momento.',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Después'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Iniciar ahora'),
+            ),
+          ],
+        );
+      },
+    );
+    
+    if (shouldStart == true) {
+      await _initializeUnstartedChallenges();
+    }
+  }
+
+  /// 🆕 NUEVO: Inicializar retos sin iniciar
+  Future<void> _initializeUnstartedChallenges() async {
+    bool needsSave = false;
+    final now = DateTime.now();
+    
+    for (int i = 0; i < _counters.length; i++) {
+      if (_counters[i].challengeStartedAt == null) {
+        _counters[i] = Counter(
+          uuid: _counters[i].uuid,
+          title: _counters[i].title,
+          startDate: _counters[i].startDate,
+          lastConfirmedDate: _counters[i].lastConfirmedDate,
+          isNegativeHabit: _counters[i].isNegativeHabit,
+          challengeStartedAt: now, // Iniciar desde ahora
+          color: _counters[i].color,
+          icon: _counters[i].icon,
+        );
+        needsSave = true;
+        print('✅ Reto "${_counters[i].title}" iniciado automáticamente');
+      }
+    }
+    
+    if (needsSave) {
+      await _saveCounters();
+      setState(() {}); // Actualizar UI
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Retos iniciados exitosamente',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadCounters() async {
@@ -168,19 +324,40 @@ class _CountersPageState extends State<CountersPage> {
       _counters = decoded.map((e) => Counter.fromJson(e)).toList();
     }
     
-    // MIGRACIÓN: Inicializar challengeStartedAt para retos existentes que no lo tienen
+    // 🔧 MIGRACIÓN MEJORADA: Manejo inteligente de retos existentes
     bool needsSave = false;
+    Map<String, String> legacyIdMapping = {}; // Mapeo de IDs legacy a UUIDs
+    
     for (int i = 0; i < _counters.length; i++) {
+      bool counterNeedsMigration = false;
+      
+      // Migración 1: UUID para retos existentes sin UUID
+      String? existingUuid = _counters[i].uuid;
+      if (existingUuid.startsWith('challenge_') || existingUuid.isEmpty) {
+        // Es un ID legacy, necesita migración a UUID real
+        final legacyId = 'challenge_$i';
+        legacyIdMapping[legacyId] = _counters[i].uuid; // El constructor ya asignó UUID
+        counterNeedsMigration = true;
+        print('🔄 Migrando reto "${_counters[i].title}" de $legacyId a UUID: ${_counters[i].uuid}');
+      }
+      
+      // Migración 2: challengeStartedAt con confirmación inteligente
+      DateTime? newChallengeStartedAt = _counters[i].challengeStartedAt;
       if (_counters[i].challengeStartedAt == null) {
-        // Para retos existentes sin challengeStartedAt, usar la hora actual como punto de inicio
-        // Esto permite que los retos existentes empiecen a contar desde "ahora"
-        final now = DateTime.now();
+        // 🔧 MEJORA: Marcar para confirmación posterior en lugar de iniciar automáticamente
+        print('⚠️ Reto "${_counters[i].title}" sin fecha de inicio - se solicitará confirmación al usuario');
+        // Será manejado en _promptUserForLegacyChallenges()
+        counterNeedsMigration = true;
+      }
+      
+      if (counterNeedsMigration) {
         _counters[i] = Counter(
+          uuid: _counters[i].uuid, // Preservar UUID (ya sea existente o recién generado)
           title: _counters[i].title,
           startDate: _counters[i].startDate,
           lastConfirmedDate: _counters[i].lastConfirmedDate,
           isNegativeHabit: _counters[i].isNegativeHabit,
-          challengeStartedAt: now, // 🔧 CORREGIDO: Empezar desde el momento actual para retos existentes
+          challengeStartedAt: newChallengeStartedAt,
           color: _counters[i].color,
           icon: _counters[i].icon,
         );
@@ -191,12 +368,20 @@ class _CountersPageState extends State<CountersPage> {
     // Guardar los cambios si se hizo alguna migración
     if (needsSave) {
       await _saveCounters();
-      print('✅ Migración: challengeStartedAt inicializado para ${_counters.length} retos');
+      print('✅ Migración UUID completada para ${_counters.length} retos');
+      
+      // 🆕 MIGRAR DATOS DE RACHAS de IDs legacy a UUIDs
+      if (legacyIdMapping.isNotEmpty) {
+        await _migrateLegacyStreakData(legacyIdMapping);
+      }
     }
+
+    // 🆕 NUEVO: Confirmar retos sin iniciar
+    await _promptUserForLegacyChallenges();
     
     // Registrar todos los desafíos en el sistema de rachas individuales
     for (int i = 0; i < _counters.length; i++) {
-      final challengeId = _getChallengeId(i);
+      final challengeId = _getChallengeId(i); // Ahora usa UUID
       await IndividualStreakService.instance.registerChallenge(
         challengeId,
         _counters[i].title,
@@ -350,34 +535,13 @@ class _CountersPageState extends State<CountersPage> {
       return false;
     }
 
-    // 2. 🆕 NUEVA LÓGICA: Determinar tiempo mínimo según CUÁNDO y DÓNDE se creó el reto
+    // 2. 🔧 SIMPLIFICADO: Tiempo mínimo universal de 5 minutos
     final startTime = counter.challengeStartedAt!;
     final minutesSinceStart = now.difference(startTime).inMinutes;
     final currentHour = now.hour;
     
-    // Verificar si es un reto del mismo día
-    final isSameDay = _isSameDay(startTime, now);
-    
-    // Verificar si se creó dentro de la ventana de confirmación (21:00-23:59)
-    final createdInConfirmationWindow = startTime.hour >= 21 && startTime.hour <= 23;
-    
-    int minimumTimeRequired;
-    String timeContext;
-    
-    // 🎯 NUEVA LÓGICA: Solo aplicar espera de 10 minutos si cumple AMBAS condiciones
-    if (isSameDay && createdInConfirmationWindow) {
-      // Caso especial: Reto del mismo día creado en ventana de confirmación
-      minimumTimeRequired = 10;
-      timeContext = 'creado en ventana de confirmación (tiempo de reflexión)';
-    } else {
-      // Todos los demás casos: sin espera (tiempo mínimo = 0)
-      minimumTimeRequired = 0;
-      if (!isSameDay) {
-        timeContext = 'reto para fecha futura';
-      } else {
-        timeContext = 'creado fuera de ventana de confirmación';
-      }
-    }
+    const minimumTimeRequired = 5; // Tiempo universal simplificado
+    const timeContext = 'tiempo de reflexión universal';
     
     if (minutesSinceStart < minimumTimeRequired) {
       print('⚠️ "${counter.title}" - Solo ${minutesSinceStart}min desde inicio (mínimo ${minimumTimeRequired}min - $timeContext)');
@@ -389,46 +553,26 @@ class _CountersPageState extends State<CountersPage> {
     print('🕐 "${counter.title}" - Hora actual: $currentTime, En ventana: $isInWindow ($timeContext)');
     if (!isInWindow) return false;
     
-    // 4. Verificar que no esté confirmado hoy según Counter
-    final notConfirmedTodayByCounter = counter.lastConfirmedDate == null || 
-                                      !_isSameDay(counter.lastConfirmedDate!, now);
-    
-    // 5. Verificar que no esté confirmado hoy según sistema de rachas individuales
+    // 🔧 SIMPLIFICADO: Usar SOLO IndividualStreakService como fuente única de verdad
     final challengeId = _getChallengeId(_counters.indexOf(counter));
     final streak = IndividualStreakService.instance.getStreak(challengeId);
-    final notConfirmedTodayByStreak = streak?.isCompletedToday != true;
+    final notConfirmedToday = streak?.isCompletedToday != true;
     
-    // 6. Debe cumplir AMBAS condiciones para mostrar el botón
-    final shouldShow = notConfirmedTodayByCounter && notConfirmedTodayByStreak;
+    // 🆕 DEBUG: Log para transparencia
+    print('🔍 "${counter.title}" - Estado confirmación:');
+    print('   • Streak completedToday: ${streak?.isCompletedToday ?? false}');
+    print('   • Debería mostrar botón: $notConfirmedToday');
     
-    // 7. CORREGIR INCONSISTENCIAS: Si hay desincronización, corregir
-    if (notConfirmedTodayByCounter != notConfirmedTodayByStreak) {
-      print('⚠️ INCONSISTENCIA detectada en "${counter.title}":');
-      print('  • Counter dice no confirmado: $notConfirmedTodayByCounter');
-      print('  • Streak dice no confirmado: $notConfirmedTodayByStreak');
-      
-      // Si el streak dice que está completado pero el counter no, sincronizar
-      if (!notConfirmedTodayByStreak && notConfirmedTodayByCounter) {
-        print('  → Sincronizando: Counter marca como completado hoy');
-        counter.lastConfirmedDate = DateTime(now.year, now.month, now.day);
-        _saveCounters(); // Guardar la corrección
-      }
-    }
-    
-    // 8. Debug logging para identificar problemas
-    if (!shouldShow && isInWindow) {
+    // 🆕 NUEVO: Debug adicional para casos problemáticos
+    if (!notConfirmedToday && isInWindow) {
       print('❌ Botón NO mostrado para "${counter.title}" (ventana activa 21:00-23:59):');
+      print('  • Reto ya completado hoy según IndividualStreakService');
       print('  • Minutos desde inicio: $minutesSinceStart');
-      print('  • Hora actual: ${now.hour}:${now.minute}');
-      print('  • Counter lastConfirmed: ${counter.lastConfirmedDate}');
-      print('  • Streak completedToday: ${streak?.isCompletedToday}');
-      print('  • Counter dice no confirmado: $notConfirmedTodayByCounter');
-      print('  • Streak dice no confirmado: $notConfirmedTodayByStreak');
-    } else if (!isInWindow && notConfirmedTodayByCounter && notConfirmedTodayByStreak) {
+    } else if (!isInWindow && notConfirmedToday) {
       print('⏰ Reto "${counter.title}" esperando ventana de confirmación (21:00-23:59). Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
     }
     
-    return shouldShow;
+    return notConfirmedToday;
   }
 
   /// 🆕 MEJORADO: Calcula el mensaje de tiempo restante con nueva lógica contextual
@@ -1663,21 +1807,20 @@ class _CountersPageState extends State<CountersPage> {
       if (dayDate.isAfter(today)) break; // No contar días futuros
       totalDays++;
 
-      // 🆕 MEJORADO: Verificar si se completó este día Y no falló posteriormente
+      // 🔧 SIMPLIFICADO: Solo verificar si se completó este día específico
       final wasConfirmed = streak.confirmationHistory.any((confirmation) {
         final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
         return confirmDate.isAtSameMomentAs(dayDate);
       });
 
-      // 🆕 NUEVO: Verificar si este día o días posteriores tienen fallos
-      // Si hay un fallo después de una confirmación, esa confirmación ya no cuenta
-      final hasSubsequentFailure = streak.failedDays.any((failDate) {
+      // 🔧 MEJORADO: Solo verificar fallos en EL MISMO DÍA, no días posteriores
+      final failedThisDay = streak.failedDays.any((failDate) {
         final failed = DateTime(failDate.year, failDate.month, failDate.day);
-        return failed.isAfter(dayDate) || failed.isAtSameMomentAs(dayDate);
+        return failed.isAtSameMomentAs(dayDate);
       });
 
-      // ✅ LÓGICA UX: Solo cuenta si se confirmó Y no hay fallos posteriores
-      if (wasConfirmed && !hasSubsequentFailure) {
+      // ✅ LÓGICA SIMPLIFICADA: Se cuenta como completado si se confirmó y no falló ese día
+      if (wasConfirmed && !failedThisDay) {
         completedDays++;
       }
     }

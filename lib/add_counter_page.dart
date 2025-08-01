@@ -69,7 +69,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
   }
 
   /// Sistema inteligente de rachas para retos registrados con fecha atrasada
-  Future<void> _handleBackdatedChallenge(String challengeTitle, DateTime startDate) async {
+  Future<void> _handleBackdatedChallenge(String challengeTitle, DateTime startDate, String challengeId) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final start = DateTime(startDate.year, startDate.month, startDate.day);
@@ -96,17 +96,10 @@ class _AddCounterPageState extends State<AddCounterPage> {
     
     if (!mounted) return;
     
-    // Generar ID único para el reto
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString('counters');
-    final list = jsonString != null ? jsonDecode(jsonString) : [];
-    final challengeId = 'challenge_${list.length - 1}'; // 🔧 CORRECCIÓN: Usar list.length - 1 para coincidir con el índice del counter recién agregado
-    
     print('🔍 === DEBUG _handleBackdatedChallenge ===');
     print('🔍 Counter recién agregado: $challengeTitle');
-    print('🔍 Lista actual tiene: ${list.length} counters');
-    print('🔍 ChallengeId generado: $challengeId');
-    print('🔍 ¿UI buscará este ID?: challenge_${list.length - 1} (${challengeId == 'challenge_${list.length - 1}' ? "SÍ" : "NO"})');
+    print('🔍 ChallengeId (UUID): $challengeId');
+    print('🔍 Días transcurridos: $daysPassed');
     
     // Mostrar diálogo de cortesía para retos atrasados
     final result = await showDialog<String>(
@@ -404,8 +397,8 @@ class _AddCounterPageState extends State<AddCounterPage> {
     list.add(newCounter.toJson());
     await prefs.setString('counters', jsonEncode(list));
     
-    // NUEVO: Sistema inteligente de rachas para retos atrasados
-    await _handleBackdatedChallenge(sanitized, _selectedDate);
+    // 🔧 CORREGIDO: Usar UUID del counter recién creado
+    await _handleBackdatedChallenge(sanitized, _selectedDate, newCounter.uuid);
     
     // Registrar estadísticas y verificar logros
     await StatisticsService.instance.recordChallengeConfirmation();

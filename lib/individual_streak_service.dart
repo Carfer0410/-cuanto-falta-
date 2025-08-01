@@ -12,9 +12,10 @@ class ChallengeStreak {
   final DateTime? lastConfirmedDate;
   final List<DateTime> confirmationHistory;
   final List<DateTime> failedDays;
-  final int forgivenessTokens; // Nuevo: fichas de perdón
+  final int forgivenessTokens; // Fichas de perdón
   final DateTime? lastForgivenessUsed;
   final int totalPoints;
+  final bool isRetroactive; // 🆕 NUEVO: Flag para identificar retos retroactivos
 
   ChallengeStreak({
     required this.challengeId,
@@ -27,6 +28,7 @@ class ChallengeStreak {
     this.forgivenessTokens = 2, // Iniciar con 2 fichas de perdón
     this.lastForgivenessUsed,
     this.totalPoints = 0,
+    this.isRetroactive = false, // 🆕 NUEVO: Por defecto no es retroactivo
   });
 
   Map<String, dynamic> toJson() => {
@@ -40,6 +42,7 @@ class ChallengeStreak {
     'forgivenessTokens': forgivenessTokens,
     'lastForgivenessUsed': lastForgivenessUsed?.toIso8601String(),
     'totalPoints': totalPoints,
+    'isRetroactive': isRetroactive, // 🆕 NUEVO
   };
 
   static ChallengeStreak fromJson(Map<String, dynamic> json) => ChallengeStreak(
@@ -61,6 +64,7 @@ class ChallengeStreak {
         ? DateTime.parse(json['lastForgivenessUsed']) 
         : null,
     totalPoints: json['totalPoints'] ?? 0,
+    isRetroactive: json['isRetroactive'] ?? false, // 🆕 NUEVO: Retrocompatibilidad
   );
 
   ChallengeStreak copyWith({
@@ -74,6 +78,7 @@ class ChallengeStreak {
     int? forgivenessTokens,
     DateTime? lastForgivenessUsed,
     int? totalPoints,
+    bool? isRetroactive, // 🆕 NUEVO
   }) => ChallengeStreak(
     challengeId: challengeId ?? this.challengeId,
     challengeTitle: challengeTitle ?? this.challengeTitle,
@@ -85,6 +90,7 @@ class ChallengeStreak {
     forgivenessTokens: forgivenessTokens ?? this.forgivenessTokens,
     lastForgivenessUsed: lastForgivenessUsed ?? this.lastForgivenessUsed,
     totalPoints: totalPoints ?? this.totalPoints,
+    isRetroactive: isRetroactive ?? this.isRetroactive, // 🆕 NUEVO
   );
 
   /// Verifica si el desafío ha sido completado hoy
@@ -222,6 +228,44 @@ class IndividualStreakService extends ChangeNotifier {
     }
   }
 
+  /// 🆕 NUEVO: Migrar datos de racha de ID legacy a UUID
+  Future<void> migrateStreakToNewId(String legacyId, String newUuid) async {
+    debugPrint('🔄 === migrateStreakToNewId ===');
+    debugPrint('🔄 Legacy ID: $legacyId');
+    debugPrint('🔄 New UUID: $newUuid');
+    
+    // Obtener datos del ID legacy
+    final legacyStreak = _streaks[legacyId];
+    if (legacyStreak == null) {
+      debugPrint('⚠️ No se encontraron datos para el ID legacy: $legacyId');
+      return;
+    }
+    
+    // Verificar si el UUID ya existe
+    if (_streaks.containsKey(newUuid)) {
+      debugPrint('⚠️ UUID $newUuid ya existe, conservando datos existentes');
+      return;
+    }
+    
+    // Migrar datos al nuevo UUID
+    _streaks[newUuid] = legacyStreak.copyWith(
+      challengeId: newUuid, // Actualizar el ID interno si existe
+      challengeTitle: legacyStreak.challengeTitle, // Preservar título
+    );
+    
+    // Remover entrada legacy
+    _streaks.remove(legacyId);
+    
+    debugPrint('✅ Migración completada: $legacyId → $newUuid');
+    debugPrint('   • Racha: ${legacyStreak.currentStreak} días');
+    debugPrint('   • Puntos: ${legacyStreak.totalPoints}');
+    debugPrint('   • Confirmaciones: ${legacyStreak.confirmationHistory.length}');
+    
+    // Guardar cambios
+    await _saveStreaks();
+    notifyListeners();
+  }
+
   /// Confirmar un desafío (mantener/aumentar racha)
   Future<void> confirmChallenge(String challengeId, String challengeTitle, {bool isNegativeHabit = false}) async {
     final now = DateTime.now();
@@ -250,16 +294,11 @@ class IndividualStreakService extends ChangeNotifier {
       return;
     }
 
-    // 🔧 NUEVA LÓGICA: Detectar si es un reto retroactivo
-    final hasBackdatedConfirmations = current.confirmationHistory.any((confirmation) {
-      final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
-      return confirmDate.isBefore(today);
-    });
-
+    // 🔧 MEJORADO: Usar flag explícito en lugar de inferir
     int newStreak; // Declarar variable aquí
 
-    if (hasBackdatedConfirmations) {
-      debugPrint('🔄 Reto retroactivo detectado - manejo especial');
+    if (current.isRetroactive) {
+      debugPrint('🔄 Reto retroactivo (marcado explícitamente) - manejo especial');
       
       // Para retos retroactivos, solo agregar confirmación de HOY sin recalcular racha completa
       final newHistory = [...current.confirmationHistory, now];
@@ -381,6 +420,7 @@ class IndividualStreakService extends ChangeNotifier {
       lastConfirmedDate: backdatedHistory.isNotEmpty ? backdatedHistory.last : null,
       confirmationHistory: backdatedHistory,
       totalPoints: pointsToAdd,
+      isRetroactive: true, // 🆕 MARCAR como retroactivo explícitamente
     );
 
     await _saveStreaks();

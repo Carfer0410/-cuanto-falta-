@@ -230,6 +230,8 @@ class _CountersPageState extends State<CountersPage> {
   void _debugButtonStates() {
     final now = DateTime.now();
     print('\n🔍 === DEBUG ESTADO DE BOTONES (${now.day}/${now.month} ${now.hour}:${now.minute.toString().padLeft(2, '0')}) ===');
+    print('🕐 ¿En ventana de confirmación?: ${now.hour >= 21 && now.hour <= 23 ? "✅ SÍ" : "❌ NO"}');
+    print('');
     
     for (int i = 0; i < _counters.length; i++) {
       final counter = _counters[i];
@@ -241,10 +243,15 @@ class _CountersPageState extends State<CountersPage> {
                         shouldShow ? 'CONFIRMAR' : 'COMPLETADO';
       
       print('📱 "${counter.title}" → $buttonType');
-      print('   • Iniciado: ${counter.challengeStartedAt != null ? _formatStartDate(counter.challengeStartedAt!) : 'NO'}');
+      print('   • Iniciado: ${counter.challengeStartedAt != null ? _formatStartDate(counter.challengeStartedAt!) : "❌ NO INICIADO"}');
       print('   • Última confirmación: ${counter.lastConfirmedDate != null ? '${counter.lastConfirmedDate!.day}/${counter.lastConfirmedDate!.month}' : 'NUNCA'}');
       print('   • Racha actual: ${streak?.currentStreak ?? 0} días');
       print('   • Completado hoy (streak): ${streak?.isCompletedToday ?? false}');
+      if (counter.challengeStartedAt == null) {
+        print('   ⚠️ PROBLEMA: Reto no iniciado - presiona "Iniciar Reto" primero');
+      } else if (!shouldShow && now.hour >= 21 && now.hour <= 23) {
+        print('   ⚠️ PROBLEMA: En ventana pero botón no aparece');
+      }
       print('');
     }
     print('=== FIN DEBUG ===\n');
@@ -339,7 +346,7 @@ class _CountersPageState extends State<CountersPage> {
     
     // 1. Verificar que el reto esté iniciado
     if (counter.challengeStartedAt == null) {
-      print('⚠️ "${counter.title}" - No iniciado');
+      print('⚠️ "${counter.title}" - No iniciado (presiona "Iniciar Reto" primero)');
       return false;
     }
 

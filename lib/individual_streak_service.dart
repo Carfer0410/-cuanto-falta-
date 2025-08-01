@@ -338,14 +338,24 @@ class IndividualStreakService extends ChangeNotifier {
     debugPrint('🔄 Start Date: $startDate');
     debugPrint('🔄 Days to Grant: $daysToGrant');
     
-    // Crear historial de confirmaciones retroactivas
+    // Crear historial de confirmaciones retroactivas (EXCLUYENDO HOY)
     final backdatedHistory = <DateTime>[];
+    final today = DateTime.now();
+    final todayNormalized = DateTime(today.year, today.month, today.day);
+    
     for (int i = 0; i < daysToGrant; i++) {
       final confirmDate = startDate.add(Duration(days: i));
-      backdatedHistory.add(confirmDate);
+      final confirmDateNormalized = DateTime(confirmDate.year, confirmDate.month, confirmDate.day);
+      
+      // 🔧 CORRECCIÓN CRÍTICA: No incluir HOY en el historial retroactivo
+      // HOY debe confirmarse manualmente en la ventana de confirmación
+      if (!confirmDateNormalized.isAtSameMomentAs(todayNormalized)) {
+        backdatedHistory.add(confirmDate);
+      }
     }
     
-    debugPrint('🔄 Historial retroactivo creado: ${backdatedHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
+    debugPrint('🔄 Historial retroactivo creado (SIN hoy): ${backdatedHistory.map((d) => '${d.day}/${d.month}').join(', ')}');
+    debugPrint('🔄 HOY (${today.day}/${today.month}) NO incluido - requiere confirmación manual');
     
     // 🔧 CORRECCIÓN: Crear objeto temporal para calcular racha correctamente
     final tempStreak = ChallengeStreak(
@@ -377,7 +387,8 @@ class IndividualStreakService extends ChangeNotifier {
     notifyListeners();
     
     debugPrint('🎉 ✅ Reto retroactivo creado con racha calculada: $calculatedStreak días');
-    debugPrint('🔄 === FIN grantBackdatedStreak ===');
+    debugPrint('� ¿Completado HOY?: ${_streaks[challengeId]?.isCompletedToday ?? false} (debe ser FALSE para mostrar botón)');
+    debugPrint('�🔄 === FIN grantBackdatedStreak ===');
   }
 
   /// Fallar en un desafío (puede usar ficha de perdón)

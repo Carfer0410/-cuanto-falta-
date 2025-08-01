@@ -74,9 +74,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
     final today = DateTime(now.year, now.month, now.day);
     final start = DateTime(startDate.year, startDate.month, startDate.day);
     
-    // CORREGIDO: Calcular días correctamente incluyendo el día de inicio
-    // Ejemplo: 18 julio → 21 julio = 3 días (18, 19, 20)
-    final daysPassed = today.difference(start).inDays;
+    // CORREGIDO: Calcular días correctamente incluyendo el día de inicio (INCLUSIVO)
+    // Ejemplo: 18 julio → 21 julio = 4 días (18, 19, 20, 21)
+    final daysPassed = today.difference(start).inDays + 1;
     
     // 🔍 DEBUG: Logs detallados para investigar el bug
     print('🔍 === _handleBackdatedChallenge DEBUG ===');
@@ -100,7 +100,13 @@ class _AddCounterPageState extends State<AddCounterPage> {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('counters');
     final list = jsonString != null ? jsonDecode(jsonString) : [];
-    final challengeId = 'challenge_${list.length}'; // 🔧 CORRECCIÓN: Usar list.length (el próximo índice) en lugar de list.length - 1
+    final challengeId = 'challenge_${list.length - 1}'; // 🔧 CORRECCIÓN: Usar list.length - 1 para coincidir con el índice del counter recién agregado
+    
+    print('🔍 === DEBUG _handleBackdatedChallenge ===');
+    print('🔍 Counter recién agregado: $challengeTitle');
+    print('🔍 Lista actual tiene: ${list.length} counters');
+    print('🔍 ChallengeId generado: $challengeId');
+    print('🔍 ¿UI buscará este ID?: challenge_${list.length - 1} (${challengeId == 'challenge_${list.length - 1}' ? "SÍ" : "NO"})');
     
     // Mostrar diálogo de cortesía para retos atrasados
     final result = await showDialog<String>(
@@ -137,7 +143,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Registraste un reto que empezó hace $daysPassed ${daysPassed == 1 ? 'día' : 'días'}',
+                        'Registraste un reto que empezó el ${startDate.day}/${startDate.month}/${startDate.year}. Han pasado ${daysPassed - 1} ${daysPassed - 1 == 1 ? 'día' : 'días'} desde entonces.',
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           color: Colors.blue[800],
@@ -228,11 +234,11 @@ class _AddCounterPageState extends State<AddCounterPage> {
     
     print('🔄 ✅ Reto retroactivo creado con racha calculada correctamente: $daysPassed días');
     
-    // NUEVO: Calcular fecha de inicio exacta para sincronizar cronómetro
-    final now = DateTime.now();
-    final calculatedStartDate = now.subtract(Duration(days: daysPassed));
-    final exactStartTime = DateTime(calculatedStartDate.year, calculatedStartDate.month, calculatedStartDate.day); // Inicio del día
+    // CORREGIDO: Usar startDate directamente en lugar de calcular desde daysPassed
+    final exactStartTime = DateTime(startDate.year, startDate.month, startDate.day); // Usar fecha original seleccionada
     await _updateCounterStartTimeForConsistency(challengeTitle, exactStartTime);
+    
+    print('🔄 📅 Cronómetro configurado desde fecha original: ${startDate.day}/${startDate.month}/${startDate.year}');
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

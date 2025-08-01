@@ -448,16 +448,40 @@ class IndividualStreakService extends ChangeNotifier {
 
     // Intentar usar ficha de perdón si se solicita
     if (useForgiveness && current.canUseForgiveness) {
+      // 🔧 MEJORADO: La ficha de perdón SIMULA confirmación del día perdido
+      final yesterday = DateTime(now.year, now.month, now.day - 1);
+      
+      // Agregar confirmación automática del día perdido
+      final newConfirmationHistory = [...current.confirmationHistory, yesterday];
+      
+      // Recalcular racha con la nueva confirmación simulada
+      final tempStreak = current.copyWith(confirmationHistory: newConfirmationHistory);
+      final newCurrentStreak = _calculateStreak(tempStreak);
+      final newLongestStreak = newCurrentStreak > current.longestStreak 
+          ? newCurrentStreak 
+          : current.longestStreak;
+      
+      // Calcular puntos por la confirmación simulada
+      final pointsFromSimulatedConfirmation = 10 + (newCurrentStreak * 2);
+      
       _streaks[challengeId] = current.copyWith(
         forgivenessTokens: current.forgivenessTokens - 1,
         lastForgivenessUsed: now,
+        confirmationHistory: newConfirmationHistory,
+        currentStreak: newCurrentStreak,
+        longestStreak: newLongestStreak,
+        totalPoints: current.totalPoints + pointsFromSimulatedConfirmation,
       );
       
       await _saveStreaks();
       notifyListeners();
       
-      debugPrint('🛡️ Ficha de perdón usada para $challengeId. Fichas restantes: ${current.forgivenessTokens - 1}');
-      return true; // Fallo perdonado
+      debugPrint('🛡️ Ficha de perdón usada para $challengeId:');
+      debugPrint('   📅 Confirmación simulada: ${yesterday.day}/${yesterday.month}/${yesterday.year}');
+      debugPrint('   🔥 Racha actualizada: ${current.currentStreak} → $newCurrentStreak');
+      debugPrint('   ⭐ Puntos ganados: +$pointsFromSimulatedConfirmation');
+      debugPrint('   🛡️ Fichas restantes: ${current.forgivenessTokens - 1}');
+      return true; // Fallo perdonado Y confirmación simulada
     }
 
     // Fallo normal: resetear racha Y PUNTOS

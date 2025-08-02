@@ -308,16 +308,17 @@ class IndividualStreakService extends ChangeNotifier {
       
       debugPrint('🔄 Racha retroactiva mantenida: ${current.currentStreak} + 1 = $newStreak');
       
-      // Calcular puntos para confirmación de HOY
-      int pointsToAdd = 10 + (newStreak * 2);
+      // 🔧 CORRECCIÓN CRÍTICA: Para retos retroactivos, recalcular puntos totales
+      // Los puntos deben reflejar la racha ACTUAL, no acumularse incorrectamente
+      int totalPoints = 10 + (newStreak * 2);
       
-      // Actualizar con incremento simple
+      // Actualizar con recálculo total de puntos
       _streaks[challengeId] = current.copyWith(
         currentStreak: newStreak,
         longestStreak: newStreak > current.longestStreak ? newStreak : current.longestStreak,
         lastConfirmedDate: now,
         confirmationHistory: newHistory,
-        totalPoints: current.totalPoints + pointsToAdd,
+        totalPoints: totalPoints, // 🔧 USAR puntos totales, no sumar
       );
     } else {
       debugPrint('🔄 Reto normal - cálculo estándar');
@@ -335,10 +336,11 @@ class IndividualStreakService extends ChangeNotifier {
       
       debugPrint('🔍 Nueva racha calculada: $newStreak');
       
-      // Calcular puntos con bonus de racha
-      int pointsToAdd = 10 + (newStreak * 2);
+      // 🔧 CORRECCIÓN CRÍTICA: Recalcular puntos totales correctamente
+      // Los puntos deben reflejar la racha ACTUAL, no acumularse incorrectamente
+      int totalPoints = 10 + (newStreak * 2);
       
-      debugPrint('🔍 Puntos a agregar: $pointsToAdd');
+      debugPrint('🔍 Puntos totales calculados: $totalPoints (fórmula: 10 + $newStreak * 2)');
       
       // Actualizar racha
       _streaks[challengeId] = current.copyWith(
@@ -346,7 +348,7 @@ class IndividualStreakService extends ChangeNotifier {
         longestStreak: newStreak > current.longestStreak ? newStreak : current.longestStreak,
         lastConfirmedDate: now,
         confirmationHistory: newHistory,
-        totalPoints: current.totalPoints + pointsToAdd,
+        totalPoints: totalPoints, // 🔧 USAR puntos totales, no sumar
       );
     }
 
@@ -408,13 +410,10 @@ class IndividualStreakService extends ChangeNotifier {
     final calculatedStreak = _calculateStreak(tempStreak);
     debugPrint('🔄 Racha calculada por _calculateStreak: $calculatedStreak');
     
-    // 🔧 CORRECCIÓN: Calcular puntos progresivos correctamente
-    // Cada día debe tener puntos según su posición en la racha
-    int pointsToAdd = 0;
-    for (int i = 1; i <= calculatedStreak; i++) {
-      pointsToAdd += 10 + (i * 2); // 10 base + 2 por día de racha
-    }
-    debugPrint('🔄 Puntos calculados progresivamente: $pointsToAdd');
+    // 🔧 CORRECCIÓN CRÍTICA: Puntos retroactivos = puntos finales únicamente
+    // NO sumar progresivamente, solo calcular puntos de la racha final
+    int pointsToAdd = 10 + (calculatedStreak * 2);
+    debugPrint('🔄 Puntos calculados para racha retroactiva: $pointsToAdd (fórmula: 10 + ${calculatedStreak} * 2)');
     
     // Crear el reto con la racha calculada correctamente
     _streaks[challengeId] = ChallengeStreak(
@@ -461,8 +460,8 @@ class IndividualStreakService extends ChangeNotifier {
           ? newCurrentStreak 
           : current.longestStreak;
       
-      // Calcular puntos por la confirmación simulada
-      final pointsFromSimulatedConfirmation = 10 + (newCurrentStreak * 2);
+      // 🔧 CORRECCIÓN CRÍTICA: Recalcular puntos totales correctamente
+      final totalPoints = 10 + (newCurrentStreak * 2);
       
       _streaks[challengeId] = current.copyWith(
         forgivenessTokens: current.forgivenessTokens - 1,
@@ -470,7 +469,7 @@ class IndividualStreakService extends ChangeNotifier {
         confirmationHistory: newConfirmationHistory,
         currentStreak: newCurrentStreak,
         longestStreak: newLongestStreak,
-        totalPoints: current.totalPoints + pointsFromSimulatedConfirmation,
+        totalPoints: totalPoints, // 🔧 USAR puntos totales, no sumar
       );
       
       await _saveStreaks();
@@ -479,7 +478,7 @@ class IndividualStreakService extends ChangeNotifier {
       debugPrint('🛡️ Ficha de perdón usada para $challengeId:');
       debugPrint('   📅 Confirmación simulada: ${yesterday.day}/${yesterday.month}/${yesterday.year}');
       debugPrint('   🔥 Racha actualizada: ${current.currentStreak} → $newCurrentStreak');
-      debugPrint('   ⭐ Puntos ganados: +$pointsFromSimulatedConfirmation');
+      debugPrint('   ⭐ Puntos totales: $totalPoints');
       debugPrint('   🛡️ Fichas restantes: ${current.forgivenessTokens - 1}');
       return true; // Fallo perdonado Y confirmación simulada
     }

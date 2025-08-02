@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'notification_service.dart';
 import 'notification_navigation_service.dart';
+import 'notification_center_service.dart';
 import 'simple_event_checker.dart';
 import 'challenge_notification_service.dart';
 import 'statistics_service.dart';
@@ -70,6 +71,9 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _initializeNotificationSystems() async {
     await NotificationService.instance.init();
+    
+    // 🆕 INICIALIZAR CENTRO DE NOTIFICACIONES
+    await NotificationCenterService.instance.init();
     
     // Sistema Timer MEJORADO - Más frecuente y resistente a suspensión
     await SimpleEventChecker.startChecking();
@@ -497,7 +501,7 @@ class _MyAppState extends State<MyApp> {
         await NotificationService.instance.showImmediateNotification(
           id: 77700 + challengeId.hashCode.abs() % 1000,
           title: '🛡️ Ficha de perdón usada',
-          body: 'No confirmaste "$challengeTitle" ayer (${missedDate.day}/${missedDate.month}), pero se usó una ficha de perdón. Tu racha siguió creciendo automáticamente.',
+          body: 'Ficha usada para "$challengeTitle" (${missedDate.day}/${missedDate.month}). Racha preservada.',
           payload: payload,
         );
         
@@ -521,7 +525,7 @@ class _MyAppState extends State<MyApp> {
       await NotificationService.instance.showImmediateNotification(
         id: 77800 + challengeId.hashCode.abs() % 1000,
         title: '💔 Racha perdida',
-        body: 'No confirmaste "$challengeTitle" antes de las 23:59 ayer (${missedDate.day}/${missedDate.month}). Tu racha se ha reseteado a 0.',
+        body: 'No confirmaste "$challengeTitle" ayer (${missedDate.day}/${missedDate.month}). Racha reseteada.',
         payload: payload,
       );
       
@@ -659,6 +663,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider.value(value: ChallengeStrategyService.instance),
         ChangeNotifierProvider.value(value: IndividualStreakService.instance),
         ChangeNotifierProvider.value(value: EventDashboardService.instance),
+        ChangeNotifierProvider.value(value: NotificationCenterService.instance),
       ],
       child: Consumer<LocalizationService>(
         builder: (context, localizationService, child) {

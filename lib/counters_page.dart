@@ -14,6 +14,7 @@ import 'event.dart'; // Para usar EventColor y EventIcon
 import 'challenge_strategies_page.dart';
 import 'theme_service.dart';
 import 'challenge_notification_service.dart';
+import 'notification_center_widgets.dart';
 import 'package:uuid/uuid.dart';
 
 class Counter {
@@ -784,6 +785,8 @@ class _CountersPageState extends State<CountersPage> {
             foregroundColor: Colors.white,
             elevation: 0,
         actions: [
+          // 🔔 NUEVO: Centro de notificaciones
+          const NotificationCenterButton(),
           // 🆕 NUEVO: Botón de acceso rápido a rachas individuales
           IconButton(
             icon: const Icon(Icons.local_fire_department),

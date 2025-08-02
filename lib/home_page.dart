@@ -13,6 +13,7 @@ import 'event_preparations_page.dart';
 import 'preparation_service.dart';
 import 'event_dashboard_service.dart';
 import 'theme_service.dart';
+import 'notification_center_widgets.dart';
 
 /// Widget de cuenta regresiva en vivo mostrando días, horas, minutos y segundos.
 class _CountdownTimer extends StatefulWidget {
@@ -203,6 +204,8 @@ class _HomePageState extends State<HomePage> {
             foregroundColor: Colors.white,
             elevation: 0,
         actions: [
+          // 🔔 NUEVO: Centro de notificaciones
+          const NotificationCenterButton(),
           IconButton(
             icon: const Icon(Icons.lightbulb_outline),
             tooltip: localizationService.t('optimal_usage'),

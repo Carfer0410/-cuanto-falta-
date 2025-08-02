@@ -6,6 +6,7 @@ import 'achievement_service.dart';
 import 'data_migration_service.dart';
 import 'individual_streak_service.dart';
 import 'individual_streaks_page.dart';
+import 'notification_center_widgets.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -176,6 +177,7 @@ class _DashboardPageState extends State<DashboardPage> {
           },
         ),
         actions: [
+          const NotificationCenterButton(),
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () => _showInfoDialog(context),

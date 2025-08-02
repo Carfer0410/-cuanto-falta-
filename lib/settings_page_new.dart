@@ -8,6 +8,7 @@ import 'planning_style_service.dart';
 import 'planning_style_selection_page.dart';
 import 'theme_service.dart';
 import 'localization_service.dart';
+import 'notification_center_widgets.dart';
 
 class SettingsPage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -184,6 +185,10 @@ class _SettingsPageState extends State<SettingsPage> {
         title: const Text('Ajustes'),
         backgroundColor: context.orangeVariant,
         foregroundColor: Colors.white,
+        actions: [
+          // 🔔 NUEVO: Centro de notificaciones
+          const NotificationCenterButton(),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

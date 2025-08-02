@@ -225,55 +225,70 @@ class _MyAppState extends State<MyApp> {
       }
     });
     
-    // 🆕 MEJORADO: SISTEMA AUTOMÁTICO DE VERIFICACIÓN NOCTURNA
-    // 1. Timer que verifica cada hora (para apps abiertas toda la noche)
-    Timer.periodic(Duration(hours: 1), (timer) async {
+    // 🆕 MEJORADO: SISTEMA SIMPLIFICADO DE VERIFICACIÓN NOCTURNA
+    // Un solo timer cada 15 minutos para mayor robustez
+    Timer.periodic(Duration(minutes: 15), (timer) async {
       final now = DateTime.now();
+      final prefs = await SharedPreferences.getInstance();
       
-      // A las 00:30 (30 minutos después de medianoche) ejecutar verificación automática
-      if (now.hour == 0 && now.minute >= 25 && now.minute <= 35) {
-        print('🌙 === VERIFICACIÓN NOCTURNA AUTOMÁTICA (${now.hour}:${now.minute.toString().padLeft(2, '0')}) ===');
-        await _checkMissedConfirmationsAndApplyConsequences();
-        
-        // 🔧 NUEVO: Marcar verificación como ejecutada
-        final prefs = await SharedPreferences.getInstance();
-        final today = DateTime(now.year, now.month, now.day);
-        await prefs.setString('last_night_verification', today.toIso8601String());
-      }
-    });
-    
-    // 2. 🔧 NUEVO: Verificación al iniciar la app (para casos donde app estuvo cerrada)
-    Timer(Duration(seconds: 5), () async {
-      await _checkPendingNightVerification();
-    });
-    
-    // 3. 🧪 NUEVO: Timer de verificación más frecuente (cada 30 minutos)
-    // Para garantizar que la verificación se ejecute aunque se pierda la ventana exacta
-    Timer.periodic(Duration(minutes: 30), (timer) async {
-      final now = DateTime.now();
+      // Verificar si necesita ejecutar verificación nocturna
+      bool shouldExecute = false;
+      String reason = '';
       
-      // Verificar si ya pasaron las 00:30 y no se ha ejecutado hoy
-      if (now.hour >= 1 || (now.hour == 0 && now.minute >= 30)) {
-        final prefs = await SharedPreferences.getInstance();
+      // Condición 1: Es la ventana principal (00:15 - 01:00)
+      if ((now.hour == 0 && now.minute >= 15) || (now.hour == 1 && now.minute == 0)) {
+        // Verificar si ya se ejecutó hoy
         final lastVerificationStr = prefs.getString('last_night_verification');
         final today = DateTime(now.year, now.month, now.day);
         
-        bool needsVerification = true;
+        bool alreadyExecutedToday = false;
         if (lastVerificationStr != null) {
           final lastVerification = DateTime.parse(lastVerificationStr);
           final lastVerificationDate = DateTime(lastVerification.year, lastVerification.month, lastVerification.day);
-          
-          if (!lastVerificationDate.isBefore(today)) {
-            needsVerification = false;
-          }
+          alreadyExecutedToday = !lastVerificationDate.isBefore(today);
         }
         
-        if (needsVerification) {
-          print('🌙 ⚡ VERIFICACIÓN NOCTURNA DE RESPALDO (${now.hour}:${now.minute.toString().padLeft(2, '0')})');
-          await _checkMissedConfirmationsAndApplyConsequences();
-          await prefs.setString('last_night_verification', today.toIso8601String());
+        if (!alreadyExecutedToday) {
+          shouldExecute = true;
+          reason = 'Ventana principal de verificación (${now.hour}:${now.minute.toString().padLeft(2, '0')})';
         }
       }
+      
+      // Condición 2: Verificación de recuperación (después de las 01:00 si no se ejecutó)
+      else if (now.hour >= 1) {
+        final lastVerificationStr = prefs.getString('last_night_verification');
+        final today = DateTime(now.year, now.month, now.day);
+        
+        bool needsRecovery = true;
+        if (lastVerificationStr != null) {
+          final lastVerification = DateTime.parse(lastVerificationStr);
+          final lastVerificationDate = DateTime(lastVerification.year, lastVerification.month, lastVerification.day);
+          needsRecovery = lastVerificationDate.isBefore(today);
+        }
+        
+        if (needsRecovery) {
+          shouldExecute = true;
+          reason = 'Verificación de recuperación (${now.hour}:${now.minute.toString().padLeft(2, '0')})';
+        }
+      }
+      
+      if (shouldExecute) {
+        print('🌙 === VERIFICACIÓN NOCTURNA AUTOMÁTICA ===');
+        print('📅 Razón: $reason');
+        
+        await _checkMissedConfirmationsAndApplyConsequences();
+        
+        // Marcar como ejecutada
+        final today = DateTime(now.year, now.month, now.day);
+        await prefs.setString('last_night_verification', today.toIso8601String());
+        
+        print('🔧 Verificación marcada como ejecutada para hoy');
+      }
+    });
+    
+    // 2. 🔧 VERIFICACIÓN AL INICIAR LA APP (para casos donde app estuvo cerrada)
+    Timer(Duration(seconds: 5), () async {
+      await _checkPendingNightVerification();
     });
     
     // Regenerar fichas de perdón semanalmente
@@ -315,12 +330,14 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  /// 🔧 NUEVO: Verificar si necesita ejecutar verificación nocturna pendiente
-  /// Se ejecuta al iniciar la app para capturar verificaciones perdidas
+  /// 🔧 MEJORADO: Verificar múltiples días de verificaciones pendientes
+  /// Se ejecuta al iniciar la app para capturar verificaciones perdidas de varios días
   Future<void> _checkPendingNightVerification() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
+      
+      print('🔍 === VERIFICACIÓN DE DÍAS PENDIENTES ===');
       
       // Obtener la fecha de la última verificación nocturna ejecutada
       final lastNightCheckStr = prefs.getString('last_night_verification');
@@ -331,56 +348,137 @@ class _MyAppState extends State<MyApp> {
         lastNightCheck = DateTime.parse(lastNightCheckStr);
       }
       
-      // Si nunca se ha ejecutado, o no se ejecutó hoy
-      bool shouldExecuteNightCheck = false;
-      String reason = '';
+      // Determinar cuántos días han pasado sin verificación
+      List<DateTime> daysMissed = [];
       
       if (lastNightCheck == null) {
-        shouldExecuteNightCheck = true;
-        reason = 'Primera verificación nocturna';
+        // Primera vez - verificar últimos 3 días por seguridad
+        for (int i = 1; i <= 3; i++) {
+          daysMissed.add(today.subtract(Duration(days: i)));
+        }
+        print('📅 Primera verificación - revisando últimos 3 días');
       } else {
         final lastCheckDate = DateTime(lastNightCheck.year, lastNightCheck.month, lastNightCheck.day);
         
-        // Si ya pasó medianoche desde la última verificación
-        if (lastCheckDate.isBefore(today)) {
-          shouldExecuteNightCheck = true;
-          reason = 'Verificación pendiente del ${today.day}/${today.month}';
+        // Verificar cada día desde la última verificación
+        DateTime checkDate = lastCheckDate.add(Duration(days: 1));
+        while (checkDate.isBefore(today) || checkDate.isAtSameMomentAs(today)) {
+          daysMissed.add(checkDate);
+          checkDate = checkDate.add(Duration(days: 1));
+        }
+        
+        if (daysMissed.isNotEmpty) {
+          print('📅 Días sin verificar desde ${lastCheckDate.day}/${lastCheckDate.month}: ${daysMissed.length}');
         }
       }
       
-      if (shouldExecuteNightCheck) {
-        print('🌙 ⚡ EJECUTANDO VERIFICACIÓN NOCTURNA PENDIENTE');
-        print('📅 Razón: $reason');
-        print('🕐 Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}');
+      if (daysMissed.isNotEmpty) {
+        print('🌙 ⚡ EJECUTANDO VERIFICACIONES PENDIENTES');
+        print('� Total de días a verificar: ${daysMissed.length}');
         
-        await _checkMissedConfirmationsAndApplyConsequences();
+        for (final missedDay in daysMissed) {
+          print('�️ Verificando día: ${missedDay.day}/${missedDay.month}/${missedDay.year}');
+          
+          await _checkMissedConfirmationsForSpecificDate(missedDay);
+          
+          // Pequeña pausa para evitar sobrecarga
+          await Future.delayed(Duration(milliseconds: 100));
+        }
         
-        // Marcar como ejecutada HOY
+        // Marcar como ejecutada para HOY
         await prefs.setString('last_night_verification', today.toIso8601String());
         
-        print('✅ Verificación nocturna completada y marcada para hoy');
+        print('✅ Todas las verificaciones pendientes completadas');
+        
+        // Notificación resumen
+        await NotificationService.instance.showImmediateNotification(
+          id: 99998,
+          title: '🌙 Verificación de recuperación',
+          body: 'Se procesaron ${daysMissed.length} días pendientes. Revisa el centro de notificaciones para más detalles.',
+          payload: '{"action":"recovery_summary","days":${daysMissed.length}}',
+        );
+        
       } else {
-        print('✅ Verificación nocturna ya ejecutada hoy (${lastNightCheck?.day}/${lastNightCheck?.month})');
+        print('✅ No hay verificaciones pendientes');
       }
       
     } catch (e) {
-      print('❌ Error verificando verificación nocturna pendiente: $e');
+      print('❌ Error verificando verificaciones pendientes: $e');
+    }
+  }
+  
+  /// 🆕 NUEVA FUNCIÓN: Verificar confirmaciones para una fecha específica
+  Future<void> _checkMissedConfirmationsForSpecificDate(DateTime targetDate) async {
+    try {
+      print('🔍 Verificando confirmaciones para: ${targetDate.day}/${targetDate.month}/${targetDate.year}');
+      
+      // Obtener todos los retos individuales
+      final streakService = IndividualStreakService.instance;
+      final allStreaks = streakService.streaks;
+      
+      if (allStreaks.isEmpty) {
+        print('📝 No hay retos registrados para esta fecha');
+        return;
+      }
+      
+      int retosVerificados = 0;
+      int retosConFallo = 0;
+      
+      // Verificar cada reto individualmente
+      for (final entry in allStreaks.entries) {
+        final challengeId = entry.key;
+        final streak = entry.value;
+        
+        retosVerificados++;
+        
+        // Verificar si fue confirmado en la fecha objetivo
+        final wasConfirmedOnDate = _wasConfirmedOnDate(streak, targetDate);
+        
+        if (!wasConfirmedOnDate) {
+          retosConFallo++;
+          print('   ❌ "${streak.challengeTitle}" no confirmado el ${targetDate.day}/${targetDate.month}');
+          
+          await _applyMissedConfirmationPenalty(
+            challengeId, 
+            streak.challengeTitle,
+            targetDate
+          );
+        } else {
+          print('   ✅ "${streak.challengeTitle}" confirmado correctamente');
+        }
+      }
+      
+      print('📊 Resumen ${targetDate.day}/${targetDate.month}: $retosVerificados verificados, $retosConFallo fallos');
+      
+    } catch (e) {
+      print('❌ Error verificando fecha ${targetDate.day}/${targetDate.month}: $e');
     }
   }
 
   /// 🆕 NUEVO: SISTEMA AUTOMÁTICO DE VERIFICACIÓN NOCTURNA
   /// Verifica retos no confirmados el día anterior y aplica consecuencias automáticas
   Future<void> _checkMissedConfirmationsAndApplyConsequences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final executionId = DateTime.now().millisecondsSinceEpoch.toString();
+    
     try {
       final now = DateTime.now();
       print('🔍 === INICIANDO VERIFICACIÓN NOCTURNA ===');
+      print('🆔 ID de ejecución: $executionId');
       print('🕐 Hora actual: ${now.hour}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}');
       print('📅 Fecha actual: ${now.day}/${now.month}/${now.year}');
       
-      // Calcular el día de ayer
-      final yesterday = DateTime(now.year, now.month, now.day - 1);
+      // 🔧 REGISTRO DETALLADO: Guardar inicio de verificación
+      await prefs.setString('last_verification_start_$executionId', now.toIso8601String());
+      await prefs.setString('current_verification_status', 'INICIANDO');
+      
+      // Calcular el día de ayer usando subtract() para evitar errores de fecha
+      final yesterday = DateTime(now.year, now.month, now.day).subtract(Duration(days: 1));
       
       print('🗓️ Verificando confirmaciones del día: ${yesterday.day}/${yesterday.month}/${yesterday.year}');
+      
+      // 🔧 REGISTRO: Guardar día verificado
+      await prefs.setString('last_verified_date', yesterday.toIso8601String());
       
       // Obtener todos los retos individuales
       final streakService = IndividualStreakService.instance;
@@ -388,10 +486,13 @@ class _MyAppState extends State<MyApp> {
       
       if (allStreaks.isEmpty) {
         print('📝 No hay retos registrados, saliendo...');
+        await prefs.setString('current_verification_status', 'COMPLETADO_SIN_RETOS');
         return;
       }
       
       print('📊 Total de retos encontrados: ${allStreaks.length}');
+      await prefs.setString('current_verification_status', 'PROCESANDO_RETOS');
+      await prefs.setInt('total_challenges_found', allStreaks.length);
       
       int retosVerificados = 0;
       int retosConFallo = 0;
@@ -405,15 +506,24 @@ class _MyAppState extends State<MyApp> {
         
         retosVerificados++;
         
+        // 🔧 REGISTRO: Estado inicial del reto
+        print('🔍 "${streak.challengeTitle}":');
+        print('   📊 Fichas antes: ${streak.forgivenessTokens}');
+        print('   📊 Racha antes: ${streak.currentStreak}');
+        
         // Verificar si fue confirmado ayer
         final wasConfirmedYesterday = _wasConfirmedOnDate(streak, yesterday);
         
-        print('🔍 "${streak.challengeTitle}":');
         print('   ¿Confirmado ayer? ${wasConfirmedYesterday ? "SÍ ✅" : "NO ❌"}');
+        
+        // 🔧 REGISTRO DETALLADO: Guardar estado de cada reto
+        await prefs.setString('challenge_${challengeId}_status_$executionId', 
+          'confirmed:$wasConfirmedYesterday,tokens:${streak.forgivenessTokens},streak:${streak.currentStreak}');
         
         if (!wasConfirmedYesterday) {
           // No fue confirmado ayer - aplicar consecuencias
           retosConFallo++;
+          print('   ⚡ Aplicando consecuencias...');
           
           await _applyMissedConfirmationPenalty(
             challengeId, 
@@ -424,15 +534,26 @@ class _MyAppState extends State<MyApp> {
           // Verificar si se usó ficha o se perdió racha
           final updatedStreak = streakService.getStreak(challengeId);
           if (updatedStreak != null) {
+            print('   📊 Fichas después: ${updatedStreak.forgivenessTokens}');
+            print('   📊 Racha después: ${updatedStreak.currentStreak}');
+            
             // Si las fichas disminuyeron, se usó una ficha
             if (updatedStreak.forgivenessTokens < streak.forgivenessTokens) {
               fichasUsadas++;
+              print('   🛡️ FICHA USADA');
             }
             // Si la racha se reseteó, se perdió
             if (updatedStreak.currentStreak == 0 && streak.currentStreak > 0) {
               rachasPerdidas++;
+              print('   💔 RACHA PERDIDA');
             }
+            
+            // 🔧 REGISTRO FINAL: Estado después del procesamiento
+            await prefs.setString('challenge_${challengeId}_result_$executionId', 
+              'tokens_used:${streak.forgivenessTokens - updatedStreak.forgivenessTokens},streak_lost:${updatedStreak.currentStreak == 0 && streak.currentStreak > 0}');
           }
+        } else {
+          print('   ✅ Reto confirmado correctamente');
         }
       }
       
@@ -444,14 +565,27 @@ class _MyAppState extends State<MyApp> {
       print('💔 Rachas perdidas: $rachasPerdidas');
       print('✅ Verificación nocturna completada');
       
-      // Guardar estadísticas de la verificación (opcional)
-      final prefs = await SharedPreferences.getInstance();
+      // 🔧 REGISTRO FINAL: Marcar verificación como completada
+      await prefs.setString('current_verification_status', 'COMPLETADO');
+      await prefs.setString('last_verification_end_$executionId', DateTime.now().toIso8601String());
+      
+      // Guardar estadísticas de la verificación 
       final today = DateTime.now();
       final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
       await prefs.setInt('night_check_verified_$dateKey', retosVerificados);
       await prefs.setInt('night_check_failed_$dateKey', retosConFallo);
       await prefs.setInt('night_check_tokens_used_$dateKey', fichasUsadas);
       await prefs.setInt('night_check_streaks_lost_$dateKey', rachasPerdidas);
+      
+      // 🚨 NOTIFICACIÓN DE CONFIRMACIÓN (para debugging)
+      if (retosConFallo > 0) {
+        await NotificationService.instance.showImmediateNotification(
+          id: 99999,
+          title: '🌙 Verificación nocturna ejecutada',
+          body: 'Procesados $retosVerificados retos. $retosConFallo fallos detectados. Fichas usadas: $fichasUsadas. Rachas perdidas: $rachasPerdidas.',
+          payload: '{"action":"verification_summary","date":"${yesterday.day}/${yesterday.month}"}',
+        );
+      }
       
     } catch (e) {
       print('❌ Error en verificación nocturna: $e');

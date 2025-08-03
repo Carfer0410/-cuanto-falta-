@@ -231,7 +231,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 16),
                   
                   // Logros recientes
-                  _buildRecentAchievements(localization, achievementService),
+                  _buildRecentAchievements(context, localization, achievementService),
                   
                   const SizedBox(height: 80), // Espacio para el FAB
                 ],
@@ -283,7 +283,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       '¡Bienvenido a ¿Cuánto Falta?!',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -295,7 +295,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 'Crea tu primer reto para comenzar tu aventura de crecimiento personal. ¡Cada gran viaje comienza con un pequeño paso!',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
               ),
               const SizedBox(height: 16),
@@ -328,13 +328,13 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildCompletionStat(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white, size: 24),
-        const SizedBox(height: 4),
+        Icon(icon, color: Colors.white, size: 20),
+        const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -343,7 +343,7 @@ class _DashboardPageState extends State<DashboardPage> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 10,
+            fontSize: 9,
           ),
         ),
       ],
@@ -425,14 +425,14 @@ class _DashboardPageState extends State<DashboardPage> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 description,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   color: Colors.grey[600],
                 ),
               ),
@@ -533,6 +533,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(width: 16),
             Expanded(
+              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -561,29 +562,34 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
-            Column(
-              children: [
-                const Icon(Icons.trending_up, color: Colors.green),
-                Text(
-                  '+${_getThisWeekActivity(stats)}',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  const Icon(Icons.trending_up, color: Colors.green),
+                  Text(
+                    '+${_getThisWeekActivity(stats)}',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text(
-                  'esta semana',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                  Text(
+                    'esta semana',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
+  }
   }
 
   Widget _buildStatsGrid(LocalizationService localization, UserStatistics stats) {
@@ -666,30 +672,37 @@ class _DashboardPageState extends State<DashboardPage> {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 6),
+            Flexible(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
+            const SizedBox(height: 2),
+            Flexible(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -732,7 +745,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Text(
                         '${stats.currentStreak}',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: stats.currentStreak > 0 ? Colors.red : Colors.grey,
                         ),
@@ -740,7 +753,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Text(
                         'días consecutivos',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.grey[600],
                         ),
                       ),
@@ -752,12 +765,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Text(
                         '🔥',
-                        style: TextStyle(fontSize: 24),
+                        style: TextStyle(fontSize: 20),
                       ),
                       Text(
                         '¡Sigue así!',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: Colors.red.shade600,
                           fontWeight: FontWeight.w500,
                         ),
@@ -787,44 +800,58 @@ class _DashboardPageState extends State<DashboardPage> {
             Text(
               localization.t('weekly_activity'),
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
             SizedBox(
               height: 120,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: weeklyData.entries.map((entry) {
-                  final height = maxActivity > 0 ? (entry.value / maxActivity) * 80 : 0.0;
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Container(
-                        width: 30,
-                        height: height,
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius: BorderRadius.circular(4),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final availableWidth = constraints.maxWidth;
+                  final barWidth = (availableWidth / weeklyData.length * 0.6).clamp(20.0, 30.0);
+                  final spacing = (availableWidth - (barWidth * weeklyData.length)) / (weeklyData.length + 1);
+                  
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: weeklyData.entries.map((entry) {
+                      final height = maxActivity > 0 ? (entry.value / maxActivity) * 80 : 0.0;
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: spacing * 0.5),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Container(
+                                width: barWidth,
+                                height: height,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                entry.key,
+                                style: const TextStyle(fontSize: 10),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                '${entry.value}',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        entry.key,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      Text(
-                        '${entry.value}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   );
-                }).toList(),
+                },
               ),
             ),
           ],
@@ -846,7 +873,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Text(
               localization.t('next_achievement'),
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -856,7 +883,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Icon(
                   Icons.emoji_events,
                   color: Colors.amber,
-                  size: 32,
+                  size: 28,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -866,14 +893,14 @@ class _DashboardPageState extends State<DashboardPage> {
                       Text(
                         progress['title'],
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
                         progress['description'],
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.grey[600],
                         ),
                       ),
@@ -891,7 +918,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(height: 4),
             Text(
               '${progress['current']} / ${progress['target']}',
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 10),
             ),
           ],
         ),
@@ -899,7 +926,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildRecentAchievements(LocalizationService localization, AchievementService achievementService) {
+  Widget _buildRecentAchievements(BuildContext context, LocalizationService localization, AchievementService achievementService) {
     // Por ahora mostramos un mensaje genérico sobre logros
     return Card(
       elevation: 2,
@@ -911,16 +938,24 @@ class _DashboardPageState extends State<DashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  localization.t('recent_achievements'),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    localization.t('recent_achievements'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                TextButton(
-                  onPressed: () => _showAchievementsBottomSheet(context),
-                  child: Text(localization.t('view_all')),
+                Flexible(
+                  child: TextButton(
+                    onPressed: () => _showAchievementsBottomSheet(context),
+                    child: Text(
+                      localization.t('view_all'),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -928,11 +963,14 @@ class _DashboardPageState extends State<DashboardPage> {
             Center(
               child: Column(
                 children: [
-                  Icon(Icons.emoji_events_outlined, size: 48, color: Colors.grey[600]),
-                  const SizedBox(height: 8),
+                  Icon(Icons.emoji_events_outlined, size: 40, color: Colors.grey[600]),
+                  const SizedBox(height: 6),
                   Text(
                     localization.t('continue_completing_challenges'),
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
@@ -1119,4 +1157,3 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-}

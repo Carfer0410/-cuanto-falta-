@@ -5,7 +5,6 @@ import 'preparation_task.dart';
 import 'preparation_service.dart';
 import 'localization_service.dart';
 import 'theme_service.dart';
-import 'notification_center_widgets.dart';
 
 class EventPreparationsPage extends StatefulWidget {
   final Event event;

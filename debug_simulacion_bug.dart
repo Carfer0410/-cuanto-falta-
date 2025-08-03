@@ -87,7 +87,7 @@ int calculateStreak(ChallengeStreak streak) {
   DateTime? expectedDate = today;
   
   print('\n--- CÁLCULO PASO A PASO ---');
-  print('Empezando desde: ${expectedDate!.day}/${expectedDate.month}');
+  print('Empezando desde: ${expectedDate.day}/${expectedDate.month}');
   
   for (final confirmation in sortedConfirmations) {
     final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
@@ -108,7 +108,7 @@ int calculateStreak(ChallengeStreak streak) {
     }
     
     // Si esta confirmación es para la fecha que esperamos, continuar racha
-    if (expectedDate != null && confirmDate.isAtSameMomentAs(expectedDate)) {
+    if (confirmDate.isAtSameMomentAs(expectedDate)) {
       currentStreak++;
       expectedDate = expectedDate.subtract(Duration(days: 1));
       print('  ✅ Racha aumenta a: $currentStreak');

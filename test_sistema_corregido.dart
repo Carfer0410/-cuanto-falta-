@@ -1,8 +1,6 @@
 // 🧪 SCRIPT DE PRUEBA PARA EL SISTEMA NOCTURNO CORREGIDO
 // Simula exactamente tu caso: 31/07 creado, 01/08 y 02/08 no confirmados
 
-import 'dart:convert';
-import 'dart:io';
 
 void main() async {
   print('🧪 === PRUEBA DEL SISTEMA NOCTURNO CORREGIDO ===\n');

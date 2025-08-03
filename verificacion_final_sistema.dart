@@ -1,7 +1,6 @@
 // 🔍 SCRIPT PARA VERIFICAR ESTADO ACTUAL Y PROBAR SISTEMA NOCTURNO
 // Este script te permitirá ver exactamente qué pasó con tu reto y probar el sistema corregido
 
-import 'dart:convert';
 
 void main() {
   print('🔍 === VERIFICACIÓN DEL ESTADO ACTUAL ===\n');

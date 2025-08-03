@@ -32,7 +32,7 @@ void main() {
   DateTime? expectedDate = DateTime(today.year, today.month, today.day);
   
   print('\nCálculo paso a paso:');
-  print('Empezando desde hoy: ${expectedDate!.day}/${expectedDate.month}');
+  print('Empezando desde hoy: ${expectedDate.day}/${expectedDate.month}');
   
   for (final confirmation in sortedConfirmations) {
     final confirmDate = DateTime(confirmation.year, confirmation.month, confirmation.day);
@@ -41,7 +41,7 @@ void main() {
     print('  Esperada: ${expectedDate!.day}/${expectedDate.month}');
     print('  ¿Coincide? ${confirmDate.isAtSameMomentAs(expectedDate)}');
     
-    if (expectedDate != null && confirmDate.isAtSameMomentAs(expectedDate)) {
+    if (confirmDate.isAtSameMomentAs(expectedDate)) {
       currentStreak++;
       expectedDate = expectedDate.subtract(Duration(days: 1));
       print('  ✅ Racha aumenta a: $currentStreak');

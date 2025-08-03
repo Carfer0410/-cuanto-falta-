@@ -1,8 +1,6 @@
 // 🚨 DIAGNÓSTICO PROFUNDO DEL SISTEMA AUTOMÁTICO NOCTURNO
 // Este script analizará exactamente qué pasó con tu caso específico
 
-import 'dart:convert';
-import 'dart:io';
 
 void main() {
   print('🚨 === DIAGNÓSTICO SISTEMA VERIFICACIÓN NOCTURNA ===\n');
@@ -11,7 +9,7 @@ void main() {
   final retoCreado = DateTime(2025, 7, 31);
   final primerDia = DateTime(2025, 8, 1);
   final segundoDia = DateTime(2025, 8, 2);
-  final hoy = DateTime(2025, 8, 2);
+  // final hoy = DateTime(2025, 8, 2); // Removed unused variable
   
   print('📊 CASO REPORTADO:');
   print('🔨 Reto creado: ${retoCreado.day}/${retoCreado.month}/${retoCreado.year}');

@@ -91,7 +91,6 @@ void main() {
   
   for (final reto in retosSimulados) {
     final titulo = reto['titulo'] as String;
-    final rachaActual = reto['rachaActual'] as int;
     final historial = (reto['historial'] as List).cast<String>();
     final puntosActuales = reto['puntosActuales'] as int;
     

@@ -1,7 +1,6 @@
 // 🔄 SCRIPT PARA RESETEAR COMPLETAMENTE LA APP
 // Archivo: reset_app_data.dart
 
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {

@@ -429,17 +429,6 @@ class ChallengeNotificationService {
     }
   }
 
-  /// 🧪 MÉTODO DE PRUEBA: Simular notificación de inicio
-  static Future<void> testStartNotification() async {
-    print('🧪 === PRUEBA MANUAL DE NOTIFICACIÓN DE INICIO ===');
-    try {
-      await _sendConfirmationWindowNotifications('start');
-      print('✅ Prueba de notificación de inicio completada');
-    } catch (e) {
-      print('❌ Error en prueba: $e');
-    }
-  }
-
   /// 🧪 MÉTODO DE PRUEBA: Forzar notificación sin verificar si ya fue enviada
   static Future<void> testForceNotification() async {
     print('🧪 === PRUEBA FORZADA DE NOTIFICACIÓN ===');
@@ -936,22 +925,6 @@ class ChallengeNotificationService {
     print('🧪 [TEST] Probando notificación de recordatorio (23:30)...');
     await _sendConfirmationWindowNotifications('reminder');
     print('✅ [TEST] Notificación de recordatorio enviada');
-  }
-
-  /// Método para limpiar el historial de notificaciones y poder probar múltiples veces
-  static Future<void> clearNotificationHistory() async {
-    print('🧹 [TEST] Limpiando historial de notificaciones...');
-    final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys().where((key) => 
-      key.startsWith('confirmation_window_') || 
-      key.startsWith('reminder_sent_')
-    ).toList();
-    
-    for (String key in keys) {
-      await prefs.remove(key);
-    }
-    
-    print('✅ [TEST] Historial limpio. ${keys.length} entradas eliminadas.');
   }
 
   /// Método para verificar el estado actual del sistema de notificaciones

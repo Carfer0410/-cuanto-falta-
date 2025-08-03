@@ -339,6 +339,18 @@ class _MyAppState extends State<MyApp> {
       
       print('🔍 === VERIFICACIÓN DE DÍAS PENDIENTES ===');
       
+      // 🔧 CORRECCIÓN: Verificar primero si existen retos
+      final streakService = IndividualStreakService.instance;
+      final allStreaks = streakService.streaks;
+      
+      if (allStreaks.isEmpty) {
+        print('📝 No hay retos registrados, saltando verificación de días pendientes');
+        print('✅ Es normal en instalaciones nuevas o usuarios sin retos activos');
+        return;
+      }
+      
+      print('📊 Retos encontrados: ${allStreaks.length} - procediendo con verificación');
+      
       // Obtener la fecha de la última verificación nocturna ejecutada
       final lastNightCheckStr = prefs.getString('last_night_verification');
       final today = DateTime(now.year, now.month, now.day);
@@ -352,11 +364,37 @@ class _MyAppState extends State<MyApp> {
       List<DateTime> daysMissed = [];
       
       if (lastNightCheck == null) {
-        // Primera vez - verificar últimos 3 días por seguridad
-        for (int i = 1; i <= 3; i++) {
-          daysMissed.add(today.subtract(Duration(days: i)));
+        // 🔧 MEJORADO: Primera vez - solo verificar si hay retos con historial
+        // Buscar la fecha más antigua entre todos los retos para determinar desde cuándo verificar
+        DateTime? oldestChallengeDate;
+        
+        for (final streak in allStreaks.values) {
+          if (streak.confirmationHistory.isNotEmpty) {
+            final oldestInThisChallenge = streak.confirmationHistory
+                .reduce((a, b) => a.isBefore(b) ? a : b);
+            
+            if (oldestChallengeDate == null || oldestInThisChallenge.isBefore(oldestChallengeDate)) {
+              oldestChallengeDate = oldestInThisChallenge;
+            }
+          }
         }
-        print('📅 Primera verificación - revisando últimos 3 días');
+        
+        if (oldestChallengeDate != null) {
+          // Verificar desde el día después del reto más antiguo hasta ayer
+          final oldestDate = DateTime(oldestChallengeDate.year, oldestChallengeDate.month, oldestChallengeDate.day);
+          DateTime checkDate = oldestDate.add(Duration(days: 1));
+          
+          while (checkDate.isBefore(today)) {
+            daysMissed.add(checkDate);
+            checkDate = checkDate.add(Duration(days: 1));
+          }
+          
+          print('📅 Primera verificación - revisando desde ${oldestDate.day}/${oldestDate.month}: ${daysMissed.length} días');
+        } else {
+          print('📅 Primera verificación - no hay historial de confirmaciones previas');
+          print('✅ No hay días que verificar en instalación limpia');
+          return;
+        }
       } else {
         final lastCheckDate = DateTime(lastNightCheck.year, lastNightCheck.month, lastNightCheck.day);
         
@@ -434,15 +472,20 @@ class _MyAppState extends State<MyApp> {
         // Verificar si fue confirmado en la fecha objetivo
         final wasConfirmedOnDate = _wasConfirmedOnDate(streak, targetDate);
         
-        if (!wasConfirmedOnDate) {
+        // 🔧 CORRECCIÓN: Verificar si el usuario ya interactuó con el reto
+        final userAlreadyInteracted = await _didUserInteractWithChallengeOnDate(challengeId, targetDate);
+        
+        if (!wasConfirmedOnDate && !userAlreadyInteracted) {
           retosConFallo++;
-          print('   ❌ "${streak.challengeTitle}" no confirmado el ${targetDate.day}/${targetDate.month}');
+          print('   ❌ "${streak.challengeTitle}" no confirmado el ${targetDate.day}/${targetDate.month} y usuario no interactuó');
           
           await _applyMissedConfirmationPenalty(
             challengeId, 
             streak.challengeTitle,
             targetDate
           );
+        } else if (!wasConfirmedOnDate && userAlreadyInteracted) {
+          print('   ✅ "${streak.challengeTitle}" - usuario ya interactuó el ${targetDate.day}/${targetDate.month} (usó ficha de perdón)');
         } else {
           print('   ✅ "${streak.challengeTitle}" confirmado correctamente');
         }
@@ -514,16 +557,32 @@ class _MyAppState extends State<MyApp> {
         // Verificar si fue confirmado ayer
         final wasConfirmedYesterday = _wasConfirmedOnDate(streak, yesterday);
         
+        // 🔧 CORRECCIÓN CRÍTICA: Verificar si el usuario YA interactuó con el reto ayer
+        // (ya sea confirmando éxito o usando ficha de perdón en ventana de confirmación)
+        final userAlreadyInteracted = await _didUserInteractWithChallengeOnDate(challengeId, yesterday);
+        
         print('   ¿Confirmado ayer? ${wasConfirmedYesterday ? "SÍ ✅" : "NO ❌"}');
+        print('   ¿Usuario ya interactuó? ${userAlreadyInteracted ? "SÍ ✅" : "NO ❌"}');
         
         // 🔧 REGISTRO DETALLADO: Guardar estado de cada reto
         await prefs.setString('challenge_${challengeId}_status_$executionId', 
-          'confirmed:$wasConfirmedYesterday,tokens:${streak.forgivenessTokens},streak:${streak.currentStreak}');
+          'confirmed:$wasConfirmedYesterday,interacted:$userAlreadyInteracted,tokens:${streak.forgivenessTokens},streak:${streak.currentStreak}');
         
-        if (!wasConfirmedYesterday) {
-          // No fue confirmado ayer - aplicar consecuencias
+        // 🔧 LÓGICA CORREGIDA: Solo aplicar consecuencias si el usuario NO interactuó
+        if (!wasConfirmedYesterday && !userAlreadyInteracted) {
+          // No fue confirmado ayer Y el usuario no interactuó - aplicar consecuencias
           retosConFallo++;
-          print('   ⚡ Aplicando consecuencias...');
+          print('   ⚡ Aplicando consecuencias automáticas (usuario no interactuó)...');
+        } else if (!wasConfirmedYesterday && userAlreadyInteracted) {
+          // El usuario ya interactuó (usó ficha de perdón) - no aplicar consecuencias adicionales
+          print('   ✅ Usuario ya interactuó con el reto ayer (usó ficha de perdón) - sin penalización adicional');
+          continue; // Saltar al siguiente reto
+        } else {
+          print('   ✅ Reto confirmado correctamente');
+          continue; // Saltar al siguiente reto
+        }
+        
+        if (!wasConfirmedYesterday && !userAlreadyInteracted) {
           
           await _applyMissedConfirmationPenalty(
             challengeId, 
@@ -600,6 +659,35 @@ class _MyAppState extends State<MyApp> {
       final confirmNormalized = DateTime(confirmation.year, confirmation.month, confirmation.day);
       return confirmNormalized.isAtSameMomentAs(targetNormalized);
     });
+  }
+
+  /// 🔧 NUEVA FUNCIÓN: Verificar si el usuario ya interactuó con un reto en una fecha específica
+  /// (ya sea confirmando éxito o usando ficha de perdón en ventana de confirmación)
+  Future<bool> _didUserInteractWithChallengeOnDate(String challengeId, DateTime targetDate) async {
+    final prefs = await SharedPreferences.getInstance();
+    final dateKey = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+    
+    // Verificar si hay registro de interacción del usuario para esta fecha
+    // Esto se marca cuando el usuario usa ficha de perdón en ventana de confirmación
+    final interactionKey = 'user_interacted_${challengeId}_$dateKey';
+    final didInteract = prefs.getBool(interactionKey) ?? false;
+    
+    if (didInteract) {
+      print('   📝 Encontrado registro de interacción del usuario para ${targetDate.day}/${targetDate.month}');
+    }
+    
+    return didInteract;
+  }
+
+  /// 🔧 NUEVA FUNCIÓN: Marcar que el usuario interactuó con un reto en una fecha específica
+  /// Esta función debe ser llamada desde counters_page.dart cuando el usuario usa ficha de perdón
+  static Future<void> markUserInteractionWithChallenge(String challengeId, DateTime date) async {
+    final prefs = await SharedPreferences.getInstance();
+    final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final interactionKey = 'user_interacted_${challengeId}_$dateKey';
+    
+    await prefs.setBool(interactionKey, true);
+    print('📝 Marcada interacción del usuario con reto $challengeId para fecha ${date.day}/${date.month}');
   }
 
   /// Aplicar penalización por confirmación perdida (usar ficha de perdón o resetear racha)
@@ -823,4 +911,10 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
+}
+
+/// 🔧 FUNCIÓN GLOBAL: Marcar interacción del usuario para evitar doble penalización
+/// Accesible desde cualquier archivo que importe main.dart
+Future<void> markUserInteractionWithChallenge(String challengeId, DateTime date) async {
+  await _MyAppState.markUserInteractionWithChallenge(challengeId, date);
 }

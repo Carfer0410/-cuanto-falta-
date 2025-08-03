@@ -16,6 +16,7 @@ import 'theme_service.dart';
 import 'challenge_notification_service.dart';
 import 'notification_center_widgets.dart';
 import 'package:uuid/uuid.dart';
+import 'main.dart'; // 🔧 NUEVO: Para acceso a markUserInteractionWithChallenge
 
 class Counter {
   final String uuid; // 🆕 NUEVO: UUID permanente
@@ -1611,6 +1612,11 @@ class _CountersPageState extends State<CountersPage> {
                                               
                                               debugPrint('🔍 Resultado wasForgiven: $wasForgiven');
                                               
+                                              // 🔧 CRÍTICO: Marcar interacción del usuario independientemente del resultado
+                                              // Esto evita que el sistema nocturno penalice nuevamente
+                                              await markUserInteractionWithChallenge(challengeId, DateTime.now());
+                                              debugPrint('📝 Marcada interacción del usuario para evitar doble penalización');
+                                              
                                               // 🔧 CORREGIDO: Si se usa ficha de perdón, marcar como completado hoy
                                               if (wasForgiven) {
                                                 // 🔧 NUEVO: Forzar actualización inmediata del estado UI
@@ -1680,6 +1686,11 @@ class _CountersPageState extends State<CountersPage> {
                                                 counter.title,
                                                 useForgiveness: false
                                               );
+                                              
+                                              // 🔧 CRÍTICO: Marcar interacción del usuario para evitar doble penalización
+                                              // El usuario confirmó explícitamente que no cumplió
+                                              await markUserInteractionWithChallenge(challengeId, DateTime.now());
+                                              debugPrint('📝 Marcada interacción del usuario (no cumplió) para evitar doble penalización');
                                               
                                               if (mounted) {
                                                 ScaffoldMessenger.of(context).showSnackBar(

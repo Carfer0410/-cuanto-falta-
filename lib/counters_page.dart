@@ -1587,6 +1587,13 @@ class _CountersPageState extends State<CountersPage> {
                                             }
                                             
                                             if (streak != null && streak.canUseForgiveness && streak.currentStreak > 0) {
+                                              debugPrint('🔍 === DIÁLOGO FICHA DE PERDÓN ===');
+                                              debugPrint('🔍 challengeId: $challengeId');
+                                              debugPrint('🔍 Fichas disponibles: ${streak.forgivenessTokens}');
+                                              debugPrint('🔍 canUseForgiveness: ${streak.canUseForgiveness}');
+                                              debugPrint('🔍 currentStreak: ${streak.currentStreak}');
+                                              debugPrint('🔍 lastForgivenessUsed: ${streak.lastForgivenessUsed}');
+                                              
                                               // Mostrar diálogo de ficha de perdón
                                               final useForgiveness = await _showForgivenessDialog(
                                                 context, 
@@ -1594,11 +1601,36 @@ class _CountersPageState extends State<CountersPage> {
                                                 streak.currentStreak
                                               );
                                               
+                                              debugPrint('🔍 Usuario decidió usar ficha: ${useForgiveness ?? false}');
+                                              
                                               final wasForgiven = await IndividualStreakService.instance.failChallenge(
                                                 challengeId,
                                                 counter.title,
                                                 useForgiveness: useForgiveness ?? false
                                               );
+                                              
+                                              debugPrint('🔍 Resultado wasForgiven: $wasForgiven');
+                                              
+                                              // 🔧 CORREGIDO: Si se usa ficha de perdón, marcar como completado hoy
+                                              if (wasForgiven) {
+                                                // 🔧 NUEVO: Forzar actualización inmediata del estado UI
+                                                if (mounted) {
+                                                  setState(() {
+                                                    // Forzar rebuild inmediato para que el botón desaparezca
+                                                  });
+                                                }
+                                                
+                                                setState(() {
+                                                  counter.lastConfirmedDate = DateTime(
+                                                    now.year,
+                                                    now.month,
+                                                    now.day,
+                                                  );
+                                                });
+                                                await _saveCounters();
+                                                
+                                                debugPrint('🔍 Counter actualizado - lastConfirmedDate: ${counter.lastConfirmedDate}');
+                                              }
                                               
                                               if (mounted) {
                                                 if (wasForgiven) {
@@ -2298,6 +2330,10 @@ class _CountersPageState extends State<CountersPage> {
 
   /// Mostrar diálogo para usar ficha de perdón
   Future<bool?> _showForgivenessDialog(BuildContext context, int tokensAvailable, int currentStreak) {
+    debugPrint('🔍 === DIÁLOGO DE FICHAS DE PERDÓN ===');
+    debugPrint('🔍 tokensAvailable recibido: $tokensAvailable');
+    debugPrint('🔍 currentStreak recibido: $currentStreak');
+    
     return showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -2374,7 +2410,10 @@ class _CountersPageState extends State<CountersPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () {
+                debugPrint('🔍 Usuario eligió: NO usar ficha');
+                Navigator.of(context).pop(false);
+              },
               child: Text(
                 'No usar (perder racha)',
                 style: TextStyle(color: context.secondaryTextColor),
@@ -2382,7 +2421,10 @@ class _CountersPageState extends State<CountersPage> {
             ),
             ElevatedButton.icon(
               onPressed: tokensAvailable > 0
-                  ? () => Navigator.of(context).pop(true)
+                  ? () {
+                      debugPrint('🔍 Usuario eligió: SÍ usar ficha');
+                      Navigator.of(context).pop(true);
+                    }
                   : null,
               icon: const Icon(Icons.shield, size: 18),
               label: Text(tokensAvailable > 0 ? 'Usar ficha' : 'Sin fichas'),

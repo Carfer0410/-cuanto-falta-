@@ -105,19 +105,35 @@ class ChallengeStreak {
 
   /// Verifica si el usuario puede usar una ficha de perdón
   bool get canUseForgiveness {
-    if (forgivenessTokens <= 0) return false;
+    debugPrint('🔍 === VERIFICANDO canUseForgiveness ===');
+    debugPrint('🔍 Fichas disponibles: $forgivenessTokens');
+    
+    if (forgivenessTokens <= 0) {
+      debugPrint('🔍 RESULTADO: false - Sin fichas disponibles');
+      return false;
+    }
     
     // Solo se puede usar una ficha por día
     if (lastForgivenessUsed != null) {
       final today = DateTime.now();
       final lastUsed = lastForgivenessUsed!;
-      if (lastUsed.year == today.year &&
+      
+      debugPrint('🔍 Fecha de última ficha usada: ${lastUsed.day}/${lastUsed.month}/${lastUsed.year} ${lastUsed.hour}:${lastUsed.minute}');
+      debugPrint('🔍 Fecha de hoy: ${today.day}/${today.month}/${today.year} ${today.hour}:${today.minute}');
+      
+      final isToday = lastUsed.year == today.year &&
           lastUsed.month == today.month &&
-          lastUsed.day == today.day) {
+          lastUsed.day == today.day;
+          
+      debugPrint('🔍 ¿Usada hoy?: $isToday');
+      
+      if (isToday) {
+        debugPrint('🔍 RESULTADO: false - Ya se usó una ficha hoy');
         return false;
       }
     }
     
+    debugPrint('🔍 RESULTADO: true - Puede usar ficha');
     return true;
   }
 
@@ -447,11 +463,15 @@ class IndividualStreakService extends ChangeNotifier {
 
     // Intentar usar ficha de perdón si se solicita
     if (useForgiveness && current.canUseForgiveness) {
-      // 🔧 MEJORADO: La ficha de perdón SIMULA confirmación del día perdido
-      final yesterday = DateTime(now.year, now.month, now.day - 1);
+      debugPrint('🛡️ === PROCESANDO FICHA DE PERDÓN ===');
+      debugPrint('🛡️ challengeId: $challengeId');
+      debugPrint('🛡️ Fichas ANTES: ${current.forgivenessTokens}');
+      debugPrint('🛡️ Última ficha usada ANTES: ${current.lastForgivenessUsed}');
       
-      // Agregar confirmación automática del día perdido
-      final newConfirmationHistory = [...current.confirmationHistory, yesterday];
+      // 🔧 CORREGIDO: La ficha de perdón marca HOY como completado y preserva la racha
+      
+      // Agregar confirmación automática del día ACTUAL (no ayer)
+      final newConfirmationHistory = [...current.confirmationHistory, today];
       
       // Recalcular racha con la nueva confirmación simulada
       final tempStreak = current.copyWith(confirmationHistory: newConfirmationHistory);
@@ -463,24 +483,33 @@ class IndividualStreakService extends ChangeNotifier {
       // 🔧 CORRECCIÓN CRÍTICA: Recalcular puntos totales correctamente
       final totalPoints = 10 + (newCurrentStreak * 2);
       
-      _streaks[challengeId] = current.copyWith(
+      final newStreak = current.copyWith(
         forgivenessTokens: current.forgivenessTokens - 1,
         lastForgivenessUsed: now,
+        lastConfirmedDate: now, // 🔧 CORRECCIÓN CRÍTICA: Actualizar lastConfirmedDate para que isCompletedToday funcione
         confirmationHistory: newConfirmationHistory,
         currentStreak: newCurrentStreak,
         longestStreak: newLongestStreak,
         totalPoints: totalPoints, // 🔧 USAR puntos totales, no sumar
       );
       
+      _streaks[challengeId] = newStreak;
+      
+      debugPrint('🛡️ Fichas DESPUÉS: ${newStreak.forgivenessTokens}');
+      debugPrint('🛡️ Última ficha usada DESPUÉS: ${newStreak.lastForgivenessUsed}');
+      debugPrint('🛡️ lastConfirmedDate DESPUÉS: ${newStreak.lastConfirmedDate}');
+      debugPrint('🛡️ isCompletedToday DESPUÉS: ${newStreak.isCompletedToday}');
+      debugPrint('🛡️ ¿Puede usar ficha DESPUÉS?: ${newStreak.canUseForgiveness}');
+      
       await _saveStreaks();
       notifyListeners();
       
       debugPrint('🛡️ Ficha de perdón usada para $challengeId:');
-      debugPrint('   📅 Confirmación simulada: ${yesterday.day}/${yesterday.month}/${yesterday.year}');
+      debugPrint('   📅 Confirmación simulada para HOY: ${today.day}/${today.month}/${today.year}');
       debugPrint('   🔥 Racha actualizada: ${current.currentStreak} → $newCurrentStreak');
       debugPrint('   ⭐ Puntos totales: $totalPoints');
-      debugPrint('   🛡️ Fichas restantes: ${current.forgivenessTokens - 1}');
-      return true; // Fallo perdonado Y confirmación simulada
+      debugPrint('   🛡️ Fichas restantes: ${newStreak.forgivenessTokens}');
+      return true; // Fallo perdonado Y confirmación simulada para HOY
     }
 
     // Fallo normal: resetear racha Y PUNTOS

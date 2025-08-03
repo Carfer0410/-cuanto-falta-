@@ -303,6 +303,11 @@ class LocalizationService extends ChangeNotifier {
       'theme': 'Tema',
       'lightTheme': 'Claro',
       'darkTheme': 'Modo oscuro',
+      'themeDescription': 'Cambia entre tema claro y oscuro',
+      'darkThemeActivated': '🌙 Modo oscuro activado',
+      'lightThemeActivated': '☀️ Modo claro activado',
+      'customization': 'Personalización',
+      'planningStyle': 'Estilo de Planificación',
       'systemTheme': 'Sistema',
       'notifications': 'Notificaciones',
       'eventNotifications': 'Recordatorios de Eventos',
@@ -320,7 +325,6 @@ class LocalizationService extends ChangeNotifier {
       'notificationInfo': 'Acerca de las notificaciones',
       'soundEnabled': 'Reproducir sonido con las notificaciones',
       'vibrationEnabled': 'Vibrar el dispositivo con las notificaciones',
-      'themeDescription': 'Cambia entre tema claro y oscuro',
 
       // MENSAJES DE SNACKBAR - CONFIGURACIONES
       'eventsActivated': '✅ Notificaciones de eventos activadas',
@@ -335,6 +339,9 @@ class LocalizationService extends ChangeNotifier {
       'challengeFrequencyChanged': '🎯 Frecuencia de retos: cada {frequency} horas',
       'languageChanged': '🌍 Idioma cambiado: {language}',
       'testNotificationSent': '🔔 Notificación de prueba enviada',
+      'retroactiveTest': '🧪 Retroactivo',
+      'retroactiveTestSent': '🧪 Prueba de reto retroactivo enviada',
+      'retroactiveTestError': '❌ Error en prueba',
 
       // SUBTÍTULOS DE NOTIFICACIONES
       'eventNotificationSubtitleEnabled': 'Sistema verifica eventos cada {frequency} minutos para enviar recordatorios oportunos',
@@ -686,6 +693,10 @@ class LocalizationService extends ChangeNotifier {
       'theme': 'Theme',
       'lightTheme': 'Light',
       'darkTheme': 'Dark mode',
+      'darkThemeActivated': '🌙 Dark mode activated',
+      'lightThemeActivated': '☀️ Light mode activated',
+      'customization': 'Customization',
+      'planningStyle': 'Planning Style',
       'systemTheme': 'System',
       'notifications': 'Notifications',
       'eventNotifications': 'Event Reminders',
@@ -718,6 +729,9 @@ class LocalizationService extends ChangeNotifier {
       'challengeFrequencyChanged': '🎯 Challenge frequency: every {frequency} hours',
       'languageChanged': '🌍 Language changed: {language}',
       'testNotificationSent': '🔔 Test notification sent',
+      'retroactiveTest': '🧪 Retroactive',
+      'retroactiveTestSent': '🧪 Retroactive challenge test sent',
+      'retroactiveTestError': '❌ Test error',
 
       // NOTIFICATION SUBTITLES
       'eventNotificationSubtitleEnabled': 'System checks events every {frequency} minutes to send timely reminders',
@@ -1024,6 +1038,10 @@ class LocalizationService extends ChangeNotifier {
       'theme': 'Tema',
       'lightTheme': 'Claro',
       'darkTheme': 'Modo escuro',
+      'darkThemeActivated': '🌙 Modo escuro ativado',
+      'lightThemeActivated': '☀️ Modo claro ativado',
+      'customization': 'Personalização',
+      'planningStyle': 'Estilo de Planejamento',
       'systemTheme': 'Sistema',
       'notifications': 'Notificações',
       'eventNotifications': 'Lembretes de Eventos',
@@ -1054,6 +1072,9 @@ class LocalizationService extends ChangeNotifier {
       'challengeFrequencyChanged': '🎯 Frequência de desafios: a cada {frequency} horas',
       'languageChanged': '🌍 Idioma alterado: {language}',
       'testNotificationSent': '🔔 Notificação de teste enviada',
+      'retroactiveTest': '🧪 Retroativo',
+      'retroactiveTestSent': '🧪 Teste de desafio retroativo enviado',
+      'retroactiveTestError': '❌ Erro no teste',
 
       // LEGENDAS DE NOTIFICAÇÕES
       'eventNotificationSubtitleEnabled': 'Sistema verifica eventos a cada {frequency} minutos para enviar lembretes oportunos',
@@ -1231,6 +1252,10 @@ class LocalizationService extends ChangeNotifier {
       'theme': 'Thème',
       'lightTheme': 'Clair',
       'darkTheme': 'Mode sombre',
+      'darkThemeActivated': '🌙 Mode sombre activé',
+      'lightThemeActivated': '☀️ Mode clair activé',
+      'customization': 'Personnalisation',
+      'planningStyle': 'Style de Planification',
       'systemTheme': 'Système',
       'notifications': 'Notifications',
       'eventNotifications': 'Rappels d\'événements',
@@ -1261,6 +1286,9 @@ class LocalizationService extends ChangeNotifier {
       'challengeFrequencyChanged': '🎯 Fréquence de défis: toutes les {frequency} heures',
       'languageChanged': '🌍 Langue changée: {language}',
       'testNotificationSent': '🔔 Notification de test envoyée',
+      'retroactiveTest': '🧪 Rétroactif',
+      'retroactiveTestSent': '🧪 Test de défi rétroactif envoyé',
+      'retroactiveTestError': '❌ Erreur de test',
 
       // SUBTÍTULOS DE NOTIFICACIONES
       'eventNotificationSubtitleEnabled': 'Le système vérifie les événements toutes les {frequency} minutes pour envoyer des rappels opportuns',
@@ -1438,6 +1466,10 @@ class LocalizationService extends ChangeNotifier {
       'theme': 'Thema',
       'lightTheme': 'Hell',
       'darkTheme': 'Dunkler Modus',
+      'darkThemeActivated': '🌙 Dunkler Modus aktiviert',
+      'lightThemeActivated': '☀️ Heller Modus aktiviert',
+      'customization': 'Anpassung',
+      'planningStyle': 'Planungsstil',
       'systemTheme': 'System',
       'notifications': 'Benachrichtigungen',
       'eventNotifications': 'Ereigniserinnerungen',
@@ -1468,6 +1500,9 @@ class LocalizationService extends ChangeNotifier {
       'challengeFrequencyChanged': '🎯 Challenge-Frequenz: alle {frequency} Stunden',
       'languageChanged': '🌍 Sprache geändert: {language}',
       'testNotificationSent': '🔔 Testbenachrichtigung gesendet',
+      'retroactiveTest': '🧪 Rückwirkend',
+      'retroactiveTestSent': '🧪 Rückwirkender Challenge-Test gesendet',
+      'retroactiveTestError': '❌ Testfehler',
 
       // SUBTÍTULOS DE NOTIFICACIONES
       'eventNotificationSubtitleEnabled': 'System prüft Ereignisse alle {frequency} Minuten für rechtzeitige Erinnerungen',
@@ -1642,6 +1677,12 @@ class LocalizationService extends ChangeNotifier {
 
       // CONFIGURACIÓN BÁSICA
       'appearance': 'Aspetto',
+      'darkTheme': 'Tema scuro',
+      'lightTheme': 'Chiaro',
+      'darkThemeActivated': '🌙 Tema scuro attivato',
+      'lightThemeActivated': '☀️ Tema chiaro attivato',
+      'customization': 'Personalizzazione',
+      'planningStyle': 'Stile di pianificazione',
       'notifications': 'Notifiche',
       'eventNotifications': 'Promemoria eventi',
       'challengeNotifications': 'Notifiche motivazionali',
@@ -1666,6 +1707,9 @@ class LocalizationService extends ChangeNotifier {
       'vibrationDeactivated': '📴 Vibrazione disattivata',
       'languageChanged': '🌍 Lingua cambiata: {language}',
       'testNotificationSent': '🔔 Notifica di test inviata',
+      'retroactiveTest': '🧪 Retroattivo',
+      'retroactiveTestSent': '🧪 Test sfida retroattiva inviato',
+      'retroactiveTestError': '❌ Errore test',
       'eventNotificationSubtitleEnabled': 'Il sistema verifica gli eventi ogni {frequency} minuti per inviare promemoria tempestivi',
       'eventNotificationSubtitleDisabled': 'Non riceverai promemoria di eventi',
       'challengeNotificationSubtitleEnabled': 'Il sistema verifica i risultati ogni {frequency} ore per inviare motivazione',
@@ -1838,8 +1882,20 @@ class LocalizationService extends ChangeNotifier {
       'progress': '進捗',
       'level': 'レベル',
       
+      'appearance': '外観',
+      'darkTheme': 'ダークテーマ',
+      'lightTheme': 'ライトテーマ',
+      'darkThemeActivated': '🌙 ダークテーマがアクティブ',
+      'lightThemeActivated': '☀️ ライトテーマがアクティブ',
+      'customization': 'カスタマイズ',
+      'planningStyle': 'プランニングスタイル',
+      
       'language': '言語',
       'selectLanguage': '言語を選択',
+      'testNotificationSent': '🔔 テスト通知が送信されました',
+      'retroactiveTest': '🧪 遡及',
+      'retroactiveTestSent': '🧪 遡及チャレンジテストが送信されました',
+      'retroactiveTestError': '❌ テストエラー',
     },
 
     'ko': {
@@ -1948,8 +2004,20 @@ class LocalizationService extends ChangeNotifier {
       'progress': '진행 상황',
       'level': '레벨',
       
+      'appearance': '외관',
+      'darkTheme': '다크 테마',
+      'lightTheme': '라이트 테마',
+      'darkThemeActivated': '🌙 다크 테마 활성화',
+      'lightThemeActivated': '☀️ 라이트 테마 활성화',
+      'customization': '맞춤설정',
+      'planningStyle': '계획 스타일',
+      
       'language': '언어',
       'selectLanguage': '언어 선택',
+      'testNotificationSent': '🔔 테스트 알림이 전송되었습니다',
+      'retroactiveTest': '🧪 소급',
+      'retroactiveTestSent': '🧪 소급 챌린지 테스트가 전송되었습니다',
+      'retroactiveTestError': '❌ 테스트 오류',
     },
 
     'zh': {
@@ -2058,8 +2126,20 @@ class LocalizationService extends ChangeNotifier {
       'progress': '进展',
       'level': '等级',
       
+      'appearance': '外观',
+      'darkTheme': '深色主题',
+      'lightTheme': '浅色主题', 
+      'darkThemeActivated': '🌙 深色主题已激活',
+      'lightThemeActivated': '☀️ 浅色主题已激活',
+      'customization': '自定义',
+      'planningStyle': '规划风格',
+      
       'language': '语言',
       'selectLanguage': '选择语言',
+      'testNotificationSent': '🔔 测试通知已发送',
+      'retroactiveTest': '🧪 追溯',
+      'retroactiveTestSent': '🧪 追溯挑战测试已发送',
+      'retroactiveTestError': '❌ 测试错误',
     },
 
     'ar': {
@@ -2168,8 +2248,20 @@ class LocalizationService extends ChangeNotifier {
       'progress': 'التقدم',
       'level': 'المستوى',
       
+      'appearance': 'المظهر',
+      'darkTheme': 'الوضع المظلم',
+      'lightTheme': 'الوضع الفاتح',
+      'darkThemeActivated': '🌙 تم تفعيل الوضع المظلم',
+      'lightThemeActivated': '☀️ تم تفعيل الوضع الفاتح',
+      'customization': 'التخصيص',
+      'planningStyle': 'نمط التخطيط',
+      
       'language': 'اللغة',
       'selectLanguage': 'اختر اللغة',
+      'testNotificationSent': '🔔 تم إرسال إشعار تجريبي',
+      'retroactiveTest': '🧪 رجعي',
+      'retroactiveTestSent': '🧪 تم إرسال اختبار التحدي الرجعي',
+      'retroactiveTestError': '❌ خطأ في الاختبار',
     },
 
     'ru': {
@@ -2278,8 +2370,20 @@ class LocalizationService extends ChangeNotifier {
       'progress': 'Прогресс',
       'level': 'Уровень',
       
+      'appearance': 'Внешний вид',
+      'darkTheme': 'Темная тема',
+      'lightTheme': 'Светлая тема',
+      'darkThemeActivated': '🌙 Темная тема активирована',
+      'lightThemeActivated': '☀️ Светлая тема активирована',
+      'customization': 'Настройка',
+      'planningStyle': 'Стиль планирования',
+      
       'language': 'Язык',
       'selectLanguage': 'Выбрать язык',
+      'testNotificationSent': '🔔 Тестовое уведомление отправлено',
+      'retroactiveTest': '🧪 Ретроактивный',
+      'retroactiveTestSent': '🧪 Ретроактивный тест вызова отправлен',
+      'retroactiveTestError': '❌ Ошибка теста',
     },
 
     'hi': {
@@ -2388,8 +2492,20 @@ class LocalizationService extends ChangeNotifier {
       'progress': 'प्रगति',
       'level': 'स्तर',
       
+      'appearance': 'दिखावट',
+      'darkTheme': 'डार्क थीम',
+      'lightTheme': 'लाइट थीम',
+      'darkThemeActivated': '🌙 डार्क थीम सक्रिय',
+      'lightThemeActivated': '☀️ लाइट थीम सक्रिय',
+      'customization': 'अनुकूलन',
+      'planningStyle': 'योजना शैली',
+      
       'language': 'भाषा',
       'selectLanguage': 'भाषा चुनें',
+      'testNotificationSent': '🔔 परीक्षण अधिसूचना भेजी गई',
+      'retroactiveTest': '🧪 पूर्वव्यापी',
+      'retroactiveTestSent': '🧪 पूर्वव्यापी चुनौती परीक्षण भेजा गया',
+      'retroactiveTestError': '❌ परीक्षण त्रुटि',
     },
   };
 }

@@ -190,7 +190,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('🧪 Prueba de reto retroactivo enviada'),
+                    content: Text(localizationService.t('retroactiveTestSent')),
                     backgroundColor: Colors.green,
                     duration: Duration(seconds: 3),
                   ),
@@ -200,14 +200,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('❌ Error en prueba: $e'),
+                    content: Text('${localizationService.t('retroactiveTestError')}: $e'),
                     backgroundColor: Colors.red,
                     duration: Duration(seconds: 3),
                   ),
                 );
               }
             },
-            child: Text('🧪 Retroactivo'),
+            child: Text(localizationService.t('retroactiveTest')),
           ),
         ],
       ),
@@ -414,7 +414,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       items: ['1', '3', '5', '10', '15'].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text('$value min'),
+                          child: Text('$value ${localizationService.t('minutesShort')}'),
                         );
                       }).toList(),
                       onChanged: _eventNotificationsEnabled ? (String? newValue) {
@@ -442,7 +442,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       items: ['3', '6', '12', '24'].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text('${value}h'),
+                          child: Text('$value${localizationService.t('hoursShort')}'),
                         );
                       }).toList(),
                       onChanged: _challengeNotificationsEnabled ? (String? newValue) {

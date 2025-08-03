@@ -95,9 +95,9 @@ class DataMigrationService {
     }
   }
 
-  /// Fuerza una resincronización completa de datos
+  /// 🔧 ARQUITECTURA CORREGIDA: Sincronización segura que NO corrompe datos
   static Future<void> forceSyncAllData() async {
-    print('🔄 DataMigrationService: Forzando sincronización completa...');
+    print('🔄 DataMigrationService: Forzando sincronización SEGURA...');
 
     try {
       // Obtener todos los eventos de la base de datos
@@ -114,33 +114,32 @@ class DataMigrationService {
       }
       print('📊 DataMigrationService: Encontrados $challengeCount retos');
 
-      // Reconstruir estadísticas desde cero basándose en datos reales
+      // 🔧 SINCRONIZACIÓN SEGURA: Solo actualizar contadores básicos, NO rachas ni puntos
       final currentStats = StatisticsService.instance.statistics;
-      final basePoints = (events.length * 5) + (challengeCount * 10);
       
       final syncedStats = currentStats.copyWith(
         totalEvents: events.length,
         totalChallenges: challengeCount,
-        activeChallenges: challengeCount,
-        completedChallenges: 0, // Por ahora no tenemos manera de saber cuáles están completos
-        // Mantener la racha y actividad reciente, solo corregir contadores
-        totalPoints: currentStats.currentStreak > 0 
-          ? basePoints + (currentStats.currentStreak * 2) // Mantener bonus de racha
-          : basePoints,
+        // 🔧 PRESERVAR DATOS CRÍTICOS:
+        // - NO tocar activeChallenges (se calculará desde IndividualStreakService)
+        // - NO tocar totalPoints (se calculará desde IndividualStreakService)  
+        // - NO tocar currentStreak (se calculará desde IndividualStreakService)
+        // - NO tocar longestStreak (se calculará desde IndividualStreakService)
+        // - Preservar recentActivity y failedDays (historial importante)
       );
 
-      print('📊 DataMigrationService: Actualizando estadísticas a: eventos=${syncedStats.totalEvents}, retos=${syncedStats.totalChallenges}');
+      print('📊 DataMigrationService: Actualizando SOLO contadores básicos: eventos=${syncedStats.totalEvents}, retos=${syncedStats.totalChallenges}');
 
-      // Actualizar el servicio
+      // Actualizar el servicio SIN sobrescribir datos calculados
       await StatisticsService.instance.setStatisticsFromMigration(syncedStats);
 
-      // Verificar logros
+      // Verificar logros (esto es seguro)
       await AchievementService.instance.checkAndUnlockAchievements(syncedStats);
 
-      print('✅ DataMigrationService: Sincronización forzada completada: ${events.length} eventos, $challengeCount retos');
+      print('✅ DataMigrationService: Sincronización SEGURA completada: ${events.length} eventos, $challengeCount retos');
 
     } catch (e) {
-      print('❌ DataMigrationService: Error en la sincronización forzada: $e');
+      print('❌ DataMigrationService: Error en la sincronización segura: $e');
       rethrow; // Re-lanzar el error para que las páginas puedan manejarlo
     }
   }

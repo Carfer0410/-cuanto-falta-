@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'counters_page.dart';
 import 'localization_service.dart';
-import 'statistics_service.dart';
-import 'achievement_service.dart';
 import 'individual_streak_service.dart';
 import 'event.dart';
 import 'challenge_customization_widget.dart';
@@ -401,11 +399,12 @@ class _AddCounterPageState extends State<AddCounterPage> {
     // 🔧 CORREGIDO: Usar UUID del counter recién creado
     await _handleBackdatedChallenge(sanitized, _selectedDate, newCounter.uuid);
     
-    // Registrar estadísticas y verificar logros
-    await StatisticsService.instance.recordChallengeConfirmation();
-    await AchievementService.instance.checkAndUnlockAchievements(
-      StatisticsService.instance.statistics
-    );
+    // 🔧 ARQUITECTURA CORREGIDA: Solo usar IndividualStreakService para retos
+    // StatisticsService NO debe manejar confirmaciones de retos
+    // Los logros se verificarán automáticamente cuando se confirme el reto
+    
+    // No llamar a StatisticsService.recordChallengeConfirmation() aquí
+    // La creación de un reto NO es una confirmación
     
     if (!mounted) return;
     Navigator.pop(context, true);

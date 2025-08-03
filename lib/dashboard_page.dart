@@ -35,10 +35,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  /// 🔧 NUEVO: Sincronizar estadísticas con datos reales de retos individuales
+  /// 🔧 ARQUITECTURA CORREGIDA: Sincronizar con datos reales de IndividualStreakService
   Future<void> _syncRealStatistics() async {
     try {
-      // Obtener estadísticas reales de IndividualStreakService
+      // Obtener estadísticas reales de IndividualStreakService (ÚNICA fuente de verdad)
       final streakService = IndividualStreakService.instance;
       final allStreaks = streakService.streaks;
       
@@ -47,57 +47,58 @@ class _DashboardPageState extends State<DashboardPage> {
         return;
       }
       
-      // Calcular estadísticas reales
-      int activeChallenges = 0; // Retos con racha actual > 0
-      int totalChallenges = allStreaks.length; // Total de retos existentes
+      // 🔧 DEFINICIÓN CORREGIDA: Calcular estadísticas reales basadas en existencia, NO en racha
+      int activeChallenges = allStreaks.length; // TODOS los retos existentes son "activos"
+      int totalChallenges = allStreaks.length;   // Total de retos creados
       int totalPoints = 0;
-      int currentStreak = 0;
-      int longestStreak = 0;
+      int currentStreak = 0;    // Racha más alta actual
+      int longestStreak = 0;    // Racha más larga histórica
+      int completedToday = 0;   // Retos completados hoy
       
       for (final streak in allStreaks.values) {
-        // 🔧 CORREGIDO: Un reto está "activo" si tiene racha actual > 0
-        if (streak.currentStreak > 0) {
-          activeChallenges++;
-        }
-        
-        // Sumar puntos reales (convertir a int)
+        // Sumar puntos reales de cada reto
         totalPoints += streak.totalPoints.round();
         
-        // Calcular racha más larga
+        // Calcular racha más larga histórica
         if (streak.longestStreak > longestStreak) {
           longestStreak = streak.longestStreak;
         }
         
-        // Para la racha actual del dashboard, usar la racha más alta
+        // Para la racha actual del dashboard, usar la racha más alta actual
         if (streak.currentStreak > currentStreak) {
           currentStreak = streak.currentStreak;
         }
-      }
-      
-      // Actualizar StatisticsService con datos reales
-      final statsService = StatisticsService.instance;
-      await statsService.updateChallengeStats(activeChallenges, totalChallenges);
-      
-      // Actualizar puntos totales si es diferente
-      final currentStats = statsService.statistics;
-      if (currentStats.totalPoints != totalPoints) {
-        // Crear estadísticas actualizadas
-        final updatedStats = currentStats.copyWith(
-          totalPoints: totalPoints,
-          currentStreak: currentStreak,
-          longestStreak: longestStreak,
-        );
         
-        // Actualizar estadísticas usando el método disponible
-        await statsService.setStatisticsFromMigration(updatedStats);
+        // Contar retos completados hoy
+        if (streak.isCompletedToday) {
+          completedToday++;
+        }
       }
       
-      print('✅ Estadísticas sincronizadas:');
-      print('  • Retos activos: $activeChallenges');
+      // 🔧 ACTUALIZACIÓN SEGURA: Solo actualizar contadores, preservar historial
+      final statsService = StatisticsService.instance;
+      final currentStats = statsService.statistics;
+      
+      // Crear estadísticas corregidas preservando historial existente
+      final correctedStats = currentStats.copyWith(
+        activeChallenges: activeChallenges,     // CORREGIDO: Todos los retos existentes
+        totalChallenges: totalChallenges,       // Total de retos creados
+        totalPoints: totalPoints,               // Puntos reales de IndividualStreakService
+        currentStreak: currentStreak,           // Racha más alta actual
+        longestStreak: longestStreak,           // Racha más larga histórica
+        completedChallenges: completedToday,    // CORREGIDO: Completados HOY, no total
+        // Preservar: recentActivity, failedDays (para eventos y historial)
+      );
+      
+      await statsService.setStatisticsFromMigration(correctedStats);
+      
+      print('✅ Estadísticas CORREGIDAS y sincronizadas:');
+      print('  • Retos activos: $activeChallenges (TODOS los existentes)');
       print('  • Total retos: $totalChallenges');
-      print('  • Puntos totales: $totalPoints');
-      print('  • Racha actual: $currentStreak');
-      print('  • Racha más larga: $longestStreak');
+      print('  • Puntos totales: $totalPoints (desde IndividualStreakService)');
+      print('  • Racha actual: $currentStreak días');
+      print('  • Racha más larga: $longestStreak días');
+      print('  • Completados hoy: $completedToday retos');
       
     } catch (e) {
       print('❌ Error sincronizando estadísticas: $e');
@@ -196,8 +197,8 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Mensaje especial si todos los retos están completados
-                  if (stats.activeChallenges == 0 && stats.totalChallenges > 0) ...[
+                  // 🔧 CORREGIDO: Mensaje solo si NO hay retos creados
+                  if (stats.totalChallenges == 0) ...[
                     _buildAllChallengesCompletedCard(localization, stats),
                     const SizedBox(height: 16),
                   ],
@@ -223,7 +224,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 16),
                   
                   // Próximo logro o sugerencias especiales
-                  if (stats.activeChallenges == 0 && stats.totalChallenges > 0)
+                  if (stats.totalChallenges == 0)
                     _buildSuggestionsCard(localization, stats)
                   else
                     _buildNextAchievementCard(localization, achievementService),
@@ -251,7 +252,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // Tarjeta especial cuando todos los retos están completados
+  // 🔧 CORREGIDO: Tarjeta de bienvenida cuando no hay retos creados
   Widget _buildAllChallengesCompletedCard(LocalizationService localization, UserStatistics stats) {
     return Card(
       elevation: 4,
@@ -259,7 +260,7 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
-            colors: [Colors.green.shade400, Colors.green.shade600],
+            colors: [Colors.orange.shade400, Colors.orange.shade600],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -272,14 +273,14 @@ class _DashboardPageState extends State<DashboardPage> {
               Row(
                 children: [
                   const Icon(
-                    Icons.celebration,
+                    Icons.rocket_launch,
                     color: Colors.white,
                     size: 32,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      localization.t('congratulations'),
+                      '¡Bienvenido a ¿Cuánto Falta?!',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 22,
@@ -291,7 +292,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                localization.t('all_challenges_completed'),
+                'Crea tu primer reto para comenzar tu aventura de crecimiento personal. ¡Cada gran viaje comienza con un pequeño paso!',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -586,8 +587,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildStatsGrid(LocalizationService localization, UserStatistics stats) {
-    // Si todos los retos están completados, mostrar estadísticas especiales
-    if (stats.activeChallenges == 0 && stats.totalChallenges > 0) {
+    // 🔧 CORREGIDO: Mostrar estadísticas especiales solo si NO hay retos existentes
+    if (stats.totalChallenges == 0) {
       return GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
@@ -597,10 +598,10 @@ class _DashboardPageState extends State<DashboardPage> {
         childAspectRatio: 1.2,
         children: [
           _buildStatCard(
-            'Retos Completados',
-            '${stats.completedChallenges}/${stats.totalChallenges}',
-            Icons.task_alt,
-            Colors.green,
+            'Sin Retos',
+            'Crea tu primer reto',
+            Icons.add_task,
+            Colors.grey,
           ),
           _buildStatCard(
             'Puntos Totales',
@@ -609,22 +610,22 @@ class _DashboardPageState extends State<DashboardPage> {
             Colors.amber,
           ),
           _buildStatCard(
-            'Racha Actual',
-            '${stats.currentStreak} días',
-            Icons.local_fire_department,
-            Colors.red,
+            'Eventos',
+            '${stats.totalEvents}',
+            Icons.event,
+            Colors.blue,
           ),
           _buildStatCard(
-            'Mejor Racha',
-            '${stats.longestStreak} días',
-            Icons.military_tech,
-            Colors.purple,
+            'Comienza Hoy',
+            '¡Tu primera racha!',
+            Icons.local_fire_department,
+            Colors.red,
           ),
         ],
       );
     }
     
-    // Estadísticas normales cuando hay retos activos
+    // Estadísticas normales cuando hay retos existentes
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -640,7 +641,7 @@ class _DashboardPageState extends State<DashboardPage> {
           Colors.blue,
         ),
         _buildStatCard(
-          localization.t('total_challenges'),
+          'Retos Creados', // CORREGIDO: Cambiar de "total_challenges" a descripción clara
           stats.totalChallenges.toString(),
           Icons.psychology,
           Colors.green,

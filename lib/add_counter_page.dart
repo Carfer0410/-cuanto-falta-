@@ -74,9 +74,10 @@ class _AddCounterPageState extends State<AddCounterPage> {
     final today = DateTime(now.year, now.month, now.day);
     final start = DateTime(startDate.year, startDate.month, startDate.day);
     
-    // CORREGIDO: Calcular días correctamente incluyendo el día de inicio (INCLUSIVO)
-    // Ejemplo: 18 julio → 21 julio = 4 días (18, 19, 20, 21)
-    final daysPassed = today.difference(start).inDays + 1;
+    // 🔧 CORREGIDO: Solo calcular días transcurridos sin incluir el día actual
+    // Si se creó hoy, daysPassed = 0 (no activar retroactivo)
+    // Si se creó ayer, daysPassed = 1 (activar retroactivo)
+    final daysPassed = today.difference(start).inDays;
     
     // 🔍 DEBUG: Logs detallados para investigar el bug
     print('🔍 === _handleBackdatedChallenge DEBUG ===');
@@ -88,9 +89,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
     print('🔍 daysPassed calculado: $daysPassed');
     print('🔍 ¿Activar backdated dialog?: ${daysPassed >= 1}');
     
-    // Solo activar si el reto empezó al menos 1 día antes
+    // Solo activar si el reto empezó al menos 1 día antes (NO hoy)
     if (daysPassed < 1) {
-      print('🔍 RESULTADO: NO activar diálogo (daysPassed < 1)');
+      print('🔍 RESULTADO: NO activar diálogo - Reto creado hoy, cronómetro inicia desde cero');
       return;
     }
     

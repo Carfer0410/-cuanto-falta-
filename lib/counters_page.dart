@@ -1206,6 +1206,7 @@ class _CountersPageState extends State<CountersPage> {
                                     lastConfirmedDate: counter.lastConfirmedDate,
                                     confirmedToday: confirmedToday,
                                     fontSize: 22,
+                                    isChallengeStarted: counter.challengeStartedAt != null, // 🆕 NUEVO: Pasar si está iniciado
                                   ),
                                 ),
                               ),
@@ -1348,8 +1349,12 @@ class _CountersPageState extends State<CountersPage> {
                                         ),
                                         onPressed: () {
                                           setState(() {
-                                            // 🔧 CORREGIDO: Iniciar cronómetro desde el momento exacto que se presiona el botón
-                                            counter.challengeStartedAt = DateTime.now();
+                                            // 🔧 CORREGIDO: El cronómetro debe empezar desde 00:00:00, no desde la hora actual
+                                            // Establecer challengeStartedAt a DateTime.now() para que el cronómetro empiece desde cero
+                                            final now = DateTime.now();
+                                            counter.challengeStartedAt = now;
+                                            print('🕐 Reto "${counter.title}" iniciado a las ${now.hour}:${now.minute}:${now.second}');
+                                            print('   Cronómetro empezará desde 00:00:00');
                                             // ❌ NO establecer lastConfirmedDate al iniciar - el usuario debe confirmar manualmente
                                           });
                                           _saveCounters();
@@ -2529,6 +2534,7 @@ class _IndividualStreakDisplay extends StatefulWidget {
   final DateTime? lastConfirmedDate;
   final bool confirmedToday;
   final double? fontSize;
+  final bool isChallengeStarted; // 🆕 NUEVO: Indica si el reto está iniciado
   
   const _IndividualStreakDisplay({
     Key? key,
@@ -2537,6 +2543,7 @@ class _IndividualStreakDisplay extends StatefulWidget {
     required this.lastConfirmedDate,
     required this.confirmedToday,
     this.fontSize,
+    required this.isChallengeStarted, // 🆕 NUEVO: Parámetro requerido
   }) : super(key: key);
 
   @override
@@ -2648,8 +2655,8 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
   void _updateDuration() {
     final now = DateTime.now();
     
-    // CORREGIDO: El cronómetro debe contar desde que empezó ESTE reto específico
-    // No desde la última confirmación (eso sería para resetear el cronómetro cada día)
+    // 🔧 CORREGIDO: El cronómetro debe contar desde que el usuario INICIÓ el reto
+    // widget.startDate ya contiene la lógica correcta: challengeStartedAt ?? counter.startDate
     setState(() {
       _duration = now.difference(widget.startDate);
     });
@@ -2726,47 +2733,60 @@ class _IndividualStreakDisplayState extends State<_IndividualStreakDisplay> {
         ),
         const SizedBox(height: 8),
         
-        // Etiqueta para el cronómetro
-        Text(
-          'Tiempo corrido:',
-          style: TextStyle(
-            fontSize: fontSize - 8,
-            color: context.secondaryTextColor,
-            fontWeight: FontWeight.w500,
+        // 🔧 CORREGIDO: Solo mostrar cronómetro si el reto está iniciado
+        if (widget.isChallengeStarted) ...[
+          // Etiqueta para el cronómetro
+          Text(
+            'Tiempo corrido:',
+            style: TextStyle(
+              fontSize: fontSize - 8,
+              color: context.secondaryTextColor,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        
-        // Tiempo transcurrido completo (SIEMPRE muestra años, meses, días, horas, minutos y segundos cuando aplique)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Mostrar años si existen
-            if (years > 0) ...[
-              _buildTimeUnit(years, 'a', fontSize - 6),
+          const SizedBox(height: 2),
+          
+          // Tiempo transcurrido completo (SIEMPRE muestra años, meses, días, horas, minutos y segundos cuando aplique)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Mostrar años si existen
+              if (years > 0) ...[
+                _buildTimeUnit(years, 'a', fontSize - 6),
+                const SizedBox(width: 4),
+              ],
+              // Mostrar meses si existen (o si hay años)
+              if (months > 0 || years > 0) ...[
+                _buildTimeUnit(months, 'm', fontSize - 5),
+                const SizedBox(width: 4),
+              ],
+              // Siempre mostrar días (usar remDays si calculamos meses/años, sino days normal)
+              if (days >= 30) ...[
+                _buildTimeUnit(remDays, 'd', fontSize - 4),
+                const SizedBox(width: 4),
+              ] else if (days > 0) ...[
+                _buildTimeUnit(days, 'd', fontSize - 4),
+                const SizedBox(width: 4),
+              ],
+              // SIEMPRE mostrar horas, minutos y segundos
+              _buildTimeUnit(hours, 'h', fontSize - 4),
               const SizedBox(width: 4),
+              _buildTimeUnit(minutes, 'm', fontSize - 4),
+              const SizedBox(width: 4),
+              _buildTimeUnit(seconds, 's', fontSize - 4),
             ],
-            // Mostrar meses si existen (o si hay años)
-            if (months > 0 || years > 0) ...[
-              _buildTimeUnit(months, 'm', fontSize - 5),
-              const SizedBox(width: 4),
-            ],
-            // Siempre mostrar días (usar remDays si calculamos meses/años, sino days normal)
-            if (days >= 30) ...[
-              _buildTimeUnit(remDays, 'd', fontSize - 4),
-              const SizedBox(width: 4),
-            ] else if (days > 0) ...[
-              _buildTimeUnit(days, 'd', fontSize - 4),
-              const SizedBox(width: 4),
-            ],
-            // SIEMPRE mostrar horas, minutos y segundos
-            _buildTimeUnit(hours, 'h', fontSize - 4),
-            const SizedBox(width: 4),
-            _buildTimeUnit(minutes, 'm', fontSize - 4),
-            const SizedBox(width: 4),
-            _buildTimeUnit(seconds, 's', fontSize - 4),
-          ],
-        ),
+          ),
+        ] else ...[
+          // Mostrar mensaje cuando el reto no está iniciado
+          Text(
+            'Presiona "Iniciar Reto" para comenzar el cronómetro',
+            style: TextStyle(
+              fontSize: fontSize - 8,
+              color: context.secondaryTextColor,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
         
         // Fichas de perdón (solo si tiene alguna)
         if (forgivenessTokens > 0) ...[

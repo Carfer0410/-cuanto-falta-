@@ -573,13 +573,23 @@ class _CountersPageState extends State<CountersPage> {
       return false;
     }
 
-    // 2. 🔧 SIMPLIFICADO: Tiempo mínimo universal de 5 minutos
+    // 2. 🔧 CORREGIDO: Tiempo mínimo contextual
     final startTime = counter.challengeStartedAt!;
     final minutesSinceStart = now.difference(startTime).inMinutes;
     final currentHour = now.hour;
     
-    const minimumTimeRequired = 5; // Tiempo universal simplificado
-    const timeContext = 'tiempo de reflexión universal';
+    // 🆕 LÓGICA CONTEXTUAL: Determinar tiempo mínimo requerido
+    final isSameDay = _isSameDay(startTime, now);
+    final createdInConfirmationWindow = startTime.hour >= 21 && startTime.hour <= 23;
+    
+    int minimumTimeRequired = 0; // Por defecto sin espera
+    String timeContext = 'sin tiempo de espera';
+    
+    // Solo aplicar tiempo de reflexión de 10 minutos si cumple AMBAS condiciones
+    if (isSameDay && createdInConfirmationWindow) {
+      minimumTimeRequired = 10;
+      timeContext = 'tiempo de reflexión (ventana de confirmación)';
+    }
     
     if (minutesSinceStart < minimumTimeRequired) {
       print('⚠️ "${counter.title}" - Solo ${minutesSinceStart}min desde inicio (mínimo ${minimumTimeRequired}min - $timeContext)');

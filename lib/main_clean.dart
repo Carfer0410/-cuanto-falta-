@@ -209,17 +209,18 @@ class _MyAppState extends State<MyApp> {
       final now = DateTime.now();
       final prefs = await SharedPreferences.getInstance();
 
-      // CORRECCIÓN CRÍTICA TOTAL: SOLO ejecutar entre 00:00 y 01:59
-      // ABSOLUTAMENTE PROHIBIDO ejecutar durante el día (02:00-23:59)
-      if (now.hour >= 2) {
-        // BLOQUEAR COMPLETAMENTE desde las 02:00 hasta medianoche
+      // CORRECCIÓN CRÍTICA TOTAL: SOLO ejecutar entre 00:00 y 02:00
+      // ABSOLUTAMENTE PROHIBIDO ejecutar durante el día (02:01-23:59)
+      if (now.hour > 2) {
+        // BLOQUEAR COMPLETAMENTE durante TODO EL DÍA
         return;
       }
 
       // Verificar si necesita ejecutar verificación nocturna
       bool shouldExecute = false;
+      String reason = '';
 
-      // CONDICIÓN ULTRA ESTRICTA: Solo entre 00:15 y 01:29
+      // CONDICIÓN ULTRA ESTRICTA: Solo entre 00:15 y 01:30
       if (now.hour == 0 && now.minute >= 15) {
         // Verificar si ya se ejecutó hoy
         final lastVerificationStr = prefs.getString('last_night_verification');
@@ -238,9 +239,11 @@ class _MyAppState extends State<MyApp> {
 
         if (!alreadyExecutedToday) {
           shouldExecute = true;
+          reason =
+              'Ventana NOCTURNA ESTRICTA (${now.hour}:${now.minute.toString().padLeft(2, '0')})';
         }
       }
-      // Solo recuperación nocturna entre 01:30 y 01:59
+      // Solo recuperación nocturna entre 01:30 y 02:00
       else if (now.hour == 1 && now.minute >= 30) {
         final lastVerificationStr = prefs.getString('last_night_verification');
         final today = DateTime(now.year, now.month, now.day);
@@ -258,6 +261,8 @@ class _MyAppState extends State<MyApp> {
 
         if (needsRecovery) {
           shouldExecute = true;
+          reason =
+              'Recuperación NOCTURNA TARDÍA (${now.hour}:${now.minute.toString().padLeft(2, '0')})';
         }
       }
 

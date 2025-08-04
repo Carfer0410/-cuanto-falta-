@@ -1,6 +1,30 @@
 # 🔧 CORRECCIÓN CRÍTICA: Error del Verificador Nocturno - SOLUCIONADO
 
-## 🚨 PROBLEMA IDENTIFICADO
+## 🚨 NUEVOS PROBLEMAS CRÍTICOS IDENTIFICADOS Y CORREGIDOS
+
+### ❌ **BUG CRÍTICO #2: Ejecución Durante el Día**
+**Fecha:** Diciembre 2024
+**Problema:** El verificador nocturno se ejecutaba **DURANTE EL DÍA** (ej: 11:07 AM) procesando 28 días y gastando fichas de perdón incorrectamente.
+
+**CAUSA:** Condición lógica incorrecta en `main.dart` línea 252:
+```dart
+// ❌ CONDICIÓN INCORRECTA
+if (now.hour < 0 || now.hour > 2) {
+```
+- `now.hour < 0` es **IMPOSIBLE** (horas van de 0-23)
+- Esta condición NUNCA bloqueaba, permitiendo ejecución a cualquier hora
+
+**✅ CORRECCIÓN APLICADA:**
+```dart
+// ✅ CONDICIÓN CORREGIDA
+if (now.hour > 2) {
+```
+- Verificador **SOLO** entre 00:00-02:00
+- **COMPLETAMENTE BLOQUEADO** entre 02:01-23:59
+
+---
+
+## 🚨 PROBLEMA INICIAL IDENTIFICADO
 
 **Situación reportada**: El usuario confirmó correctamente un reto en la ventana de confirmación (21:00-23:59), pero a las 21:30 el verificador nocturno aplicó incorrectamente una penalización, quitando una ficha de perdón a pesar de que el reto ya había sido confirmado.
 

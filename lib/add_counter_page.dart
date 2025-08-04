@@ -18,7 +18,9 @@ class AddCounterPage extends StatefulWidget {
 
 class _AddCounterPageState extends State<AddCounterPage> {
   static const List<String> _bannedWords = ['mierda', 'puta', 'idiota'];
-  static final DateTime _minDate = DateTime.now().subtract(Duration(days: 3650)); // hace 10 años
+  static final DateTime _minDate = DateTime.now().subtract(
+    Duration(days: 3650),
+  ); // hace 10 años
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
@@ -50,9 +52,20 @@ class _AddCounterPageState extends State<AddCounterPage> {
   String _sanitizeTitle(String input) {
     var title = input.trim().toLowerCase();
     // Eliminar todos los caracteres de puntuación
-    title = title.replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '').trim();
+    title =
+        title.replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '').trim();
     // Prefijos comunes a eliminar, incluyendo sinónimos
-    const prefixes = ['dejar de ', 'parar de ', 'comenzar a ', 'empezar a ', 'cesar ', 'detener ', 'iniciar ', 'abandonar ', 'suprimir '];
+    const prefixes = [
+      'dejar de ',
+      'parar de ',
+      'comenzar a ',
+      'empezar a ',
+      'cesar ',
+      'detener ',
+      'iniciar ',
+      'abandonar ',
+      'suprimir ',
+    ];
     bool removed;
     do {
       removed = false;
@@ -67,16 +80,20 @@ class _AddCounterPageState extends State<AddCounterPage> {
   }
 
   /// Sistema inteligente de rachas para retos registrados con fecha atrasada
-  Future<void> _handleBackdatedChallenge(String challengeTitle, DateTime startDate, String challengeId) async {
+  Future<void> _handleBackdatedChallenge(
+    String challengeTitle,
+    DateTime startDate,
+    String challengeId,
+  ) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final start = DateTime(startDate.year, startDate.month, startDate.day);
-    
+
     // 🔧 CORREGIDO: Solo calcular días transcurridos sin incluir el día actual
     // Si se creó hoy, daysPassed = 0 (no activar retroactivo)
     // Si se creó ayer, daysPassed = 1 (activar retroactivo)
     final daysPassed = today.difference(start).inDays;
-    
+
     // 🔍 DEBUG: Logs detallados para investigar el bug
     print('🔍 === _handleBackdatedChallenge DEBUG ===');
     print('🔍 challengeTitle: $challengeTitle');
@@ -86,20 +103,22 @@ class _AddCounterPageState extends State<AddCounterPage> {
     print('🔍 start (normalizado): $start');
     print('🔍 daysPassed calculado: $daysPassed');
     print('🔍 ¿Activar backdated dialog?: ${daysPassed >= 1}');
-    
+
     // Solo activar si el reto empezó al menos 1 día antes (NO hoy)
     if (daysPassed < 1) {
-      print('🔍 RESULTADO: NO activar diálogo - Reto creado hoy, cronómetro inicia desde cero');
+      print(
+        '🔍 RESULTADO: NO activar diálogo - Reto creado hoy, cronómetro inicia desde cero',
+      );
       return;
     }
-    
+
     if (!mounted) return;
-    
+
     print('🔍 === DEBUG _handleBackdatedChallenge ===');
     print('🔍 Counter recién agregado: $challengeTitle');
     print('🔍 ChallengeId (UUID): $challengeId');
     print('🔍 Días transcurridos: $daysPassed');
-    
+
     // Mostrar diálogo de cortesía para retos atrasados
     final result = await showDialog<String>(
       context: context,
@@ -135,7 +154,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Registraste un reto que empezó el ${startDate.day}/${startDate.month}/${startDate.year}. Han pasado ${daysPassed - 1} ${daysPassed - 1 == 1 ? 'día' : 'días'} desde entonces.',
+                        'Registraste un reto que empezó el ${startDate.day}/${startDate.month}/${startDate.year}. Han pasado $daysPassed ${daysPassed == 1 ? 'día' : 'días'} desde entonces.',
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           color: Colors.blue[800],
@@ -188,50 +207,76 @@ class _AddCounterPageState extends State<AddCounterPage> {
         );
       },
     );
-    
+
     if (!mounted) return;
-    
+
     // Procesar respuesta del usuario
     switch (result) {
       case 'yes':
         // Usuario confirma que cumplió todos los días
-        await _grantBackdatedStreak(challengeId, challengeTitle, startDate, daysPassed);
+        await _grantBackdatedStreak(
+          challengeId,
+          challengeTitle,
+          startDate,
+          daysPassed,
+        );
         break;
       case 'partial':
         // Usuario cumplió solo algunos días - mostrar selector
-        await _showPartialStreakDialog(challengeId, challengeTitle, startDate, daysPassed);
+        await _showPartialStreakDialog(
+          challengeId,
+          challengeTitle,
+          startDate,
+          daysPassed,
+        );
         break;
       case 'no':
       default:
         // Usuario no cumplió - empezar racha desde 0 (comportamiento normal)
-        await IndividualStreakService.instance.registerChallenge(challengeId, challengeTitle);
+        await IndividualStreakService.instance.registerChallenge(
+          challengeId,
+          challengeTitle,
+        );
         break;
     }
   }
 
   /// Otorga racha completa para retos cumplidos retroactivamente
-  Future<void> _grantBackdatedStreak(String challengeId, String challengeTitle, DateTime startDate, int daysPassed) async {
+  Future<void> _grantBackdatedStreak(
+    String challengeId,
+    String challengeTitle,
+    DateTime startDate,
+    int daysPassed,
+  ) async {
     print('🔄 === _grantBackdatedStreak INICIADO ===');
     print('🔄 challengeId: $challengeId');
     print('🔄 challengeTitle: $challengeTitle');
     print('🔄 daysPassed: $daysPassed');
-    
+
     // Usar el nuevo método especializado para rachas retroactivas
     await IndividualStreakService.instance.grantBackdatedStreak(
-      challengeId, 
-      challengeTitle, 
-      startDate, 
-      daysPassed
+      challengeId,
+      challengeTitle,
+      startDate,
+      daysPassed,
     );
-    
-    print('🔄 ✅ Reto retroactivo creado con racha calculada correctamente: $daysPassed días');
-    
+
+    print(
+      '🔄 ✅ Reto retroactivo creado con racha calculada correctamente: $daysPassed días',
+    );
+
     // CORREGIDO: Usar startDate directamente en lugar de calcular desde daysPassed
-    final exactStartTime = DateTime(startDate.year, startDate.month, startDate.day); // Usar fecha original seleccionada
+    final exactStartTime = DateTime(
+      startDate.year,
+      startDate.month,
+      startDate.day,
+    ); // Usar fecha original seleccionada
     await _updateCounterStartTimeForConsistency(challengeTitle, exactStartTime);
-    
-    print('🔄 📅 Cronómetro configurado desde fecha original: ${startDate.day}/${startDate.month}/${startDate.year}');
-    
+
+    print(
+      '🔄 📅 Cronómetro configurado desde fecha original: ${startDate.day}/${startDate.month}/${startDate.year}',
+    );
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -255,15 +300,18 @@ class _AddCounterPageState extends State<AddCounterPage> {
   }
 
   /// Actualiza el challengeStartedAt del counter para sincronizar cronómetro con racha
-  Future<void> _updateCounterStartTimeForConsistency(String challengeTitle, DateTime newStartTime) async {
+  Future<void> _updateCounterStartTimeForConsistency(
+    String challengeTitle,
+    DateTime newStartTime,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString('counters');
       if (jsonString == null) return;
-      
+
       List<dynamic> list = jsonDecode(jsonString);
       bool updated = false;
-      
+
       // Buscar y actualizar el counter específico
       for (int i = 0; i < list.length; i++) {
         if (list[i]['title'] == challengeTitle) {
@@ -273,10 +321,12 @@ class _AddCounterPageState extends State<AddCounterPage> {
           break;
         }
       }
-      
+
       if (updated) {
         await prefs.setString('counters', jsonEncode(list));
-        print('✅ Cronómetro sincronizado: $challengeTitle ahora cuenta desde $newStartTime');
+        print(
+          '✅ Cronómetro sincronizado: $challengeTitle ahora cuenta desde $newStartTime',
+        );
       }
     } catch (e) {
       print('❌ Error sincronizando cronómetro: $e');
@@ -284,9 +334,14 @@ class _AddCounterPageState extends State<AddCounterPage> {
   }
 
   /// Permite al usuario seleccionar cuántos días realmente cumplió
-  Future<void> _showPartialStreakDialog(String challengeId, String challengeTitle, DateTime startDate, int totalDays) async {
+  Future<void> _showPartialStreakDialog(
+    String challengeId,
+    String challengeTitle,
+    DateTime startDate,
+    int totalDays,
+  ) async {
     int selectedDays = 0;
-    
+
     final result = await showDialog<int>(
       context: context,
       builder: (BuildContext context) {
@@ -306,23 +361,35 @@ class _AddCounterPageState extends State<AddCounterPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        onPressed: selectedDays > 0 ? () => setState(() => selectedDays--) : null,
+                        onPressed:
+                            selectedDays > 0
+                                ? () => setState(() => selectedDays--)
+                                : null,
                         icon: const Icon(Icons.remove_circle),
                         color: Colors.orange,
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.orange),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '$selectedDays días',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       IconButton(
-                        onPressed: selectedDays < totalDays ? () => setState(() => selectedDays++) : null,
+                        onPressed:
+                            selectedDays < totalDays
+                                ? () => setState(() => selectedDays++)
+                                : null,
                         icon: const Icon(Icons.add_circle),
                         color: Colors.orange,
                       ),
@@ -337,7 +404,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(selectedDays),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                  ),
                   child: const Text('Confirmar'),
                 ),
               ],
@@ -346,12 +415,20 @@ class _AddCounterPageState extends State<AddCounterPage> {
         );
       },
     );
-    
+
     if (result != null && result > 0) {
-      await _grantBackdatedStreak(challengeId, challengeTitle, startDate, result);
+      await _grantBackdatedStreak(
+        challengeId,
+        challengeTitle,
+        startDate,
+        result,
+      );
     } else {
       // Si cancela o selecciona 0, empezar desde 0
-      await IndividualStreakService.instance.registerChallenge(challengeId, challengeTitle);
+      await IndividualStreakService.instance.registerChallenge(
+        challengeId,
+        challengeTitle,
+      );
     }
   }
 
@@ -366,46 +443,70 @@ class _AddCounterPageState extends State<AddCounterPage> {
     final text = _titleController.text;
     final sanitized = _sanitizeTitle(text);
     // Validar fecha
-    if (_selectedDate.isAfter(DateTime.now()) || _selectedDate.isBefore(_minDate)) {
+    if (_selectedDate.isAfter(DateTime.now()) ||
+        _selectedDate.isBefore(_minDate)) {
       if (!mounted) return;
-      showDialog(context: context, builder: (_) => AlertDialog(
-        title: Text(localizationService.t('invalidDate')),
-        content: Text(localizationService.t('invalidDateMessage')),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(localizationService.t('ok')))],
-      ));
+      showDialog(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              title: Text(localizationService.t('invalidDate')),
+              content: Text(localizationService.t('invalidDateMessage')),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(localizationService.t('ok')),
+                ),
+              ],
+            ),
+      );
       return;
     }
     // Validar duplicados
     if (list.any((e) => (e['title'] as String) == sanitized)) {
       if (!mounted) return;
-      showDialog(context: context, builder: (_) => AlertDialog(
-        title: Text(localizationService.t('duplicateChallenge')),
-        content: Text(localizationService.t('duplicateChallengeMessage')),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(localizationService.t('ok')))],
-      ));
+      showDialog(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              title: Text(localizationService.t('duplicateChallenge')),
+              content: Text(localizationService.t('duplicateChallengeMessage')),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(localizationService.t('ok')),
+                ),
+              ],
+            ),
+      );
       return;
     }
     final newCounter = Counter(
       title: sanitized,
       startDate: _selectedDate,
-      isNegativeHabit: _selectedType == localizationService.t('stopHabit'), // Marca hábito negativo según tipo
-      challengeStartedAt: null, // 🔧 CORREGIDO: No inicializar - se establecerá cuando el usuario presione "Iniciar reto"
+      isNegativeHabit:
+          _selectedType ==
+          localizationService.t(
+            'stopHabit',
+          ), // Marca hábito negativo según tipo
+      challengeStartedAt:
+          null, // 🔧 CORREGIDO: No inicializar - se establecerá cuando el usuario presione "Iniciar reto"
       color: _selectedColor,
       icon: _selectedIcon,
     );
     list.add(newCounter.toJson());
     await prefs.setString('counters', jsonEncode(list));
-    
+
     // 🔧 CORREGIDO: Usar UUID del counter recién creado
     await _handleBackdatedChallenge(sanitized, _selectedDate, newCounter.uuid);
-    
+
     // 🔧 ARQUITECTURA CORREGIDA: Solo usar IndividualStreakService para retos
     // StatisticsService NO debe manejar confirmaciones de retos
     // Los logros se verificarán automáticamente cuando se confirme el reto
-    
+
     // No llamar a StatisticsService.recordChallengeConfirmation() aquí
     // La creación de un reto NO es una confirmación
-    
+
     if (!mounted) return;
     Navigator.pop(context, true);
   }
@@ -419,24 +520,34 @@ class _AddCounterPageState extends State<AddCounterPage> {
   @override
   Widget build(BuildContext context) {
     localizationService = Provider.of<LocalizationService>(context);
-    
+
     // Asegurar que _selectedType tenga un valor válido en el idioma actual
-    if (_selectedType == 'dejar de' || _selectedType == 'stop' || _selectedType == 'parar de' || 
-        _selectedType == 'arrêter de' || _selectedType == 'aufhören' || _selectedType == 'smettere di' ||
-        _selectedType == 'やめる' || _selectedType == '그만두기' || _selectedType == '停止' ||
-        _selectedType == 'التوقف عن' || _selectedType == 'перестать' || _selectedType == 'बंद करना') {
+    if (_selectedType == 'dejar de' ||
+        _selectedType == 'stop' ||
+        _selectedType == 'parar de' ||
+        _selectedType == 'arrêter de' ||
+        _selectedType == 'aufhören' ||
+        _selectedType == 'smettere di' ||
+        _selectedType == 'やめる' ||
+        _selectedType == '그만두기' ||
+        _selectedType == '停止' ||
+        _selectedType == 'التوقف عن' ||
+        _selectedType == 'перестать' ||
+        _selectedType == 'बंद करना') {
       _selectedType = localizationService.t('stopHabit');
     } else {
       _selectedType = localizationService.t('startHabit');
     }
-    
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(localizationService.t('newChallenge')),
         centerTitle: true,
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? (isDark ? Colors.black : Colors.orange),
+        backgroundColor:
+            Theme.of(context).appBarTheme.backgroundColor ??
+            (isDark ? Colors.black : Colors.orange),
         elevation: 2,
         actions: [
           IconButton(
@@ -468,14 +579,18 @@ class _AddCounterPageState extends State<AddCounterPage> {
             child: Container(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Card(
-                shape: isDark
-                    ? RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                        side: const BorderSide(color: Colors.orange, width: 2),
-                      )
-                    : RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
+                shape:
+                    isDark
+                        ? RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                          side: const BorderSide(
+                            color: Colors.orange,
+                            width: 2,
+                          ),
+                        )
+                        : RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
                 elevation: 12,
                 color: Theme.of(context).cardColor,
                 child: Padding(
@@ -510,7 +625,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
                               borderRadius: BorderRadius.all(
                                 Radius.circular(18),
                               ),
-                              borderSide: const BorderSide(color: Colors.orange),
+                              borderSide: const BorderSide(
+                                color: Colors.orange,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(
@@ -529,7 +646,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
                                 width: 2,
                               ),
                             ),
-                            helperText: localizationService.t('challengeExample'),
+                            helperText: localizationService.t(
+                              'challengeExample',
+                            ),
                             helperStyle: TextStyle(
                               color: isDark ? Colors.grey[400] : Colors.grey,
                               fontSize: 15,
@@ -537,7 +656,8 @@ class _AddCounterPageState extends State<AddCounterPage> {
                           ),
                           style: TextStyle(
                             fontSize: 20,
-                            color: Theme.of(context).textTheme.titleLarge?.color,
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color,
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -545,7 +665,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
                             }
                             final sanitized = _sanitizeTitle(value);
                             if (sanitized.isEmpty) {
-                              return localizationService.t('invalidTitleAfterClean');
+                              return localizationService.t(
+                                'invalidTitleAfterClean',
+                              );
                             }
                             if (sanitized.length < 3) {
                               return localizationService.t('titleTooShort');
@@ -582,7 +704,9 @@ class _AddCounterPageState extends State<AddCounterPage> {
                             fillColor: Theme.of(context).cardColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: const BorderSide(color: Colors.orange),
+                              borderSide: const BorderSide(
+                                color: Colors.orange,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
@@ -641,22 +765,24 @@ class _AddCounterPageState extends State<AddCounterPage> {
                                   fontSize: 16,
                                 ),
                               ),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.orange,
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.orange,
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold,
                                 ),
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
-                        
+
                         // Widget de personalización visual para retos
                         ChallengeCustomizationWidget(
                           selectedColor: _selectedColor,
                           selectedIcon: _selectedIcon,
-                          isNegativeHabit: _selectedType == localizationService.t('stopHabit'),
+                          isNegativeHabit:
+                              _selectedType ==
+                              localizationService.t('stopHabit'),
                           onColorChanged: (color) {
                             setState(() {
                               _selectedColor = color;
@@ -668,7 +794,7 @@ class _AddCounterPageState extends State<AddCounterPage> {
                             });
                           },
                         ),
-                        
+
                         const SizedBox(height: 36),
                         SizedBox(
                           width: double.infinity,
